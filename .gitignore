@@ -1,0 +1,11 @@
+.env
+*.log
+/vendor/
+/node_modules/
+/mobile/android/.gradle/
+/mobile/android/app/build/
+/mobile/ios/Pods/
+.DS_Store
+.idea/
+.vscode/
+coverage/

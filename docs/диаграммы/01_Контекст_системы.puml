@@ -1,0 +1,23 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+left to right direction
+actor "Администратор ЧОП" as Admin
+actor "Операционный руководитель" as Ops
+actor "Охранник" as Guard
+actor "Представитель заказчика" as Client
+actor "Оператор ЧОППРО" as Platform
+rectangle "ЧОППРО" as System
+rectangle "SMS/Email/Telegram" as Notify
+rectangle "Карты/геокодер" as Maps
+rectangle "S3-хранилище" as S3
+Admin --> System
+Ops --> System
+Guard --> System
+Client --> System
+Platform --> System
+System --> Notify
+System --> Maps
+System --> S3
+@enduml

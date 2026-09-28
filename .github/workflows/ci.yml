@@ -1,0 +1,31 @@
+name: Проверка проекта
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  php-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Проверка синтаксиса PHP
+        run: find backend web -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Smoke-тест
+        run: php backend/tests/smoke.php
+
+  repository-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверка обязательных файлов
+        run: |
+          test -f README.md
+          test -f docker-compose.yml
+          test -f backend/database/migrations/001_core.sql
+          test -d docs/диаграммы
+          test -d prototypes

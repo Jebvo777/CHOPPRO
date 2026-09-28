@@ -1,0 +1,30 @@
+:root { font-family: "Times New Roman", Times, serif; color:#000; background:#fff; }
+* { box-sizing:border-box; }
+body { margin:0; background:#fff; color:#000; }
+a { color:#000; }
+.topbar { height:58px; border-bottom:1px solid #000; display:flex; align-items:center; justify-content:space-between; padding:0 22px; }
+.brand { font-size:24px; font-weight:700; }
+.layout { display:grid; grid-template-columns:230px 1fr; min-height:calc(100vh - 58px); }
+.sidebar { border-right:1px solid #000; padding:18px; }
+.sidebar a { display:block; text-decoration:none; padding:7px 8px; margin-bottom:2px; }
+.sidebar a.active { border:1px solid #000; font-weight:700; }
+.main { padding:24px; }
+h1,h2,h3 { margin:0 0 14px; }
+.grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.card,.section,.mobile-card { border:1px solid #000; padding:14px; }
+.section { margin-top:16px; }
+table { width:100%; border-collapse:collapse; }
+th,td { border:1px solid #000; padding:8px; text-align:left; vertical-align:top; }
+.toolbar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+button,input,select,textarea { font:inherit; color:#000; background:#fff; border:1px solid #000; padding:7px 10px; }
+button.primary { font-weight:700; border-width:2px; }
+.status { display:inline-block; border:1px solid #000; padding:2px 6px; font-size:13px; }
+.phone-wrap { display:flex; justify-content:center; padding:24px; }
+.phone { width:390px; min-height:760px; border:2px solid #000; border-radius:28px; padding:18px; }
+.phone-header { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #000; padding-bottom:12px; margin-bottom:16px; }
+.mobile-card { margin-bottom:12px; }
+.mobile-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.mobile-actions button { min-height:52px; }
+.tabs { display:flex; gap:12px; border-top:1px solid #000; margin-top:16px; padding-top:12px; justify-content:space-around; }
+.prototype-nav { padding:32px; max-width:900px; margin:0 auto; }
+.prototype-nav a { display:block; border:1px solid #000; padding:16px; margin:12px 0; text-decoration:none; font-size:18px; }

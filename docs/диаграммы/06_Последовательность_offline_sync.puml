@@ -1,0 +1,21 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+actor "Охранник" as Guard
+participant "React Native" as Mobile
+participant "Локальная очередь" as Queue
+participant "REST API" as API
+database "MySQL" as DB
+Guard -> Mobile: Выполняет операцию без сети
+Mobile -> Queue: Сохранить событие + UUID + client_time + idempotency_key
+Mobile --> Guard: Статус PENDING_SYNC
+... связь восстановлена ...
+Mobile -> Queue: Получить ожидающие события
+Mobile -> API: POST /mobile/sync (batch)
+API -> DB: Идемпотентная обработка
+DB --> API: Результаты по событиям
+API --> Mobile: SYNCED / ERROR / REQUIRES_REVIEW
+Mobile -> Queue: Обновить статусы
+Mobile --> Guard: Показать итог синхронизации
+@enduml

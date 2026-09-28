@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: ЧОППРО API
+  version: 0.1.0-stage1
+  description: REST API программного комплекса ЧОППРО. Этап 1 фиксирует базовые технические endpoint и целевые группы API.
+servers:
+  - url: /api/v1
+paths:
+  /health:
+    get:
+      summary: Проверка работоспособности API
+      operationId: getHealth
+      responses:
+        '200':
+          description: API и MySQL доступны
+  /version:
+    get:
+      summary: Версия API
+      operationId: getVersion
+      responses:
+        '200':
+          description: Версия сервиса
+components:
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: {type: string}
+        title: {type: string}
+        status: {type: integer}
+        code: {type: string}
+        details: {type: object, additionalProperties: true}
+        correlation_id: {type: string, format: uuid}

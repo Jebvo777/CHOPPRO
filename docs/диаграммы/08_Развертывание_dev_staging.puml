@@ -1,0 +1,24 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+node "Рабочая станция разработчика" as Dev {
+  artifact "Git repository" as Git
+  node "Docker Compose" {
+    component "PHP/Apache" as LocalApp
+    database "MySQL" as LocalDB
+    component "Redis" as LocalRedis
+  }
+}
+cloud "GitHub
+Jebvo777/CHOPPRO" as GH
+node "Staging сервер" as Stage {
+  component "PHP Web/API" as StageApp
+  database "MySQL staging" as StageDB
+  component "Redis staging" as StageRedis
+}
+Git --> GH : push / pull request
+GH --> Stage : deployment после CI и approval
+StageApp --> StageDB
+StageApp --> StageRedis
+@enduml

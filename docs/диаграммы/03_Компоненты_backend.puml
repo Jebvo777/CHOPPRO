@@ -1,0 +1,47 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+package "HTTP" {
+  [Front Controller]
+  [Router]
+  [Request/Response]
+}
+package "Middleware" {
+  [Authentication]
+  [Tenant Context]
+  [RBAC]
+  [Correlation ID]
+}
+package "Модули" {
+  [Auth]
+  [Tenants]
+  [Users]
+  [HR]
+  [Compliance]
+  [Facilities]
+  [Scheduling]
+  [Attendance]
+  [Patrols]
+  [Incidents]
+  [Reporting]
+  [Audit]
+}
+package "Инфраструктура" {
+  [PDO Repositories]
+  [MySQL]
+  [Redis]
+  [S3 Adapter]
+  [Notification Adapters]
+}
+[Front Controller] --> [Router]
+[Router] --> [Authentication]
+[Authentication] --> [Tenant Context]
+[Tenant Context] --> [RBAC]
+[RBAC] --> [Модули]
+[Модули] --> [PDO Repositories]
+[PDO Repositories] --> [MySQL]
+[Модули] --> [Redis]
+[Модули] --> [S3 Adapter]
+[Модули] --> [Notification Adapters]
+@enduml

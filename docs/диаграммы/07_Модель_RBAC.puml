@@ -1,0 +1,28 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+class User
+class Role
+class Permission
+class RoleAssignment {
+  tenant_id
+  object_scope
+  valid_until
+}
+class Tenant
+class Facility
+Tenant "1" -- "*" User
+Tenant "1" -- "*" Role
+User "1" -- "*" RoleAssignment
+Role "1" -- "*" RoleAssignment
+Role "*" -- "*" Permission
+RoleAssignment "0..*" .. "0..*" Facility : object_scope
+note right of RoleAssignment
+Доступ определяется одновременно:
+1. tenant пользователя;
+2. разрешением роли;
+3. объектной областью;
+4. сроком назначения.
+end note
+@enduml
