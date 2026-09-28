@@ -1,26 +1,303 @@
 openapi: 3.0.3
 info:
   title: ЧОППРО API
-  version: 0.1.0-stage1
-  description: REST API программного комплекса ЧОППРО. Этап 1 фиксирует базовые технические endpoint и целевые группы API.
+  version: 0.2.0-stage1
+  description: >
+    Проектный REST API ЧОППРО. На Этапе 1 реализованы системные health/version
+    endpoints; остальные маршруты фиксируются как контракт Этапов 2-4.
 servers:
   - url: /api/v1
+tags:
+  - {name: System}
+  - {name: Auth}
+  - {name: Core}
+  - {name: Operations}
+  - {name: Client}
+  - {name: Reporting}
+  - {name: Platform}
 paths:
   /health:
     get:
-      summary: Проверка работоспособности API
-      operationId: getHealth
+      tags: [System]
+      x-stage: "1"
+      summary: Проверка процесса API
+      security: []
       responses:
-        '200':
-          description: API и MySQL доступны
+        "200": {description: API запущен}
+  /ready:
+    get:
+      tags: [System]
+      x-stage: "1"
+      summary: Проверка MySQL и Redis
+      security: []
+      responses:
+        "200": {description: Сервис готов}
+        "503": {description: Одна из зависимостей недоступна}
   /version:
     get:
-      summary: Версия API
-      operationId: getVersion
+      tags: [System]
+      x-stage: "1"
+      summary: Версия приложения
+      security: []
       responses:
-        '200':
-          description: Версия сервиса
+        "200": {description: Версия сервиса}
+  /auth/login:
+    post:
+      tags: [Auth]
+      x-stage: "2"
+      summary: Вход web-пользователя
+      responses: {"200": {description: Сессия создана}}
+  /auth/otp/request:
+    post:
+      tags: [Auth]
+      x-stage: "3"
+      summary: Запрос OTP охранника
+      responses: {"200": {description: OTP challenge создан}}
+  /auth/otp/verify:
+    post:
+      tags: [Auth]
+      x-stage: "3"
+      summary: Проверка OTP
+      responses: {"200": {description: Сессия создана}}
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      x-stage: "2"
+      summary: Обновление сессии
+      responses: {"200": {description: Токен обновлен}}
+  /auth/logout:
+    post:
+      tags: [Auth]
+      x-stage: "2"
+      summary: Завершение сессии
+      responses: {"200": {description: Сессия отозвана}}
+  /tenant:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Текущий tenant
+      responses: {"200": {description: Tenant}}
+  /users:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Пользователи tenant
+      responses: {"200": {description: Список}}
+  /roles:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Роли и permissions
+      responses: {"200": {description: Список}}
+  /role-assignments:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Назначения ролей и object scope
+      responses: {"200": {description: Список}}
+  /employees:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Сотрудники
+      responses: {"200": {description: Список}}
+  /employees/{id}:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Карточка сотрудника
+      parameters:
+        - {in: path, name: id, required: true, schema: {type: string, format: uuid}}
+      responses: {"200": {description: Сотрудник}}
+  /documents:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Документы сотрудников
+      responses: {"200": {description: Список}}
+  /licenses:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Лицензии
+      responses: {"200": {description: Список}}
+  /contracts:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Договоры
+      responses: {"200": {description: Список}}
+  /compliance/tasks:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Compliance-задачи
+      responses: {"200": {description: Список}}
+  /customers:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Заказчики
+      responses: {"200": {description: Список}}
+  /facilities:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Объекты
+      responses: {"200": {description: Список}}
+  /posts:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Посты
+      responses: {"200": {description: Список}}
+  /shifts:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Смены
+      responses: {"200": {description: Список}}
+  /assignments:
+    get:
+      tags: [Core]
+      x-stage: "2"
+      summary: Назначения
+      responses: {"200": {description: Список}}
+  /mobile/bootstrap:
+    get:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Bootstrap мобильного клиента
+      responses: {"200": {description: Пакет данных}}
+  /mobile/sync:
+    post:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Пакетная синхронизация offline-событий
+      parameters:
+        - {$ref: "#/components/parameters/IdempotencyKey"}
+      responses: {"200": {description: Результаты событий}}
+  /attendance/check-in:
+    post:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Check-in
+      parameters:
+        - {$ref: "#/components/parameters/IdempotencyKey"}
+      responses: {"200": {description: VALID или REQUIRES_REVIEW}}
+  /attendance/check-out:
+    post:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Check-out
+      parameters:
+        - {$ref: "#/components/parameters/IdempotencyKey"}
+      responses: {"200": {description: Результат}}
+  /attendance/review:
+    get:
+      tags: [Operations]
+      x-stage: "2-3"
+      summary: Очередь ручной проверки attendance
+      responses: {"200": {description: Список}}
+  /patrol-runs:
+    get:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Обходы
+      responses: {"200": {description: Список}}
+  /checkpoint-scans/batch:
+    post:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Пакет QR-сканов обхода
+      parameters:
+        - {$ref: "#/components/parameters/IdempotencyKey"}
+      responses: {"200": {description: Результаты}}
+  /incidents:
+    get:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Происшествия
+      responses: {"200": {description: Список}}
+    post:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Создать происшествие
+      parameters:
+        - {$ref: "#/components/parameters/IdempotencyKey"}
+      responses: {"200": {description: Происшествие создано}}
+  /notifications:
+    get:
+      tags: [Operations]
+      x-stage: "3"
+      summary: Уведомления
+      responses: {"200": {description: Список}}
+  /client/dashboard:
+    get:
+      tags: [Client]
+      x-stage: "2"
+      summary: Dashboard заказчика
+      responses: {"200": {description: Dashboard}}
+  /client/incidents:
+    get:
+      tags: [Client]
+      x-stage: "3"
+      summary: Опубликованные происшествия
+      responses: {"200": {description: Список}}
+  /client/reports:
+    get:
+      tags: [Client]
+      x-stage: "4"
+      summary: Опубликованные отчеты
+      responses: {"200": {description: Список}}
+  /reports:
+    get:
+      tags: [Reporting]
+      x-stage: "4"
+      summary: Отчеты
+      responses: {"200": {description: Список}}
+  /exports:
+    post:
+      tags: [Reporting]
+      x-stage: "4"
+      summary: Создать XLSX/CSV/PDF экспорт
+      responses: {"200": {description: Export job}}
+  /audit-logs:
+    get:
+      tags: [Reporting]
+      x-stage: "2-4"
+      summary: Журнал аудита
+      responses: {"200": {description: Список}}
+  /platform/tenants:
+    get:
+      tags: [Platform]
+      x-stage: "2"
+      summary: Tenants платформы
+      responses: {"200": {description: Список}}
+  /platform/feature-flags:
+    get:
+      tags: [Platform]
+      x-stage: "2"
+      summary: Feature flags
+      responses: {"200": {description: Список}}
+  /platform/health:
+    get:
+      tags: [Platform]
+      x-stage: "4"
+      summary: Health платформы
+      responses: {"200": {description: Состояние}}
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+  parameters:
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      schema: {type: string, minLength: 8, maxLength: 128}
   schemas:
     Problem:
       type: object
@@ -32,3 +309,5 @@ components:
         code: {type: string}
         details: {type: object, additionalProperties: true}
         correlation_id: {type: string, format: uuid}
+security:
+  - bearerAuth: []
