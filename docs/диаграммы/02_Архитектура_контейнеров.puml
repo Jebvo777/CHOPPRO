@@ -10,7 +10,7 @@ PHP/HTML/CSS/JS" as Client
 rectangle "Android/iOS
 React Native" as Mobile
 rectangle "REST API /api/v1
-PHP 8.3+ без фреймворка" as API
+PHP 8.3+" as API
 database "MySQL 8" as DB
 rectangle "Redis" as Redis
 rectangle "S3
