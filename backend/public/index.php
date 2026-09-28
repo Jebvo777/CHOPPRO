@@ -20,22 +20,33 @@ try {
     $database = Connection::fromConfig(require dirname(__DIR__) . '/config/database.php');
 
     $router = new Router();
-    $router->get('/api/v1/health', static function () use ($database): Response {
+    $router->get('/api/v1/health', static fn (): Response => Response::json([
+        'status' => 'ok',
+        'service' => 'choppro-api',
+        'version' => '0.2.0-stage1',
+        'time' => gmdate('c'),
+    ]));
+
+    $router->get('/api/v1/ready', static function () use ($database): Response {
         $database->pdo()->query('SELECT 1');
+        $redisHost = getenv('REDIS_HOST') ?: '127.0.0.1';
+        $redisPort = (int) (getenv('REDIS_PORT') ?: 6379);
+        $socket = @fsockopen($redisHost, $redisPort, $errno, $errstr, 1.0);
+        $redis = $socket !== false ? 'ok' : 'unavailable';
+        if (is_resource($socket)) { fclose($socket); }
 
         return Response::json([
-            'status' => 'ok',
-            'service' => 'choppro-api',
-            'version' => '0.1.0-stage1',
+            'status' => $redis === 'ok' ? 'ready' : 'degraded',
             'database' => 'ok',
+            'redis' => $redis,
             'time' => gmdate('c'),
-        ]);
+        ], $redis === 'ok' ? 200 : 503);
     });
 
     $router->get('/api/v1/version', static fn (): Response => Response::json([
         'name' => 'ЧОППРО',
         'api' => 'v1',
-        'version' => '0.1.0-stage1',
+        'version' => '0.2.0-stage1',
     ]));
 
     $app = new App($router, $config);

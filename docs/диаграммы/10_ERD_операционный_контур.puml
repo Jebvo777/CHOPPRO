@@ -1,0 +1,42 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+hide methods
+class Customer
+class Facility
+class FacilityGeofence
+class Post
+class PostInstruction
+class Shift
+class ShiftAssignment
+class AttendanceEvent
+class AttendanceReview
+class PatrolRoute
+class Checkpoint
+class CheckpointToken
+class PatrolRun
+class CheckpointScan
+class Incident
+class IncidentAttachment
+class IncidentComment
+class Escalation
+Customer "1" -- "*" Facility
+Facility "1" -- "1" FacilityGeofence
+Facility "1" -- "*" Post
+Post "1" -- "*" PostInstruction
+Post "1" -- "*" Shift
+Shift "1" -- "*" ShiftAssignment
+ShiftAssignment "1" -- "*" AttendanceEvent
+AttendanceEvent "1" -- "*" AttendanceReview
+Facility "1" -- "*" PatrolRoute
+PatrolRoute "1" -- "*" Checkpoint
+Checkpoint "1" -- "*" CheckpointToken
+PatrolRoute "1" -- "*" PatrolRun
+PatrolRun "1" -- "*" CheckpointScan
+Checkpoint "1" -- "*" CheckpointScan
+Facility "1" -- "*" Incident
+Incident "1" -- "*" IncidentAttachment
+Incident "1" -- "*" IncidentComment
+Incident "1" -- "*" Escalation
+@enduml

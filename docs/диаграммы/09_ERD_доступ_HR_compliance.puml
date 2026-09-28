@@ -1,0 +1,39 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+hide methods
+class Tenant
+class User
+class Role
+class Permission
+class RoleAssignment
+class AuthSession
+class Employee
+class Qualification
+class EmployeeDocument
+class DocumentVerification
+class SecurityLicense
+class LicensedServiceType
+class Contract
+class ContractService
+class ComplianceRuleVersion
+class ComplianceTask
+Tenant "1" -- "*" User
+Tenant "1" -- "*" Role
+Role "*" -- "*" Permission
+User "1" -- "*" RoleAssignment
+Role "1" -- "*" RoleAssignment
+User "1" -- "*" AuthSession
+Tenant "1" -- "*" Employee
+Employee "*" -- "*" Qualification
+Employee "1" -- "*" EmployeeDocument
+EmployeeDocument "1" -- "*" DocumentVerification
+Tenant "1" -- "*" SecurityLicense
+SecurityLicense "*" -- "*" LicensedServiceType
+Tenant "1" -- "*" Contract
+Contract "1" -- "*" ContractService
+ContractService "*" -- "1" LicensedServiceType
+ComplianceRuleVersion "1" -- "*" ComplianceTask
+Contract "1" -- "*" ComplianceTask
+@enduml
