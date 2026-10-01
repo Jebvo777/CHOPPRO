@@ -3,18 +3,13 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 left to right direction
-rectangle "Admin Web
-PHP/HTML/CSS/JS" as Admin
-rectangle "Client Portal
-PHP/HTML/CSS/JS" as Client
-rectangle "Android/iOS
-React Native" as Mobile
-rectangle "REST API /api/v1
-PHP 8.3+" as API
+rectangle "Admin Web\nPHP/HTML/CSS/JS" as Admin
+rectangle "Client Portal\nPHP/HTML/CSS/JS" as Client
+rectangle "Мобильные приложения\nAndroid / iOS" as Mobile
+rectangle "REST API /api/v1\nPHP 8.3+" as API
 database "MySQL 8" as DB
 rectangle "Redis" as Redis
-rectangle "S3
-файлы и вложения" as S3
+rectangle "S3\nфайлы и вложения" as S3
 rectangle "Адаптеры уведомлений" as Notify
 Admin --> API
 Client --> API
