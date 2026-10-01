@@ -11,7 +11,7 @@
 - Backend: PHP 8.3+.
 - База данных: MySQL 8 / InnoDB / utf8mb4.
 - Redis: кэш, rate limit, очереди и временные данные.
-- Мобильные приложения: React Native с отдельными Android и iOS сборками.
+- Мобильные приложения: отдельные полноценные приложения для Android и iOS.
 - Web: PHP, HTML, CSS, JavaScript.
 - API: REST JSON /api/v1.
 - Файлы: S3-совместимое хранилище.

@@ -8,7 +8,7 @@ GitHub: https://github.com/Jebvo777/CHOPPRO
 
 ## 2. Состав репозитория
 
-В репозитории размещены backend-каркас PHP, MySQL migrations, Docker-конфигурация, CI workflow, web-каркасы, структура React Native, прототипы, документация, OpenAPI, PUML-диаграммы и материалы приемки Этапа 1.
+В репозитории размещены backend-каркас PHP, MySQL migrations, Docker-конфигурация, CI workflow, web-каркасы, структура мобильных приложений Android/iOS, прототипы, документация, OpenAPI, PUML-диаграммы и материалы приемки Этапа 1.
 
 ## 3. Проверки
 

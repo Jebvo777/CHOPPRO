@@ -3,7 +3,7 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 actor "Охранник" as Guard
-participant "React Native" as Mobile
+participant "Мобильное приложение Android/iOS" as Mobile
 participant "Локальная очередь" as Queue
 participant "REST API" as API
 database "MySQL" as DB
