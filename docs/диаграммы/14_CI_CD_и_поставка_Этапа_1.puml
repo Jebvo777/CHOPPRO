@@ -5,8 +5,7 @@ skinparam defaultFontName "Times New Roman"
 actor "Разработчик" as Dev
 rectangle "feature/*" as Feature
 rectangle "develop" as Develop
-rectangle "CI
-php -l + smoke" as CI
+rectangle "CI\nphp -l + smoke" as CI
 rectangle "main" as Main
 rectangle "Staging / портал приемки" as Stage
 rectangle "Заказчик" as Client
