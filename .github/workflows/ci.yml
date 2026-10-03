@@ -14,7 +14,7 @@ jobs:
         with:
           php-version: '8.3'
       - name: Проверка синтаксиса PHP
-        run: find backend web -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: find backend web acceptance-portal -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Smoke-тест
         run: php backend/tests/smoke.php
 
@@ -29,3 +29,39 @@ jobs:
           test -f backend/database/migrations/001_core.sql
           test -d docs/диаграммы
           test -d prototypes
+
+  acceptance-portal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Проверки синхронизации и безопасности
+        run: php acceptance-portal/tests/run.php
+      - name: Собрать архив портала
+        run: python3 acceptance-portal/bin/build_bundle.py --output dist/CHOPPRO_portal_github_auto.zip
+      - name: Подготовить browser preview
+        run: |
+          mkdir -p "$RUNNER_TEMP/portal-preview"
+          unzip -q dist/CHOPPRO_portal_github_auto.zip -d "$RUNNER_TEMP/portal-preview"
+          php "$RUNNER_TEMP/portal-preview/tests/render.php" "$RUNNER_TEMP/portal-rendered"
+          php -S 127.0.0.1:8090 -t "$RUNNER_TEMP/portal-preview" "$RUNNER_TEMP/portal-preview/tests/router.php" > "$RUNNER_TEMP/portal-php.log" 2>&1 &
+      - name: Установить браузер для проверки
+        run: |
+          npm install --prefix "$RUNNER_TEMP/portal-ui" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/portal-ui/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Проверить страницы, фильтры и прототипы
+        env:
+          PORTAL_PLAYWRIGHT_PATH: ${{ runner.temp }}/portal-ui/node_modules/playwright
+          PORTAL_SCREENSHOTS: dist/screenshots
+        run: node acceptance-portal/tests/browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CHOPPRO-portal
+          path: dist/
