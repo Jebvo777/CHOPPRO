@@ -35,7 +35,7 @@ const path = require('path');
   await frame.locator('#app').waitFor();
   await frame.locator('[data-nav="admin:employees"]').first().click();
   await page.waitForTimeout(250);
-  if (await frame.locator('#app').innerText() === '') throw new Error('Prototype navigation failed');
+  if (!(await frame.locator('#app').innerText()).includes('Сотрудники')) throw new Error('Prototype navigation failed');
   await page.goto(origin + '/?page=prototypes&story=UC-02&step=2');
   if (!(await page.locator('.story-card').first().innerText()).includes('Шаг 2')) throw new Error('Guided scenario did not load');
   await page.setViewportSize({width: 390, height: 844});

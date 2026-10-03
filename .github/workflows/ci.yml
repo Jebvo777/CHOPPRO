@@ -51,6 +51,10 @@ jobs:
           unzip -q dist/CHOPPRO_portal_github_auto.zip -d "$RUNNER_TEMP/portal-preview"
           php "$RUNNER_TEMP/portal-preview/tests/render.php" "$RUNNER_TEMP/portal-rendered"
           php -S 127.0.0.1:8090 -t "$RUNNER_TEMP/portal-preview" "$RUNNER_TEMP/portal-preview/tests/router.php" > "$RUNNER_TEMP/portal-php.log" 2>&1 &
+      - name: Проверить настоящее подключение GitHub
+        env:
+          CHOPPRO_GITHUB_TOKEN: ${{ github.token }}
+        run: php "$RUNNER_TEMP/portal-preview/bin/sync.php" --force
       - name: Установить браузер для проверки
         run: |
           npm install --prefix "$RUNNER_TEMP/portal-ui" --no-save playwright@1.62.1

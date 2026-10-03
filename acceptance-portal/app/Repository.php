@@ -62,19 +62,24 @@ final class Repository
                 $this->state['meta_checked_at'] = $now;
             }
             $branch = $this->config['branch'] ?: ($meta['default_branch'] ?? 'main');
-            $head = $this->client->api('/commits?per_page=5&sha='.rawurlencode($branch), $this->state['etag'] ?? '');
-            if ($head['not_modified']) {
-                if (!$this->snapshot) {
-                    throw new GitHubFailure('GitHub не вернул исходную версию.');
+            $commits = $this->head($branch);
+            $commit = $commits[0];
+            $primaryTree = null;
+            if (!$this->config['branch'] && !empty($this->config['transition_branch'])) {
+                if (($this->state['transition_checked_sha'] ?? '') !== $commit['sha']) {
+                    $primaryTree = $this->tree($commit['commit']['tree']['sha']);
+                    $this->state['transition_ready'] = isset($primaryTree[$this->config['manifest_path']]);
+                    $this->state['transition_checked_sha'] = $commit['sha'];
                 }
-            } else {
-                $commits = $head['data'];
-                $commit = $commits[0] ?? null;
-                if (!is_array($commit) || !preg_match('/^[a-f0-9]{40}$/', $commit['sha'] ?? '')) {
-                    throw new GitHubFailure('GitHub не вернул коммит.');
+                if (!($this->state['transition_ready'] ?? false)) {
+                    $branch = $this->config['transition_branch'];
+                    $commits = $this->head($branch);
+                    $commit = $commits[0];
+                    $primaryTree = null;
                 }
+            }
                 if (($this->snapshot['sha'] ?? '') !== $commit['sha']) {
-                    $tree = $this->tree($commit['commit']['tree']['sha']);
+                    $tree = $primaryTree ?? $this->tree($commit['commit']['tree']['sha']);
                     $manifestEntry = $tree[$this->config['manifest_path']] ?? null;
                     $manifest = [];
                     if ($manifestEntry) {
@@ -99,8 +104,6 @@ final class Repository
                     $this->writeJson($dir.'/current.json', $new); // Atomic publish, after all blobs.
                     $this->snapshot = $new;
                 }
-                $this->state['etag'] = $head['etag'];
-            }
             $this->state['checked_at'] = $now;
             $this->state['error'] = null;
             $this->state['failures'] = 0;
@@ -285,6 +288,20 @@ final class Repository
             $files[$path] = $entry;
         }
         return $files;
+    }
+
+    private function head(string $branch): array
+    {
+        $response = $this->client->api('/commits?per_page=5&sha='.rawurlencode($branch),
+            $this->state['head_etags'][$branch] ?? '');
+        $commits = $response['data'] ?? ($this->state['heads'][$branch] ?? []);
+        if (!isset($commits[0]) || !is_array($commits[0])
+            || !preg_match('/^[a-f0-9]{40}$/', $commits[0]['sha'] ?? '')) {
+            throw new GitHubFailure('GitHub не вернул коммит.');
+        }
+        $this->state['heads'][$branch] = $commits;
+        $this->state['head_etags'][$branch] = $response['etag'];
+        return $commits;
     }
 
     private function download(array $entries, string $commit): array

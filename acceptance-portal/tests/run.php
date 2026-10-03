@@ -120,7 +120,7 @@ try {
     check($repo->snapshot['sha'] === $publishedSha, 'Corrupt downloads never publish a partial snapshot');
     $mode = '304';
     $repo->synchronize(true);
-    check($repo->snapshot['sha'] === $publishedSha && empty($repo->state['error']), 'Conditional 304 recovers without losing saved content');
+    check($repo->snapshot['sha'] === $commitSha && empty($repo->state['error']), 'Conditional 304 retries an incomplete update from the cached commit');
     check(!Repository::validPath('../config.php') && !Repository::validPath("docs/\0bad") && $repo->content('../config.php') === null, 'Traversal and control characters are rejected');
     $html = Markdown::render("# Документ\n\n<script>alert(1)</script>\n\n[bad](javascript:alert)\n\n| A | B |\n| --- | --- |\n| **Да** | Нет |\n");
     check(!str_contains($html, '<script>') && !str_contains($html, 'href="javascript:') && str_contains($html, '<table'), 'Markdown escapes scripts and supports tables');

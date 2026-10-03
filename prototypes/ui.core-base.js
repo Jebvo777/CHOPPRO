@@ -109,7 +109,7 @@
   function go(app,screen){
     const u=new URL(location.href);u.search='';u.searchParams.set('app',app);u.searchParams.set('screen',screen);history.pushState({},'',u);render();
   }
-  window.addEventListener('popstate',render);
+  window.addEventListener('popstate', () => render());
 
   function appNav(app,active){
     if(!NAV[app])return '';

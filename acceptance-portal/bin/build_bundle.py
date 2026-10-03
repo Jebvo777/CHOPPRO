@@ -21,7 +21,7 @@ def git(source: Path, *args: str) -> bytes:
 def metadata(source: Path) -> dict:
     sha = git(source, 'rev-parse', 'HEAD').decode().strip()
     branch = subprocess.run(['git','-C',str(source),'symbolic-ref','--short','-q','HEAD'],capture_output=True).stdout.decode().strip()
-    if not branch: branch = os.environ.get('GITHUB_REF_NAME','main')
+    if not branch: branch = os.environ.get('GITHUB_HEAD_REF') or os.environ.get('GITHUB_REF_NAME','main')
     tree = {}
     for record in git(source, 'ls-tree', '-r', '-t', '-l', '-z', 'HEAD').split(b'\0'):
         if not record: continue

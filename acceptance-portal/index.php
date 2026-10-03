@@ -41,6 +41,7 @@ $diagramFiles = array_filter($catalog->files(), static fn($entry, $path) => str_
 </header>
 <div class="sync-notice" data-sync-notice hidden>В GitHub появилась новая версия. <a href="<?=e($_SERVER['REQUEST_URI'] ?? './')?>" data-load-version>Открыть актуальную</a></div>
 <?php if ($status['error']): ?><div class="warning"><?=e($status['error'])?> Данные на <?=e(display_date($status['synced_at']))?>. Следующая проверка: <?=e(display_date($status['next_check_at']))?>.</div><?php endif; ?>
+<?php if (!$repository->config['branch'] && $status['branch'] === ($repository->config['transition_branch'] ?? '')): ?><div class="sync-notice">Источник — ветка <?=e($status['branch'])?>. После слияния изменений портал автоматически перейдет на основную ветку GitHub.</div><?php endif; ?>
 <div class="layout">
 <aside class="sidebar" aria-label="Разделы портала">
 <?php foreach ($catalog->sections as $s): ?><a class="nav <?=$page === $s['id'] ? 'active' : ''?>" href="<?=e(nav_url($s['id']))?>"><span><?=e($s['icon'] ?? '·')?></span><?=e($s['title'])?></a><?php endforeach; ?>
