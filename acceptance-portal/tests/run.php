@@ -88,6 +88,7 @@ try {
     check(count($catalog->data($catalog->section('stories'))) === 1, 'Scenarios come directly from Markdown');
     check(count($catalog->data($catalog->section('acceptance'))['Документы']) === 2, 'Acceptance checklist comes directly from Markdown');
     check($catalog->data($catalog->section('requirements'))[0]['requirement'] === 'Текст, с запятой', 'CSV preserves quoted commas');
+    check(stage_values('2-4') === ['2','3','4'], 'Requirements spanning stages 2-4 belong to every stage in the range');
     $oldSnapshot = $repo->snapshot;
     $oldSha = $commitSha;
     $commitSha = str_repeat('c', 40);
@@ -140,6 +141,34 @@ try {
     $blob = entry('prototypes/asset.js', 'asset');
     check($client->blobs([$blob], str_repeat('e', 40))[$blob['sha']] === 'asset', 'Authenticated blob downloads are verified');
     check(str_starts_with($authCalls[0][0], 'https://api.github.com/') && in_array('Authorization: Bearer test-token-not-a-real-secret', $authCalls[0][1]), 'Tokens are sent only to the GitHub API');
+    $merged = false;
+    $reviewFiles = ['README.md' => "# Review\n", 'acceptance-portal/portal.json' => json_encode($manifest)];
+    $transitionConfig = $config;
+    $transitionConfig['cache_dir'] = $temp.'/transition';
+    $transitionTransport = function ($url, $headers) use (&$merged, $reviewFiles): array {
+        $defaultSha = str_repeat($merged ? '3' : '1', 40);
+        $reviewSha = str_repeat('2', 40);
+        $isReview = str_contains(rawurldecode($url), 'sha=portal/github-auto-sync');
+        $data = ['default_branch' => 'main'];
+        if (str_contains($url, '/commits?')) {
+            $sha = $isReview ? $reviewSha : $defaultSha;
+            $data = [['sha' => $sha, 'commit' => ['tree' => ['sha' => $sha], 'message' => 'Transition', 'committer' => ['date' => '2026-10-03T12:00:00Z']]]];
+        } elseif (str_contains($url, '/git/trees/')) {
+            $data = ['tree' => array_map('entry', array_keys($reviewFiles), array_values($reviewFiles)), 'truncated' => false];
+            if (str_contains($url, str_repeat('1', 40))) $data['tree'] = [entry('README.md', "# Legacy\n")];
+        } elseif (str_starts_with($url, 'https://raw.githubusercontent.com/')) {
+            $parts = explode('/', parse_url($url, PHP_URL_PATH));
+            $path = rawurldecode(implode('/', array_slice($parts, 4)));
+            return ['status' => 200, 'headers' => [], 'body' => $reviewFiles[$path]];
+        }
+        return ['status' => 200, 'headers' => [], 'body' => json_encode($data)];
+    };
+    $transition = new Repository($transitionConfig, $transitionTransport);
+    $transition->synchronize(true);
+    check(($transition->snapshot['branch'] ?? '') === 'portal/github-auto-sync', 'The archive works from the review branch before the merge');
+    $merged = true;
+    $transition->synchronize(true);
+    check(($transition->snapshot['branch'] ?? '') === 'main' && $transition->snapshot['sha'] === str_repeat('3', 40), 'After the merge the portal switches to the default branch without changing server configuration');
     echo "PASS ".$checks." checks".PHP_EOL;
 } finally {
     removeTree($temp);

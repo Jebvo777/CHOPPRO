@@ -9,8 +9,7 @@ database "MySQL" as DB
 Guard -> Mobile: Открывает текущую смену
 Mobile -> Guard: Запрашивает QR и геолокацию
 Guard -> Mobile: Скан QR
-Mobile -> API: POST /attendance/check-in
-Idempotency-Key + GPS + QR
+Mobile -> API: POST /attendance/check-in\nIdempotency-Key + GPS + QR
 API -> DB: Проверить tenant, назначение, окно, геозону, QR
 DB --> API: Данные и результат проверки
 API -> DB: Создать AttendanceEvent

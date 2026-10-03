@@ -33,3 +33,16 @@ function file_title(string $path): string
 {
     return str_replace('_', ' ', preg_replace('/\.[^.]+$/', '', basename($path)));
 }
+function stage_values(string $value): array
+{
+    preg_match_all('/(\d+)(?:\s*[-–]\s*(\d+))?/u', $value, $matches, PREG_SET_ORDER);
+    $stages = [];
+    foreach ($matches as $match) {
+        $first = (int)$match[1];
+        $last = isset($match[2]) ? (int)$match[2] : $first;
+        if ($last >= $first && $last - $first <= 20) {
+            foreach (range($first, $last) as $stage) $stages[] = (string)$stage;
+        }
+    }
+    return array_values(array_unique($stages));
+}

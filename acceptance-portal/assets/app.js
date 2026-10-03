@@ -32,7 +32,11 @@
     let visible = 0;
     document.querySelectorAll('[data-req-row]').forEach(row => {
       const query = (search?.value || '').toLocaleLowerCase('ru');
-      const stages = row.dataset.stage.split(/[,/\s]+/);
+      const stages = [];
+      for (const match of row.dataset.stage.matchAll(/(\d+)(?:\s*[-–]\s*(\d+))?/g)) {
+        const first = Number(match[1]), last = Number(match[2] || match[1]);
+        if (last >= first && last - first <= 20) for (let i = first; i <= last; i++) stages.push(String(i));
+      }
       row.hidden = !!((query && !row.textContent.toLocaleLowerCase('ru').includes(query))
         || (category?.value && row.dataset.cat !== category.value)
         || (stage?.value && !stages.includes(stage.value)));
