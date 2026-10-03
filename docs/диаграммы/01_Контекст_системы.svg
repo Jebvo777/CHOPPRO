@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="548px" preserveAspectRatio="none" style="width:598px;height:548px;" version="1.1" viewBox="0 0 598 548" width="598px" zoomAndPan="magnify"><defs/><g><!--MD5=[97ab183161fd5d1db7fba7485cf76add]
+entity Admin--><ellipse cx="116" cy="17.5" fill="#F8F8F8" rx="8" ry="8" style="stroke: #383838; stroke-width: 1.5;"/><path d="M116,25.5 L116,52.5 M103,33.5 L129,33.5 M116,52.5 L103,67.5 M116,52.5 L129,67.5 " fill="none" style="stroke: #383838; stroke-width: 1.5;"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="151" x="40.5" y="82.9951">Администратор ЧОП</text><!--MD5=[b74a504a2ca8ef7e4c7be1c820c91805]
+entity Ops--><ellipse cx="116" cy="130.5" fill="#F8F8F8" rx="8" ry="8" style="stroke: #383838; stroke-width: 1.5;"/><path d="M116,138.5 L116,165.5 M103,146.5 L129,146.5 M116,165.5 L103,180.5 M116,165.5 L129,180.5 " fill="none" style="stroke: #383838; stroke-width: 1.5;"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="220" x="6" y="195.9951">Операционный руководитель</text><!--MD5=[fc6ac5ab2ff3d2290ade00ac19f75ce0]
+entity Guard--><ellipse cx="116" cy="243.5" fill="#F8F8F8" rx="8" ry="8" style="stroke: #383838; stroke-width: 1.5;"/><path d="M116,251.5 L116,278.5 M103,259.5 L129,259.5 M116,278.5 L103,293.5 M116,278.5 L129,293.5 " fill="none" style="stroke: #383838; stroke-width: 1.5;"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="70" x="81" y="308.9951">Охранник</text><!--MD5=[0ba5ee7700168656dc1b457c6fe9fdac]
+entity Client--><ellipse cx="116" cy="356.5" fill="#F8F8F8" rx="8" ry="8" style="stroke: #383838; stroke-width: 1.5;"/><path d="M116,364.5 L116,391.5 M103,372.5 L129,372.5 M116,391.5 L103,406.5 M116,391.5 L129,406.5 " fill="none" style="stroke: #383838; stroke-width: 1.5;"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="192" x="20" y="421.9951">Представитель заказчика</text><!--MD5=[e4ef8ffea338babcb5183e75747bbc6e]
+entity Platform--><ellipse cx="116" cy="469.5" fill="#F8F8F8" rx="8" ry="8" style="stroke: #383838; stroke-width: 1.5;"/><path d="M116,477.5 L116,504.5 M103,485.5 L129,485.5 M116,504.5 L103,519.5 M116,504.5 L129,519.5 " fill="none" style="stroke: #383838; stroke-width: 1.5;"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="137" x="47.5" y="534.9951">Оператор ЧОППРО</text><!--MD5=[abea0b42432aea0f9ce66e53feda8644]
+entity System--><rect fill="#F8F8F8" height="36.2969" style="stroke: #000000; stroke-width: 1.5;" width="80" x="286" y="255"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="60" x="296" y="277.9951">ЧОППРО</text><!--MD5=[2d0c8e7b40339c96aab23c4410a23e10]
+entity Notify--><rect fill="#F8F8F8" height="36.2969" style="stroke: #000000; stroke-width: 1.5;" width="161" x="426" y="184"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="141" x="436" y="206.9951">SMS/Email/Telegram</text><!--MD5=[2fb4a88e2766c36506e4f36783d67a18]
+entity Maps--><rect fill="#F8F8F8" height="36.2969" style="stroke: #000000; stroke-width: 1.5;" width="142" x="435.5" y="255"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="122" x="445.5" y="277.9951">Карты/геокодер</text><!--MD5=[6c7192638421eaf134d201765ac5db29]
+entity S3--><rect fill="#F8F8F8" height="36.2969" style="stroke: #000000; stroke-width: 1.5;" width="126" x="443.5" y="326"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="106" x="453.5" y="348.9951">S3-хранилище</text><!--MD5=[a9a9509cfef6239e58007008e5eb5dc0]
+link Admin to System--><path d="M191.73,78.11 C204,85.19 215.97,93.48 226,103 C271.35,146.01 302.45,214.4 316.5,249.91 " fill="none" id="Admin-&gt;System" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="318.45,254.9,318.9102,245.0619,316.635,250.2411,311.4559,247.9659,318.45,254.9" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[f1fa97a8e20ba247df36387f3a42f4ac]
+link Ops to System--><path d="M194.06,199.01 C204.83,204.63 215.72,210.41 226,216 C247.36,227.63 270.97,241.19 289.77,252.17 " fill="none" id="Ops-&gt;System" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="294.44,254.9,288.6979,246.8982,290.1263,252.3718,284.6527,253.8001,294.44,254.9" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[8e8d69e21da40650c4f8b5385ae2b8c5]
+link Guard to System--><path d="M151.35,273 C186.79,273 242.22,273 280.89,273 " fill="none" id="Guard-&gt;System" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="286,273,277,269,281,273,277,277,286,273" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[b01be8bdc4fb25d848cf3e7fba7545c0]
+link Client to System--><path d="M192.52,346.92 C203.77,340.98 215.21,334.87 226,329 C246.95,317.6 270.16,304.5 288.84,293.83 " fill="none" id="Client-&gt;System" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="293.49,291.17,283.692,292.1692,289.1505,293.6538,287.666,299.1123,293.49,291.17" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[25342b5019dd20ae92bd66f067383aa6]
+link Platform to System--><path d="M184.61,471.16 C199.3,463.15 214.02,453.42 226,442 C270.93,399.18 302.12,331.51 316.32,296.19 " fill="none" id="Platform-&gt;System" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="318.29,291.22,311.2518,298.1094,316.4454,295.8673,318.6875,301.0608,318.29,291.22" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[dbac1b7a1d31d0238f6763ab71917f01]
+link System to Notify--><path d="M366.17,257.42 C392.37,247 427.07,233.2 455.29,221.97 " fill="none" id="System-&gt;Notify" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="460.12,220.05,450.2785,219.6682,455.4757,221.902,453.2418,227.0991,460.12,220.05" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[40227faba13bd053759963ee9b3490b0]
+link System to Maps--><path d="M366.17,273 C384.98,273 408.18,273 430.22,273 " fill="none" id="System-&gt;Maps" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="435.49,273,426.49,269,430.49,273,426.49,277,435.49,273" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[c9651e03e46fa83ce7c9733fa4794efe]
+link System to S3--><path d="M366.17,288.58 C392.37,299 427.07,312.8 455.29,324.03 " fill="none" id="System-&gt;S3" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="460.12,325.95,453.2418,318.9009,455.4757,324.098,450.2785,326.3318,460.12,325.95" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[abb5d549a23e5f7bec3aae6f428fad8b]
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+left to right direction
+actor "Администратор ЧОП" as Admin
+actor "Операционный руководитель" as Ops
+actor "Охранник" as Guard
+actor "Представитель заказчика" as Client
+actor "Оператор ЧОППРО" as Platform
+rectangle "ЧОППРО" as System
+rectangle "SMS/Email/Telegram" as Notify
+rectangle "Карты/геокодер" as Maps
+rectangle "S3-хранилище" as S3
+Admin - -> System
+Ops - -> System
+Guard - -> System
+Client - -> System
+Platform - -> System
+System - -> Notify
+System - -> Maps
+System - -> S3
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 10:22:07 UTC 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 17.0.20.1+1
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

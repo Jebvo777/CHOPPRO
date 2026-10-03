@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "renders": {
+    "docs/диаграммы/01_Контекст_системы.puml": {
+      "source_sha": "018c945e3b16119b9f28dd90be7df7ef4b1140ef",
+      "svg": "docs/диаграммы/01_Контекст_системы.svg",
+      "png": "docs/диаграммы/01_Контекст_системы.png"
+    },
+    "docs/диаграммы/02_Архитектура_контейнеров.puml": {
+      "source_sha": "91bbdc0195b0540bc95c06f95f65cf000e65348b",
+      "svg": "docs/диаграммы/02_Архитектура_контейнеров.svg",
+      "png": "docs/диаграммы/02_Архитектура_контейнеров.png"
+    },
+    "docs/диаграммы/03_Компоненты_backend.puml": {
+      "source_sha": "991c5ed5a3bbe62faf5b3c32d73590b6625f7c99",
+      "svg": "docs/диаграммы/03_Компоненты_backend.svg",
+      "png": "docs/диаграммы/03_Компоненты_backend.png"
+    },
+    "docs/диаграммы/04_Модель_данных_ядро.puml": {
+      "source_sha": "607869842496214b3d7fb701bfe562226a50ac2e",
+      "svg": "docs/диаграммы/04_Модель_данных_ядро.svg",
+      "png": "docs/диаграммы/04_Модель_данных_ядро.png"
+    },
+    "docs/диаграммы/05_Последовательность_check_in.puml": {
+      "source_sha": "22307ea49fecea2ada01b840bfef932bd050feea",
+      "svg": "docs/диаграммы/05_Последовательность_check_in.svg",
+      "png": "docs/диаграммы/05_Последовательность_check_in.png"
+    },
+    "docs/диаграммы/06_Последовательность_offline_sync.puml": {
+      "source_sha": "0a0de1120b55787418cbc6ee8af1b108432dcf11",
+      "svg": "docs/диаграммы/06_Последовательность_offline_sync.svg",
+      "png": "docs/диаграммы/06_Последовательность_offline_sync.png"
+    },
+    "docs/диаграммы/07_Модель_RBAC.puml": {
+      "source_sha": "b0f4445b4dc6b5d0d5e423bb47b121fe85275a97",
+      "svg": "docs/диаграммы/07_Модель_RBAC.svg",
+      "png": "docs/диаграммы/07_Модель_RBAC.png"
+    },
+    "docs/диаграммы/08_Развертывание_dev_staging.puml": {
+      "source_sha": "fa88bbd43e79e48f1e11eeddc3cb8a7526c0bed2",
+      "svg": "docs/диаграммы/08_Развертывание_dev_staging.svg",
+      "png": "docs/диаграммы/08_Развертывание_dev_staging.png"
+    },
+    "docs/диаграммы/09_ERD_доступ_HR_compliance.puml": {
+      "source_sha": "96f0af64b1ff101fe55a03f28ba64808d931cca2",
+      "svg": "docs/диаграммы/09_ERD_доступ_HR_compliance.svg",
+      "png": "docs/диаграммы/09_ERD_доступ_HR_compliance.png"
+    },
+    "docs/диаграммы/10_ERD_операционный_контур.puml": {
+      "source_sha": "c9bed0962e562d5a52c28aefe871bdf22a061253",
+      "svg": "docs/диаграммы/10_ERD_операционный_контур.svg",
+      "png": "docs/диаграммы/10_ERD_операционный_контур.png"
+    },
+    "docs/диаграммы/11_ERD_отчеты_уведомления_интеграции.puml": {
+      "source_sha": "d49d8332bf03327e6f745f1948794b954daf8e8e",
+      "svg": "docs/диаграммы/11_ERD_отчеты_уведомления_интеграции.svg",
+      "png": "docs/диаграммы/11_ERD_отчеты_уведомления_интеграции.png"
+    },
+    "docs/диаграммы/12_Схема_интеграций.puml": {
+      "source_sha": "c4e13503deba6332ae5b4420a8c0f63f0e9b9852",
+      "svg": "docs/диаграммы/12_Схема_интеграций.svg",
+      "png": "docs/диаграммы/12_Схема_интеграций.png"
+    },
+    "docs/диаграммы/13_Последовательность_OTP_авторизации.puml": {
+      "source_sha": "e8f71d44989d656a2f9dd3e314349dc785f694ad",
+      "svg": "docs/диаграммы/13_Последовательность_OTP_авторизации.svg",
+      "png": "docs/диаграммы/13_Последовательность_OTP_авторизации.png"
+    },
+    "docs/диаграммы/14_CI_CD_и_поставка_Этапа_1.puml": {
+      "source_sha": "e9cbc907e9163b2c7a9a09cdf48f218f29fd9df3",
+      "svg": "docs/диаграммы/14_CI_CD_и_поставка_Этапа_1.svg",
+      "png": "docs/диаграммы/14_CI_CD_и_поставка_Этапа_1.png"
+    }
+  }
+}
