@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "autodiscover_sections": false,
+  "project": {
+    "name": "ЧОППРО",
+    "subtitle": "Рабочие приложения, спецификация и приёмка проекта",
+    "status": "Этап 2: рабочие приложения и сценарии готовы к проверке. Нативные приложения — этап 3; платные сервисы уведомлений — этап 4.",
+    "stack": [
+      "PHP 8.3+ / PDO",
+      "Модульный монолит",
+      "MySQL 8 / InnoDB",
+      "Приватное файловое хранилище",
+      "REST JSON /v1",
+      "PHP / HTML / CSS / JavaScript",
+      "Нативные Android / iOS · Этап 3"
+    ],
+    "decisions": [
+      {
+        "title": "Backend на PHP 8.3+",
+        "text": "Laravel исключен. Работа с MySQL — через PDO и подготовленные запросы; архитектура — модульный монолит."
+      },
+      {
+        "title": "Самостоятельные мобильные приложения",
+        "text": "Мобильный контур — отдельные Android- и iOS-приложения. PWA исключена сознательно."
+      },
+      {
+        "title": "UI/UX в GitHub",
+        "text": "Результат проектирования — версионируемые интерактивные HTML/CSS/JS-прототипы. Figma в поставку не входит."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "type": "overview",
+      "title": "Обзор проекта",
+      "icon": "home",
+      "group": "Проект",
+      "path": "README.md"
+    },
+    {
+      "id": "acceptance",
+      "type": "acceptance",
+      "title": "Приёмка по этапам",
+      "icon": "check",
+      "group": "Проект",
+      "path": "docs/Этап_2_приемка.md"
+    },
+    {
+      "id": "requirements",
+      "type": "requirements",
+      "title": "Требования",
+      "icon": "target",
+      "group": "Проект",
+      "path": "docs/Матрица_требований_ЧОППРО.csv"
+    },
+    {
+      "id": "docs",
+      "type": "docs",
+      "title": "Документация",
+      "icon": "book",
+      "group": "Документация",
+      "directory": "docs",
+      "description": "Документы сгруппированы по назначению. Содержимое соответствует текущей версии GitHub."
+    },
+    {
+      "id": "openapi",
+      "type": "file",
+      "title": "Спецификация API",
+      "icon": "code",
+      "group": "Документация",
+      "path": "docs/openapi.yaml",
+      "description": "Реализованные методы API, параметры и схемы данных."
+    },
+    {
+      "id": "diagrams",
+      "type": "diagrams",
+      "title": "Архитектура и схемы",
+      "icon": "layers",
+      "group": "Документация",
+      "directory": "docs/диаграммы"
+    },
+    {
+      "id": "stories",
+      "type": "stories",
+      "title": "Сценарии проверки",
+      "icon": "route",
+      "group": "Документация",
+      "path": "docs/20_Каталог_пользовательских_сценариев_ЧОППРО.md"
+    },
+    {
+      "id": "prototypes",
+      "type": "prototypes",
+      "title": "Прототипы этапа 1",
+      "icon": "layout",
+      "group": "Материалы",
+      "directory": "prototypes",
+      "entry": "prototypes/index.html",
+      "description": "Результат проектирования этапа 1. Рабочие приложения открываются кнопками «Демо»."
+    },
+    {
+      "id": "github",
+      "type": "github",
+      "title": "Версия и проверки",
+      "icon": "git",
+      "group": "Материалы"
+    },
+    {
+      "id": "delivery",
+      "type": "delivery",
+      "title": "Файлы проекта",
+      "icon": "folder",
+      "group": "Материалы"
+    }
+  ],
+  "scenario_screens": {
+    "UC-01": [
+      "platform-tenants",
+      "admin-mfa",
+      "admin-import",
+      "admin-import-result",
+      "admin-schedule"
+    ],
+    "UC-02": [
+      "mobile-home",
+      "mobile-shift",
+      "mobile-checkin",
+      "mobile-qr",
+      "mobile-checkin-result",
+      "admin-attendance"
+    ],
+    "UC-03": [
+      "mobile-shift",
+      "mobile-offline",
+      "mobile-sync",
+      "mobile-sync-result",
+      "admin-attendance"
+    ],
+    "UC-04": [
+      "mobile-incident",
+      "mobile-incident-submit",
+      "admin-incidents",
+      "admin-incident-review",
+      "client-incidents"
+    ],
+    "UC-05": [
+      "admin-reports",
+      "admin-report-draft",
+      "admin-report-published",
+      "client-reports"
+    ],
+    "FLOW-01": [
+      "mobile-patrol",
+      "mobile-qr",
+      "mobile-patrol-progress",
+      "mobile-patrol-result",
+      "admin-patrols"
+    ],
+    "FLOW-02": [
+      "admin-documents",
+      "admin-document",
+      "admin-notifications",
+      "admin-document-review",
+      "admin-employee"
+    ],
+    "FLOW-03": [
+      "admin-login",
+      "admin-dashboard",
+      "admin-facilities",
+      "admin-access-denied",
+      "admin-audit"
+    ],
+    "FLOW-04": [
+      "admin-attendance",
+      "admin-attendance-review",
+      "admin-attendance-review",
+      "admin-attendance-decision",
+      "admin-audit"
+    ],
+    "FLOW-05": [
+      "admin-report-draft",
+      "admin-report-review",
+      "admin-report-published",
+      "client-report-view",
+      "client-report-ack"
+    ]
+  }
+}

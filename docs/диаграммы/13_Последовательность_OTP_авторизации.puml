@@ -1,0 +1,20 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+actor "Охранник" as Guard
+participant "Мобильное приложение Android/iOS" as Mobile
+participant "PHP API" as API
+participant "OTP Adapter" as OTP
+database "MySQL" as DB
+Guard -> Mobile: Ввод телефона
+Mobile -> API: POST /auth/otp/request
+API -> OTP: Отправить код
+OTP --> API: provider_message_id
+API --> Mobile: challenge_id
+Guard -> Mobile: Ввод OTP
+Mobile -> API: POST /auth/otp/verify
+API -> DB: Проверить challenge / user / tenant
+API -> DB: Создать AuthSession (token_hash)
+API --> Mobile: access/refresh token
+@enduml

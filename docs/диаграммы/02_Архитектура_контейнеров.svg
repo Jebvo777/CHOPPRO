@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="296px" preserveAspectRatio="none" style="width:667px;height:296px;" version="1.1" viewBox="0 0 667 296" width="667px" zoomAndPan="magnify"><defs/><g><!--MD5=[97ab183161fd5d1db7fba7485cf76add]
+entity Admin--><rect fill="#F8F8F8" height="52.5938" style="stroke: #000000; stroke-width: 1.5;" width="141" x="36.5" y="32.5"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="78" x="46.5" y="55.4951">Admin Web</text><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="121" x="46.5" y="71.792">PHP/HTML/CSS/JS</text><!--MD5=[0ba5ee7700168656dc1b457c6fe9fdac]
+entity Client--><rect fill="#F8F8F8" height="52.5938" style="stroke: #000000; stroke-width: 1.5;" width="141" x="36.5" y="120.5"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="82" x="46.5" y="143.4951">Client Portal</text><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="121" x="46.5" y="159.792">PHP/HTML/CSS/JS</text><!--MD5=[196d6eeb2242891742fda3f334b4ab6e]
+entity Mobile--><rect fill="#F8F8F8" height="52.5938" style="stroke: #000000; stroke-width: 1.5;" width="202" x="6" y="208.5"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="182" x="16" y="231.4951">Мобильные приложения</text><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="89" x="16" y="247.792">Android / iOS</text><!--MD5=[645d8587175d8f7ad110cd370775931d]
+entity API--><rect fill="#F8F8F8" height="52.5938" style="stroke: #000000; stroke-width: 1.5;" width="132" x="268" y="120.5"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="112" x="278" y="143.4951">REST API /api/v1</text><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="66" x="278" y="159.792">PHP 8.3+</text><!--MD5=[f9ba5bf973e7832d2ce5ed59077b93f7]
+entity DB--><path d="M518.5,18.5 C518.5,8.5 558,8.5 558,8.5 C558,8.5 597.5,8.5 597.5,18.5 L597.5,43.7969 C597.5,53.7969 558,53.7969 558,53.7969 C558,53.7969 518.5,53.7969 518.5,43.7969 L518.5,18.5 " fill="#F8F8F8" style="stroke: #000000; stroke-width: 1.5;"/><path d="M518.5,18.5 C518.5,28.5 558,28.5 558,28.5 C558,28.5 597.5,28.5 597.5,18.5 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="59" x="528.5" y="45.4951">MySQL 8</text><!--MD5=[f96d690baea4a0823d36c98ba0c3a2b4]
+entity Redis--><rect fill="#F8F8F8" height="36.2969" style="stroke: #000000; stroke-width: 1.5;" width="59" x="528.5" y="89"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="39" x="538.5" y="111.9951">Redis</text><!--MD5=[6c7192638421eaf134d201765ac5db29]
+entity S3--><rect fill="#F8F8F8" height="52.5938" style="stroke: #000000; stroke-width: 1.5;" width="161" x="477.5" y="160.5"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="18" x="487.5" y="183.4951">S3</text><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="141" x="487.5" y="199.792">файлы и вложения</text><!--MD5=[2d0c8e7b40339c96aab23c4410a23e10]
+entity Notify--><rect fill="#F8F8F8" height="36.2969" style="stroke: #000000; stroke-width: 1.5;" width="196" x="460" y="249"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="176" x="470" y="271.9951">Адаптеры уведомлений</text><!--MD5=[d2b87ea86aa2a29bf58147d06945cd3f]
+link Admin to API--><path d="M175.81,85.52 C203.33,96.29 235.12,108.72 262.87,119.57 " fill="none" id="Admin-&gt;API" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="267.64,121.44,260.7059,114.4459,262.9811,119.625,257.8019,121.9002,267.64,121.44" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[8254245792b17b8d35434cddb5d9498f]
+link Client to API--><path d="M177.65,147 C204.75,147 235.74,147 262.88,147 " fill="none" id="Client-&gt;API" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="267.9,147,258.9,143,262.9,147,258.9,151,267.9,147" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[b0556c4dbaff898bb248ce2aaa19dc95]
+link Mobile to API--><path d="M175.81,208.48 C203.33,197.71 235.12,185.28 262.87,174.43 " fill="none" id="Mobile-&gt;API" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="267.64,172.56,257.8019,172.0998,262.9811,174.375,260.7059,179.5541,267.64,172.56" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[b874c2a0ce20abc088b74c0c7c933d7a]
+link API to DB--><path d="M375.19,120.37 C399.26,104.98 430.77,85.8 460,71 C477.08,62.35 496.49,54.06 513.44,47.29 " fill="none" id="API-&gt;DB" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="518.15,45.42,508.3092,45.0225,513.5027,47.2646,511.2606,52.4582,518.15,45.42" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[bad684f33a5cdf7e5fd6e6f6bc804f0d]
+link API to Redis--><path d="M400.11,135.27 C440.43,128 490.55,118.97 523.14,113.1 " fill="none" id="API-&gt;Redis" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="528.21,112.19,518.6444,109.845,523.2888,113.0744,520.0594,117.7188,528.21,112.19" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[b6c4d17b469cbb4b43f3313176986357]
+link API to S3--><path d="M400.11,158.73 C422.68,162.8 448.33,167.42 472.25,171.73 " fill="none" id="API-&gt;S3" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="477.33,172.65,469.1822,167.1171,472.4093,171.7631,467.7632,174.9902,477.33,172.65" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[8d43d338c2e857fb70910eb572c15396]
+link API to Notify--><path d="M369.72,173.6 C394.07,191.42 427.89,214.55 460,231 C471.5,236.89 484.2,242.32 496.51,247.07 " fill="none" id="API-&gt;Notify" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="501.39,248.93,494.386,242.0058,496.7131,247.1619,491.557,249.489,501.39,248.93" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[f7f0466be8d695731aeeaddae4f61f95]
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+left to right direction
+rectangle "Admin Web\nPHP/HTML/CSS/JS" as Admin
+rectangle "Client Portal\nPHP/HTML/CSS/JS" as Client
+rectangle "Мобильные приложения\nAndroid / iOS" as Mobile
+rectangle "REST API /api/v1\nPHP 8.3+" as API
+database "MySQL 8" as DB
+rectangle "Redis" as Redis
+rectangle "S3\nфайлы и вложения" as S3
+rectangle "Адаптеры уведомлений" as Notify
+Admin - -> API
+Client - -> API
+Mobile - -> API
+API - -> DB
+API - -> Redis
+API - -> S3
+API - -> Notify
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 10:22:07 UTC 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 17.0.20.1+1
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

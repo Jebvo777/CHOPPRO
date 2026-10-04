@@ -1,0 +1,6 @@
+storage/*
+!storage/.htaccess
+bootstrap/blobs/
+bootstrap/index.json
+tests/rendered/
+__pycache__/

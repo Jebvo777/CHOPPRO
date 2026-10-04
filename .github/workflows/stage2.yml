@@ -1,0 +1,78 @@
+name: Stage 2 acceptance
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-test-password
+          MYSQL_DATABASE: choppro_ci
+        ports: [3306:3306]
+        options: --health-cmd="mysqladmin ping -pci-test-password" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: choppro_ci
+      DB_USERNAME: root
+      DB_PASSWORD: ci-test-password
+      CHOPPRO_STORAGE_ROOT: /home/runner/work/_temp/choppro-private
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring, curl, gd
+          coverage: none
+      - name: PHP lint
+        run: find backend web acceptance-portal host-loader -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Immutable release and interrupted update checks
+        run: php tools/loader_tests.php
+      - name: Installed version automatic upgrade
+        run: php tools/upgrade_test.php
+      - name: MySQL acceptance scenarios
+        run: php backend/tests/stage2/integration.php
+      - uses: actions/setup-node@v4
+        if: ${{ !cancelled() }}
+        with:
+          node-version: '22'
+      - name: Check JavaScript
+        if: ${{ !cancelled() }}
+        run: node --check web/shared/app.js && node --check web/shared/qr.js && node --check web/shared/map.js && node --check web/shared/ux.js && node tools/map_tests.cjs
+      - name: Build shared hosting distribution
+        if: ${{ !cancelled() }}
+        run: |
+          export CHOPPRO_BOOTSTRAP_KEY="$(cat "$CHOPPRO_STORAGE_ROOT/key")"
+          python3 tools/build_hosting.py --sha "$GITHUB_SHA" --output dist/CHOPPRO_stage2.zip --directory "$RUNNER_TEMP/choppro-site"
+          cp -a "$CHOPPRO_STORAGE_ROOT/uploads" "$RUNNER_TEMP/choppro-site/.private/runtime/"
+      - name: Browser dependencies
+        if: ${{ !cancelled() }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/portal-ui" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/portal-ui/node_modules/.bin/playwright" install --with-deps chromium
+      - name: End-to-end applications and database button
+        if: ${{ !cancelled() }}
+        env:
+          PORTAL_PLAYWRIGHT_PATH: ${{ runner.temp }}/portal-ui/node_modules/playwright
+          PORTAL_SCREENSHOTS: dist/stage2-screenshots
+          CHOPPRO_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          php -S 127.0.0.1:8092 -t "$RUNNER_TEMP/choppro-site" tools/hosting_router.php > "$RUNNER_TEMP/stage2-php.log" 2>&1 &
+          test_server_pid=$!
+          trap 'kill "$test_server_pid" 2>/dev/null || true' EXIT
+          curl --fail --retry 3 --retry-connrefused --retry-delay 1 --max-time 25 http://127.0.0.1:8092/ >/dev/null
+          node tools/hosting_browser.cjs
+      - name: Include diagnostic logs
+        if: always()
+        run: cp "$RUNNER_TEMP/stage2-php.log" dist/stage2-php.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CHOPPRO-stage2
+          path: dist/

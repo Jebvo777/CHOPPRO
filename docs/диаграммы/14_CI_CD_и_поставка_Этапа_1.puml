@@ -1,0 +1,18 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+actor "Разработчик" as Dev
+rectangle "main" as Main
+rectangle "CI\nPHP / smoke / синхронизация / браузер" as CI
+rectangle "Архив портала\nSVG/PNG из PUML" as Artifacts
+rectangle "Staging / портал приемки" as Stage
+rectangle "Заказчик" as Client
+Dev --> Main : исходники / документы / разделы
+Main --> CI : каждый push
+CI --> Artifacts : проверки / сборка
+Artifacts --> Main : актуальные рендеры
+Main --> Stage : автоматическая синхронизация содержимого
+Artifacts --> Stage : первоначальная установка архива
+Stage --> Client : документация / прототипы / чек-лист
+@enduml

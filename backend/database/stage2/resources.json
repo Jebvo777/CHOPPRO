@@ -1,0 +1,326 @@
+{
+  "roles": {
+    "name": "varchar(200)",
+    "code": "varchar(64)",
+    "permissions": "json"
+  },
+  "employees": {
+    "name": "varchar(200)",
+    "phone": "varchar(32)",
+    "email": "varchar(200)",
+    "qualification": "int",
+    "badge": "varchar(64)",
+    "passport": "varchar(128)",
+    "status": "varchar(32)",
+    "hired_at": "date",
+    "personal_card": "varchar(128)",
+    "facility_id": "char(36)"
+  },
+  "document_types": {
+    "name": "varchar(200)",
+    "required_fields": "json",
+    "duration_days": "int",
+    "expiring_days": "int"
+  },
+  "documents": {
+    "name": "varchar(200)",
+    "employee_id": "char(36)",
+    "type_id": "char(36)",
+    "number": "varchar(200)",
+    "issued_at": "date",
+    "expires_at": "date",
+    "status": "varchar(32)",
+    "scan_status": "varchar(32)",
+    "file_path": "varchar(300)",
+    "mime": "varchar(100)",
+    "sha256": "char(64)"
+  },
+  "document_reviews": {
+    "name": "varchar(200)",
+    "document_id": "char(36)",
+    "decision": "varchar(32)",
+    "reason": "text",
+    "actor_id": "char(36)"
+  },
+  "licenses": {
+    "name": "varchar(200)",
+    "number": "varchar(100)",
+    "issued_at": "date",
+    "expires_at": "date",
+    "status": "varchar(32)",
+    "services": "json"
+  },
+  "service_types": {
+    "name": "varchar(200)",
+    "code": "varchar(64)",
+    "rule_version": "int",
+    "valid_from": "date",
+    "source": "text"
+  },
+  "customers": {
+    "name": "varchar(200)",
+    "inn": "varchar(12)",
+    "contact_name": "varchar(200)",
+    "phone": "varchar(32)",
+    "email": "varchar(200)",
+    "status": "varchar(32)"
+  },
+  "contracts": {
+    "name": "varchar(200)",
+    "number": "varchar(100)",
+    "customer_id": "char(36)",
+    "license_id": "char(36)",
+    "starts_at": "date",
+    "ends_at": "date",
+    "signed_at": "date",
+    "amount": "decimal(12,2)",
+    "services": "json",
+    "status": "varchar(32)",
+    "ownership_proof": "text",
+    "weapon_details": "text",
+    "compensation": "text",
+    "legacy": "tinyint",
+    "source_version": "int",
+    "legal_hold_until": "date",
+    "override_reason": "text",
+    "signage": "json"
+  },
+  "contract_versions": {
+    "name": "varchar(200)",
+    "contract_id": "char(36)",
+    "snapshot": "json",
+    "actor_id": "char(36)"
+  },
+  "compliance_rules": {
+    "name": "varchar(200)",
+    "rule_code": "varchar(64)",
+    "rule_version": "int",
+    "service_code": "varchar(64)",
+    "days": "int",
+    "working_days": "tinyint",
+    "offset_hours": "int",
+    "valid_from": "date",
+    "source": "text",
+    "template": "text"
+  },
+  "compliance_tasks": {
+    "name": "varchar(200)",
+    "contract_id": "char(36)",
+    "rule_id": "char(36)",
+    "rule_version": "int",
+    "deadline": "datetime",
+    "status": "varchar(32)",
+    "channel": "varchar(100)",
+    "sent_at": "datetime",
+    "receipt": "varchar(300)",
+    "attachment": "varchar(300)",
+    "author_id": "char(36)"
+  },
+  "facilities": {
+    "name": "varchar(200)",
+    "customer_id": "char(36)",
+    "contract_id": "char(36)",
+    "address": "varchar(300)",
+    "city": "varchar(100)",
+    "lat": "decimal(10,7)",
+    "lng": "decimal(10,7)",
+    "radius": "int",
+    "timezone": "varchar(64)",
+    "status": "varchar(32)",
+    "contact_name": "varchar(200)",
+    "phone": "varchar(32)",
+    "polygon": "json"
+  },
+  "posts": {
+    "name": "varchar(200)",
+    "facility_id": "char(36)",
+    "mode": "varchar(64)",
+    "qualification": "int",
+    "headcount": "int",
+    "status": "varchar(32)",
+    "instruction": "text",
+    "instruction_version": "int"
+  },
+  "instructions": {
+    "name": "varchar(200)",
+    "post_id": "char(36)",
+    "text": "text",
+    "revision": "int",
+    "author_id": "char(36)"
+  },
+  "instruction_receipts": {
+    "name": "varchar(200)",
+    "instruction_id": "char(36)",
+    "employee_id": "char(36)",
+    "acknowledged_at": "datetime"
+  },
+  "qr_points": {
+    "name": "varchar(200)",
+    "facility_id": "char(36)",
+    "post_id": "char(36)",
+    "token": "varchar(100)",
+    "status": "varchar(32)"
+  },
+  "shift_templates": {
+    "name": "varchar(200)",
+    "post_id": "char(36)",
+    "start_time": "varchar(8)",
+    "duration_hours": "decimal(5,2)",
+    "weekdays": "json"
+  },
+  "shifts": {
+    "name": "varchar(200)",
+    "post_id": "char(36)",
+    "starts_at": "datetime",
+    "ends_at": "datetime",
+    "status": "varchar(32)",
+    "published": "tinyint"
+  },
+  "assignments": {
+    "name": "varchar(200)",
+    "shift_id": "char(36)",
+    "employee_id": "char(36)",
+    "status": "varchar(32)",
+    "confirmed_at": "datetime",
+    "override_reason": "text"
+  },
+  "assignment_history": {
+    "name": "varchar(200)",
+    "assignment_id": "char(36)",
+    "old_employee_id": "char(36)",
+    "new_employee_id": "char(36)",
+    "reason": "text",
+    "actor_id": "char(36)"
+  },
+  "attendance": {
+    "name": "varchar(200)",
+    "assignment_id": "char(36)",
+    "employee_id": "char(36)",
+    "event_type": "varchar(32)",
+    "client_time": "datetime",
+    "server_time": "datetime",
+    "lat": "decimal(10,7)",
+    "lng": "decimal(10,7)",
+    "accuracy": "decimal(10,2)",
+    "device_id": "varchar(100)",
+    "qr_token": "varchar(100)",
+    "offline": "tinyint",
+    "status": "varchar(32)",
+    "reasons": "json",
+    "idempotency_key": "varchar(128)",
+    "source_id": "char(36)",
+    "reason": "text",
+    "duration_minutes": "int"
+  },
+  "incidents": {
+    "name": "varchar(200)",
+    "facility_id": "char(36)",
+    "category": "varchar(64)",
+    "severity": "varchar(32)",
+    "status": "varchar(32)",
+    "published": "tinyint",
+    "description": "text",
+    "internal_note": "text"
+  },
+  "patrols": {
+    "name": "varchar(200)",
+    "facility_id": "char(36)",
+    "shift_id": "char(36)",
+    "status": "varchar(32)",
+    "completed_points": "int",
+    "total_points": "int",
+    "finished_at": "datetime"
+  },
+  "reports": {
+    "name": "varchar(200)",
+    "customer_id": "char(36)",
+    "facility_id": "char(36)",
+    "period": "varchar(64)",
+    "status": "varchar(32)",
+    "published": "tinyint",
+    "content": "text",
+    "internal_note": "text",
+    "file_path": "varchar(300)"
+  },
+  "report_receipts": {
+    "name": "varchar(200)",
+    "report_id": "char(36)",
+    "user_id": "char(36)",
+    "report_version": "int",
+    "ip": "varchar(64)"
+  },
+  "vacancies": {
+    "name": "varchar(200)",
+    "facility_id": "char(36)",
+    "city": "varchar(100)",
+    "salary_from": "decimal(12,2)",
+    "salary_to": "decimal(12,2)",
+    "schedule": "varchar(100)",
+    "qualification": "int",
+    "description": "text",
+    "status": "varchar(32)",
+    "pinned_rank": "int",
+    "pinned_at": "datetime"
+  },
+  "applications": {
+    "name": "varchar(200)",
+    "vacancy_id": "char(36)",
+    "phone": "varchar(32)",
+    "email": "varchar(200)",
+    "message": "text",
+    "status": "varchar(32)"
+  },
+  "notifications": {
+    "name": "varchar(200)",
+    "user_id": "char(36)",
+    "entity_type": "varchar(64)",
+    "entity_id": "char(36)",
+    "dedupe_key": "varchar(200)",
+    "status": "varchar(32)",
+    "payload": "json"
+  },
+  "outbox": {
+    "name": "varchar(200)",
+    "topic": "varchar(100)",
+    "dedupe_key": "varchar(200)",
+    "payload": "json",
+    "status": "varchar(32)",
+    "attempts": "int",
+    "available_at": "datetime",
+    "last_error": "text"
+  },
+  "holidays": {
+    "name": "varchar(200)",
+    "date": "date",
+    "is_working": "tinyint"
+  },
+  "contract_templates": {
+    "name": "varchar(200)",
+    "text": "text",
+    "source": "text",
+    "revision": "int",
+    "published": "tinyint",
+    "published_by": "char(36)"
+  },
+  "no_shows": {
+    "name": "varchar(200)",
+    "assignment_id": "char(36)",
+    "status": "varchar(32)"
+  },
+  "break_glass": {
+    "name": "varchar(200)",
+    "user_id": "char(36)",
+    "reason": "text",
+    "expires_at": "datetime"
+  },
+  "personal_cards": {
+    "name": "varchar(200)",
+    "employee_id": "char(36)",
+    "number": "varchar(100)",
+    "issued_at": "date",
+    "surrendered_at": "date",
+    "authority": "varchar(200)",
+    "receipt": "varchar(300)",
+    "status": "varchar(32)"
+  }
+}

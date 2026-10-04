@@ -1,0 +1,45 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+hide methods
+class Tenant
+class User
+class Role
+class Permission
+class RoleAssignment
+class Employee
+class Customer
+class Facility
+class Post
+class Shift
+class ShiftAssignment
+class AttendanceEvent
+class PatrolRoute
+class Checkpoint
+class PatrolRun
+class Incident
+class CustomerReport
+class AuditLog
+Tenant "1" -- "*" User
+Tenant "1" -- "*" Role
+Role "*" -- "*" Permission
+User "1" -- "*" RoleAssignment
+Role "1" -- "*" RoleAssignment
+Tenant "1" -- "*" Employee
+Tenant "1" -- "*" Customer
+Customer "1" -- "*" Facility
+Facility "1" -- "*" Post
+Post "1" -- "*" Shift
+Shift "1" -- "*" ShiftAssignment
+Employee "1" -- "*" ShiftAssignment
+ShiftAssignment "1" -- "*" AttendanceEvent
+Facility "1" -- "*" PatrolRoute
+PatrolRoute "1" -- "*" Checkpoint
+PatrolRoute "1" -- "*" PatrolRun
+Employee "1" -- "*" PatrolRun
+Facility "1" -- "*" Incident
+Employee "1" -- "*" Incident
+Customer "1" -- "*" CustomerReport
+Tenant "1" -- "*" AuditLog
+@enduml

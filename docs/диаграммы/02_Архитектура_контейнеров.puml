@@ -1,0 +1,21 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+left to right direction
+rectangle "Admin Web\nPHP/HTML/CSS/JS" as Admin
+rectangle "Client Portal\nPHP/HTML/CSS/JS" as Client
+rectangle "Мобильные приложения\nAndroid / iOS" as Mobile
+rectangle "REST API /api/v1\nPHP 8.3+" as API
+database "MySQL 8" as DB
+rectangle "Redis" as Redis
+rectangle "S3\nфайлы и вложения" as S3
+rectangle "Адаптеры уведомлений" as Notify
+Admin --> API
+Client --> API
+Mobile --> API
+API --> DB
+API --> Redis
+API --> S3
+API --> Notify
+@enduml
