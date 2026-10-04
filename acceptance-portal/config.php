@@ -9,10 +9,10 @@ return [
     'branch' => getenv('CHOPPRO_GITHUB_BRANCH') ?: '',
     // Bootstrap from the review branch until the default branch contains the portal.
     // After merging, the default branch is selected automatically; no redeploy is needed.
-    'transition_branch' => 'portal/github-auto-sync',
+    'transition_branch' => '',
     'token' => $token,
     'interval' => max(60, (int)(getenv('CHOPPRO_SYNC_INTERVAL') ?: ($token ? 60 : 300))),
-    'cache_dir' => getenv('CHOPPRO_CACHE_DIR') ?: __DIR__.'/storage',
+    'cache_dir' => defined('CHOPPRO_RELEASE_ROOT') ? CHOPPRO_RELEASE_ROOT.'/.portal-cache' : (getenv('CHOPPRO_CACHE_DIR') ?: __DIR__.'/storage'),
     'bootstrap_dir' => __DIR__.'/bootstrap',
     'manifest_path' => 'acceptance-portal/portal.json',
     'max_file_bytes' => 10 * 1024 * 1024,

@@ -8,7 +8,7 @@ final class Auth
     {
         if(session_status()===PHP_SESSION_ACTIVE)return;
         $dir=$config['storage'].'/sessions';if(!is_dir($dir))mkdir($dir,0700,true);
-        session_save_path($dir);session_name('choppro_app');
+        session_save_path($dir);$space=$_GET['space']??'admin';if(!in_array($space,['admin','client','platform','jobs'],true))$space='admin';session_name('choppro_app_'.$space);
         session_set_cookie_params(['lifetime'=>0,'path'=>($config['base']?:'').'/','secure'=>!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off','httponly'=>true,'samesite'=>'Lax']);
         ini_set('session.use_strict_mode','1');session_start();
         $_SESSION['csrf']??=bin2hex(random_bytes(32));
@@ -37,7 +37,8 @@ final class Auth
         $u=$this->db->one("SELECT * FROM cp_users WHERE (email=? OR phone=?) AND status='ACTIVE' AND deleted_at IS NULL",[$login,Support::phone($login)]);
         if(!$u||!password_verify((string)($input['password']??''),$u['password_hash']??''))throw new Problem(401,'INVALID_LOGIN','Неверный логин или пароль');
         if($u['tenant_id'] && !$this->db->one("SELECT id FROM cp_tenants WHERE id=? AND status='ACTIVE' AND deleted_at IS NULL",[$u['tenant_id']]))throw new Problem(403,'TENANT_SUSPENDED','Доступ организации приостановлен');
-        if($u['mfa_enabled'] || in_array($u['role'],['tenant_admin','platform_admin'],true)) {
+        $access=new Access($this->db,$u);
+        if($u['mfa_enabled'] || $access->allows('users.update') || $access->allows('roles.update') || in_array($u['role'],['tenant_admin','platform_admin'],true)) {
             $secret=$u['mfa_secret']?Support::decrypt($u['mfa_secret'],$this->config['key']):Totp::secret();
             $id=Support::uuid();$setup=!$u['mfa_enabled'];
             $this->db->run('INSERT INTO cp_challenges(id,user_id,channel,expires_at,payload) VALUES(?,?,?,?,?)',[$id,$u['id'],'MFA',gmdate('Y-m-d H:i:s',time()+300),Support::json(['secret'=>Support::encrypt($secret,$this->config['key']),'setup'=>$setup])]);

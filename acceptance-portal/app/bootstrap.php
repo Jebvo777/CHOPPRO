@@ -6,7 +6,8 @@ require_once __DIR__.'/Markdown.php';
 require_once __DIR__.'/Catalog.php';
 
 $repository = new Repository(require dirname(__DIR__).'/config.php');
-$repository->synchronize();
+if(!defined('CHOPPRO_RELEASE_ROOT'))$repository->synchronize();
+else{$statusPath=CHOPPRO_HOST_ROOT.'/.private/sync.json';$hostStatus=is_file($statusPath)?json_decode(file_get_contents($statusPath),true):[];$repository->state=array_replace($repository->state,['checked_at'=>$hostStatus['checked_at']??null,'next_check_at'=>$hostStatus['next_check']??null,'error'=>$hostStatus['error']??null]);}
 $catalog = new Catalog($repository);
 
 function portal_headers(): void

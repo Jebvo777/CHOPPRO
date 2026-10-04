@@ -31,7 +31,7 @@ $diagramFiles = array_filter($catalog->files(), static fn($entry, $path) => str_
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title><?=e($title)?> — <?=e($project['name'] ?? 'ЧОППРО')?></title>
-<link rel="stylesheet" href="assets/style.css?v=5"><script src="assets/app.js?v=5" defer></script>
+<link rel="stylesheet" href="<?=e(defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/style.css&release='.CHOPPRO_RELEASE_SHA:'assets/style.css?v=6')?>"><script src="<?=e(defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/app.js&release='.CHOPPRO_RELEASE_SHA:'assets/app.js?v=6')?>" defer></script>
 </head>
 <body data-sha="<?=e($sha)?>" data-repository="<?=e($repository->config['owner'].'/'.$repository->config['repository'])?>">
 <div class="shell">
@@ -42,6 +42,9 @@ $diagramFiles = array_filter($catalog->files(), static fn($entry, $path) => str_
 <div class="sync-notice" data-sync-notice hidden>В GitHub появилась новая версия. <a href="<?=e($_SERVER['REQUEST_URI'] ?? './')?>" data-load-version>Открыть актуальную</a></div>
 <?php if ($status['error']): ?><div class="warning"><?=e($status['error'])?> Данные на <?=e(display_date($status['synced_at']))?>. Следующая проверка: <?=e(display_date($status['next_check_at']))?>.</div><?php endif; ?>
 <?php if (!$repository->config['branch'] && $status['branch'] === ($repository->config['transition_branch'] ?? '')): ?><div class="sync-notice">Источник — ветка <?=e($status['branch'])?>. После слияния изменений портал автоматически перейдет на основную ветку GitHub.</div><?php endif; ?>
+<?php if(defined('CHOPPRO_RELEASE_ROOT')): $releaseManifest=json_decode(file_get_contents(CHOPPRO_RELEASE_ROOT.'/site-release.json'),true); ?>
+<section class="demo-launches"><div><strong>Рабочее демо · Этап 2</strong><p>Отдельные приложения с общей БД</p></div><div class="toolbar"><?php foreach($releaseManifest['demos']??[] as $demo): ?><a class="btn primary" href="<?=e(CHOPPRO_HOST_BASE.'/demo.php?app='.$demo['app'])?>" target="_blank" rel="noopener"><?=e($demo['title'])?> ↗</a><?php endforeach; ?><a class="btn" href="<?=e(CHOPPRO_HOST_BASE.'/control.php#database')?>">Актуализировать БД</a></div></section>
+<?php endif; ?>
 <div class="layout">
 <aside class="sidebar" aria-label="Разделы портала">
 <?php foreach ($catalog->sections as $s): ?><a class="nav <?=$page === $s['id'] ? 'active' : ''?>" href="<?=e(nav_url($s['id']))?>"><span><?=e($s['icon'] ?? '·')?></span><?=e($s['title'])?></a><?php endforeach; ?>

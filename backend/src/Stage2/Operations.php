@@ -58,7 +58,7 @@ final class Operations
             if(!in_array($assignment['status'],['ASSIGNED','CONFIRMED'],true)||!(int)$s['published'])throw new Problem(409,'NO_ACTIVE_ASSIGNMENT','Нет активного опубликованного назначения');
             if($a->user['role']==='guard'&&$a->user['employee_id']!==$assignment['employee_id'])throw new Problem(404,'NOT_FOUND','Назначение не найдено');
             $previous=$this->r->db()->one('SELECT * FROM cp_attendance WHERE tenant_id=? AND idempotency_key=?',[$a->tenant(),$key]);
-            if($previous){if($previous['assignment_id']!==$assignment['id']||$previous['event_type']!==($input['event_type']??'CHECK_IN'))throw new Problem(409,'IDEMPOTENCY_CONFLICT','Ключ уже использован для другой операции');return $a->safe('attendance',$previous);}
+            if($previous){foreach(['lat','lng','accuracy','device_id','qr_token','offline']as$field)if(isset($input[$field])&&(string)$previous[$field]!== (string)$input[$field]&&!(is_numeric($previous[$field])&&is_numeric($input[$field])&&(float)$previous[$field]===(float)$input[$field]))throw new Problem(409,'IDEMPOTENCY_CONFLICT','Содержимое повторного запроса отличается');if($previous['assignment_id']!==$assignment['id']||$previous['event_type']!==($input['event_type']??'CHECK_IN'))throw new Problem(409,'IDEMPOTENCY_CONFLICT','Ключ уже использован для другой операции');return $a->safe('attendance',$previous);}
             $event=$input['event_type']??'CHECK_IN';if(!in_array($event,['CHECK_IN','CHECK_OUT'],true))throw new Problem(422,'EVENT_INVALID','Неизвестный тип события');
             foreach(['lat','lng','accuracy']as$v)if(!isset($input[$v])||!is_numeric($input[$v]))throw new Problem(422,'COORDINATES_REQUIRED','Передайте координаты и точность');
             if(abs((float)$input['lat'])>90||abs((float)$input['lng'])>180||(float)$input['accuracy']<0)throw new Problem(422,'COORDINATES_INVALID','Некорректные координаты');
@@ -69,7 +69,7 @@ final class Operations
             if($time<$start-(int)($settings['checkin_early_minutes']??60)*60||$time>$end+(int)($settings['checkin_late_minutes']??120)*60)$reasons[]='Вне временного окна смены';
             if(strtotime($client)>time()+300)$reasons[]='Время устройства опережает сервер';
             if((float)$input['accuracy']>(float)($settings['gps_max_accuracy']??100))$reasons[]='Недостаточная точность GPS';
-            if(Support::distance((float)$input['lat'],(float)$input['lng'],(float)$f['lat'],(float)$f['lng'])>(float)$f['radius'])$reasons[]='За пределами геозоны';
+            if(!self::inside((float)$input['lat'],(float)$input['lng'],$f))$reasons[]='За пределами геозоны';
             $qr=$this->r->db()->one("SELECT id FROM cp_qr_points WHERE tenant_id=? AND facility_id=? AND (post_id IS NULL OR post_id=?) AND token=? AND status='ACTIVE' AND deleted_at IS NULL",[$a->tenant(),$f['id'],$post['id'],$input['qr_token']??'']);if(!$qr)$reasons[]='QR-токен недействителен или отозван';
             $in=$this->r->db()->one("SELECT t.* FROM cp_attendance t WHERE t.assignment_id=? AND t.event_type='CHECK_IN' AND (t.status='VALID' OR EXISTS(SELECT 1 FROM cp_attendance m WHERE m.source_id=t.id AND m.status='MANUAL_OVERRIDE')) ORDER BY server_time DESC LIMIT 1",[$assignment['id']]);
             if($event==='CHECK_OUT'&&!$in)$reasons[]='Нет подтверждённого заступления';
@@ -77,6 +77,11 @@ final class Operations
             $row=$this->r->insert('attendance',['name'=>$event==='CHECK_IN'?'Заступление на смену':'Завершение смены','assignment_id'=>$assignment['id'],'employee_id'=>$assignment['employee_id'],'event_type'=>$event,'client_time'=>$client,'server_time'=>Support::now(),'lat'=>(float)$input['lat'],'lng'=>(float)$input['lng'],'accuracy'=>(float)$input['accuracy'],'device_id'=>$input['device_id'],'qr_token'=>$input['qr_token']??'','offline'=>(int)!empty($input['offline']),'status'=>$reasons?'REQUIRES_REVIEW':'VALID','reasons'=>$reasons,'idempotency_key'=>$key,'duration_minutes'=>$event==='CHECK_OUT'&&$in?max(0,(int)round(($time-strtotime($in['client_time']))/60)):null]);
             $a->audit('attendance.'.strtolower($event),'attendance',$row['id'],['assignment_id'=>$assignment['id'],'status'=>$row['status'],'reasons'=>$reasons,'device'=>$input['device_id']]);return $a->safe('attendance',$row);
         });
+    }
+    public static function inside(float $lat,float $lng,array $facility):bool
+    {
+        $polygon=Support::decode($facility['polygon']??'[]');if(!$polygon)return Support::distance($lat,$lng,(float)$facility['lat'],(float)$facility['lng'])<=(float)$facility['radius'];
+        $inside=false;$j=count($polygon)-1;for($i=0;$i<count($polygon);$i++){[$yi,$xi]=$polygon[$i];[$yj,$xj]=$polygon[$j];if(($yi>$lat)!==($yj>$lat)&&$lng<($xj-$xi)*($lat-$yi)/($yj-$yi)+$xi)$inside=!$inside;$j=$i;}return$inside;
     }
     public function override(string $id,array $input): array
     {

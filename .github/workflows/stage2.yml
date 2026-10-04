@@ -34,3 +34,30 @@ jobs:
         run: find backend web acceptance-portal host-loader -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: MySQL acceptance scenarios
         run: php backend/tests/stage2/integration.php
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript
+        run: node --check web/shared/app.js && node --check web/shared/qr.js
+      - name: Build shared hosting distribution
+        run: |
+          export CHOPPRO_OWNER_PASSWORD_HASH="$(php -r 'echo password_hash("CiOwner2026!",PASSWORD_ARGON2ID);')"
+          python3 tools/build_hosting.py --sha "$GITHUB_SHA" --output dist/CHOPPRO_stage2.zip --directory "$RUNNER_TEMP/choppro-site"
+          php -S 127.0.0.1:8092 -t "$RUNNER_TEMP/choppro-site" tools/hosting_router.php > "$RUNNER_TEMP/stage2-php.log" 2>&1 &
+      - name: Browser dependencies
+        run: |
+          npm install --prefix "$RUNNER_TEMP/portal-ui" --no-save playwright@1.62.1
+          "$RUNNER_TEMP/portal-ui/node_modules/.bin/playwright" install --with-deps chromium
+      - name: End-to-end applications and database button
+        env:
+          PORTAL_PLAYWRIGHT_PATH: ${{ runner.temp }}/portal-ui/node_modules/playwright
+          PORTAL_SCREENSHOTS: dist/stage2-screenshots
+        run: node tools/hosting_browser.cjs
+      - name: Include diagnostic logs
+        if: always()
+        run: cp "$RUNNER_TEMP/stage2-php.log" dist/stage2-php.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CHOPPRO-stage2
+          path: dist/

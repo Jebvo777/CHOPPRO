@@ -312,5 +312,15 @@
     "user_id": "char(36)",
     "reason": "text",
     "expires_at": "datetime"
+  },
+  "personal_cards": {
+    "name": "varchar(200)",
+    "employee_id": "char(36)",
+    "number": "varchar(100)",
+    "issued_at": "date",
+    "surrendered_at": "date",
+    "authority": "varchar(200)",
+    "receipt": "varchar(300)",
+    "status": "varchar(32)"
   }
 }

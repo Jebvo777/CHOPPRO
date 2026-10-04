@@ -6,7 +6,7 @@ final class Access
 {
     public const ROLES = [
         'tenant_admin'=>['*'], 'platform_admin'=>['*'],
-        'hr'=>['dashboard.read','employees.*','documents.*','document_types.*','document_reviews.read','users.read','notifications.read','audit.read'],
+        'hr'=>['dashboard.read','employees.*','documents.*','document_types.*','document_reviews.read','users.read','facilities.read','posts.read','personal_cards.*','notifications.read','audit.read'],
         'operations'=>['dashboard.read','employees.read','facilities.*','posts.*','instructions.*','qr_points.*','shift_templates.*','shifts.*','assignments.*','attendance.*','vacancies.*','applications.*','patrols.read','incidents.read','reports.read','notifications.read','audit.read'],
         'object_manager'=>['dashboard.read','employees.read','facilities.read','posts.read','instructions.read','qr_points.read','shifts.read','assignments.*','attendance.*','notifications.read'],
         'customer'=>['dashboard.read','facilities.read','posts.read','shifts.read','patrols.read','incidents.read','reports.read','reports.acknowledge','notifications.read','audit.read'],
@@ -36,6 +36,7 @@ final class Access
     {
         $parts=['t.deleted_at IS NULL']; $args=[]; $tenant=$this->tenant();
         if($tenant){$parts[]='t.tenant_id=?';$args[]=$tenant;} elseif($this->user['role']!=='platform_admin') throw new Problem(403,'NO_TENANT','Организация не определена');
+        if($kind==='notifications'&&in_array($this->user['role'],['customer','guard'],true)){$parts[]="(t.user_id=? OR (t.user_id IS NULL AND t.entity_type='break_glass'))";$args[]=$this->user['id'];}
         $facilities=$this->facilities();
         if($facilities!==null) {
             if(!$facilities){$parts[]='1=0';}
@@ -74,7 +75,7 @@ final class Access
     public function safe(string $kind,array $row): array
     {
         unset($row['password_hash'],$row['mfa_secret'],$row['mfa_last_step'],$row['file_path']);
-        if($kind==='employees'&&!$this->allows('employees.sensitive'))$row['passport']='•••• ••••••';
+        if($kind==='employees'&&(!$this->allows('employees.sensitive')||($this->user['role']==='platform_admin'&&!$this->canDownloadDocuments())))$row['passport']='•••• ••••••';
         if($kind==='documents'&&!$this->canDownloadDocuments())$row['number']='••••';
         if(in_array($this->user['role'],['customer','guard'],true))unset($row['internal_note'],$row['passport'],$row['override_reason']);
         foreach($row as $k=>$v) if(is_string($v)&&(str_starts_with($v,'[')||str_starts_with($v,'{'))) {try{$row[$k]=Support::decode($v);}catch(\Throwable){}}

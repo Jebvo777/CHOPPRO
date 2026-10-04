@@ -51,6 +51,7 @@ final class Resources
         foreach(Schema::references()as$f=>$resource)if(isset($data[$f])&&$data[$f])$this->access->reference($resource,$data[$f]);
         if(isset($data['status'])&&!in_array($data['status'],Schema::statuses($kind),true))throw new Problem(422,'VALIDATION','Недопустимый статус');
         if($kind==='facilities'){
+            $polygon=Support::decode($combined['polygon']??'[]');if($polygon&&(count($polygon)<3||count($polygon)>100))throw new Problem(422,'POLYGON_INVALID','Полигон содержит от 3 до 100 точек');foreach($polygon as$point)if(!is_array($point)||count($point)!==2||!is_numeric($point[0])||!is_numeric($point[1])||abs((float)$point[0])>90||abs((float)$point[1])>180)throw new Problem(422,'POLYGON_INVALID','Некорректные точки полигона');
             if((float)$combined['lat']<-90||(float)$combined['lat']>90||(float)$combined['lng']<-180||(float)$combined['lng']>180||(int)$combined['radius']<10||(int)$combined['radius']>10000)throw new Problem(422,'GEOFENCE_INVALID','Проверьте координаты и радиус геозоны');
             if(!in_array($combined['timezone'],\DateTimeZone::listIdentifiers(),true))throw new Problem(422,'TIMEZONE_INVALID','Неизвестный часовой пояс');
         }
@@ -73,7 +74,7 @@ final class Resources
         if($kind==='vacancies'){unset($data['pinned_rank'],$data['pinned_at']);}
         if($kind==='contracts'&&($data['status']??'')==='ACTIVE'){$data['status']='DRAFT';}
         if($kind==='shifts'){ $data['published']=0;$data['status']='DRAFT'; }
-        return $this->db()->transaction(function()use($kind,$data){$row=$this->insert($kind,$data);$this->access->audit($kind.'.created',$kind,$row['id'],['new'=>$this->auditSafe($row)]);if($kind==='posts')$this->insert('instructions',['name'=>'Инструкция: '.$row['name'],'post_id'=>$row['id'],'text'=>$row['instruction']??'','revision'=>1,'author_id'=>$this->access->user['id']]);return $this->access->safe($kind,$row);});
+        return $this->db()->transaction(function()use($kind,$data){$row=$this->insert($kind,$data);$this->access->audit($kind.'.created',$kind,$row['id'],['new'=>$this->auditSafe($row)]);if($kind==='personal_cards')(new Extensions($this))->card($row);if($kind==='posts')$this->insert('instructions',['name'=>'Инструкция: '.$row['name'],'post_id'=>$row['id'],'text'=>$row['instruction']??'','revision'=>1,'author_id'=>$this->access->user['id']]);return $this->access->safe($kind,$row);});
     }
     public function insert(string $kind,array $data,?string $tenant=null): array
     {
@@ -87,16 +88,20 @@ final class Resources
         $this->access->need($kind.'.update');$this->feature($kind);if(in_array($kind,self::IMMUTABLE,true)||$kind==='assignments')throw new Problem(405,'ACTION_REQUIRED','Используйте действие над записью');
         return $this->db()->transaction(function()use($kind,$id,$input){
             $old=$this->access->find($kind,$id,false);$version=(int)($input['version']??0);if($version!==(int)$old['version'])throw new Problem(409,'VERSION_CONFLICT','Запись изменилась. Обновите страницу.');
+            if(in_array($kind,['service_types','compliance_rules'],true)||($kind==='contract_templates'&&(int)$old['published']))throw new Problem(409,'IMMUTABLE_VERSION','Создайте новую версию справочника');
             $data=$this->normalize($kind,$input,$old);
+            if($kind==='reports'&&(int)$old['published'])$this->db()->run('INSERT INTO cp_report_versions(id,tenant_id,report_id,revision,snapshot,created_at)VALUES(?,?,?,?,?,?)',[Support::uuid(),$old['tenant_id'],$id,$old['version'],Support::json($this->access->safe('reports',$old)),Support::now()]);
             if($kind==='documents'){foreach(['status','scan_status','file_path','sha256','mime']as$f)unset($data[$f]);}
             if($kind==='vacancies')unset($data['pinned_rank'],$data['pinned_at']);
             if($kind==='contracts'&&isset($data['status'])&&$data['status']!==$old['status'])throw new Problem(405,'ACTION_REQUIRED','Для активации используйте проверку договора');
             if($kind==='shifts'){unset($data['published']);if(isset($data['status'])&&$data['status']!==$old['status'])throw new Problem(405,'ACTION_REQUIRED','Используйте публикацию или отмену смены');}
-            if($kind==='compliance_tasks'){(new Compliance($this))->validateTask(array_replace($old,$data));}
+            if($kind==='compliance_tasks'){if(in_array($data['status']??'', ['MARKED_SENT','CONFIRMED'],true))$data['author_id']=$this->access->user['id'];(new Compliance($this))->validateTask(array_replace($old,$data));}
+            if($kind==='contract_templates'&&!empty($data['published']))$data['published_by']=$this->access->user['id'];
             if($kind==='qr_points'&&isset($data['token']))unset($data['token']);
             $this->write($kind,$id,$data,$version);
             if($kind==='contracts')$this->insert('contract_versions',['name'=>$old['name'].' / v'.$old['version'],'contract_id'=>$id,'snapshot'=>$this->auditSafe($old),'actor_id'=>$this->access->user['id']]);
             if($kind==='posts'&&isset($data['instruction'])&&$data['instruction']!==$old['instruction']){ $revision=(int)$old['instruction_version']+1;$this->write('posts',$id,['instruction_version'=>$revision]);$this->insert('instructions',['name'=>'Инструкция: '.$old['name'],'post_id'=>$id,'text'=>$data['instruction'],'revision'=>$revision,'author_id'=>$this->access->user['id']]); }
+            if($kind==='personal_cards'&&($data['status']??'')!==$old['status'])(new Extensions($this))->card(array_replace($old,$data));
             if($kind==='employees'&&($data['status']??'')==='DISMISSED'){ $this->db()->run("UPDATE cp_users SET status='DISMISSED' WHERE employee_id=? AND tenant_id=?",[$id,$this->access->tenant()]);$this->db()->run('UPDATE cp_sessions s JOIN cp_users u ON s.user_id=u.id SET s.revoked_at=UTC_TIMESTAMP() WHERE u.employee_id=? AND u.tenant_id=?',[$id,$this->access->tenant()]); }
             if($kind==='roles')$this->db()->run('UPDATE cp_sessions s JOIN cp_users u ON u.id=s.user_id SET s.revoked_at=UTC_TIMESTAMP() WHERE u.tenant_id=? AND u.role=?',[$this->access->tenant(),$old['code']]);
             $this->access->audit($kind.'.updated',$kind,$id,['old'=>$this->auditSafe($old),'new'=>$this->auditSafe($data)]);

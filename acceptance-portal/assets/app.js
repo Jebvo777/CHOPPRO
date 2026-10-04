@@ -68,3 +68,5 @@
   setInterval(checkVersion, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
 })();
+
+setTimeout(()=>{const check=()=>fetch((document.body.dataset.base||'')+'/release-status.php?check=1',{credentials:'same-origin'}).catch(()=>{});check();setInterval(check,300000);},2000);
