@@ -10,7 +10,7 @@ final class Operations
         return $this->r->db()->transaction(function()use($input,$a){
             $data=$this->r->normalize('assignments',$input);
             $shift=$a->find('shifts',$data['shift_id'],false);$post=$a->reference('posts',$shift['post_id']);$facility=$a->reference('facilities',$post['facility_id']);
-            $employee=$a->reference('employees',$data['employee_id']);$this->r->db()->run('SELECT id FROM cp_employees WHERE id=? FOR UPDATE',[$employee['id']]);$this->r->db()->run('SELECT id FROM cp_shifts WHERE id=? FOR UPDATE',[$shift['id']]);
+            $a->reference('employees',$data['employee_id']);$employee=$this->r->db()->one('SELECT * FROM cp_employees WHERE id=? FOR UPDATE',[$data['employee_id']]);$shift=$this->r->db()->one('SELECT * FROM cp_shifts WHERE id=? FOR UPDATE',[$shift['id']]);
             if($employee['status']!=='ACTIVE'||$post['status']!=='ACTIVE'||$facility['status']!=='ACTIVE'||$shift['status']==='CANCELLED')throw new Problem(422,'ASSIGNMENT_UNAVAILABLE','Сотрудник, пост и объект должны быть активны');
             $issues=[];
             if((int)$employee['qualification']<(int)$post['qualification'])$issues[]='Разряд сотрудника ниже требований поста';
