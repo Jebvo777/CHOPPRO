@@ -33,12 +33,17 @@ jobs:
                       if source.is_file(): shutil.copy2(source,target/'lib'/source.name)
           PY
           tar -czf php-runtime.tar.gz runtime
+          split -b 20000000 php-runtime.tar.gz php-part-
           tar -czf mysql-bin.tar.gz mysql-runtime/bin
           tar -czf mysql-lib.tar.gz mysql-runtime/lib
       - uses: actions/upload-artifact@v4
         with:
-          name: php-runtime
-          path: php-runtime.tar.gz
+          name: php-part-1
+          path: php-part-aa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: php-part-2
+          path: php-part-ab
       - uses: actions/upload-artifact@v4
         with:
           name: mysql-bin
