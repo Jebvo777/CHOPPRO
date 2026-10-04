@@ -14,7 +14,7 @@ try{
             $raw=file_get_contents('php://input',false,null,0,2097153);if(strlen($raw)>2097152)throw new Problem(413,'BODY_TOO_LARGE','Слишком большой запрос');
             try{$input=Support::decode($raw?:'{}');}catch(Throwable){throw new Problem(422,'JSON_INVALID','Некорректный JSON');}
         }
-        $output=(new Kernel(new Db($config['database']),$config))->dispatch($_SERVER['REQUEST_METHOD']??'GET',$path,$input,$_GET,$_FILES);
+        $output=(new Kernel(new Db($config),$config))->dispatch($_SERVER['REQUEST_METHOD']??'GET',$path,$input,$_GET,$_FILES);
     }
     echo Support::json($output);
 }catch(Problem $e){http_response_code($e->status);echo Support::json(['code'=>$e->codeName,'message'=>$e->getMessage(),'details'=>$e->details,'correlation_id'=>$GLOBALS['correlation_id']]);}
