@@ -19,7 +19,7 @@ jobs:
           mkdir -p runtime/bin runtime/lib runtime/ext mysql-runtime/bin mysql-runtime/lib
           cp "$(command -v php)" runtime/bin/php
           ext="$(php -r 'echo ini_get("extension_dir");')"
-          cp "$ext"/*.so runtime/ext/
+          for module in pdo mysqlnd pdo_mysql pdo_sqlite curl mbstring gd fileinfo tokenizer; do test ! -f "$ext/$module.so" || cp "$ext/$module.so" runtime/ext/; done
           python3 - <<'PY'
           import pathlib,subprocess,shutil,re
           for root,executables in [('runtime',[pathlib.Path('runtime/bin/php'),*pathlib.Path('runtime/ext').glob('*.so')]),('mysql-runtime',[pathlib.Path('/usr/sbin/mysqld'),pathlib.Path('/usr/bin/mysql')])]:
@@ -33,12 +33,17 @@ jobs:
                       if source.is_file(): shutil.copy2(source,target/'lib'/source.name)
           PY
           tar -czf php-runtime.tar.gz runtime
-          tar -czf mysql-runtime.tar.gz mysql-runtime
+          tar -czf mysql-bin.tar.gz mysql-runtime/bin
+          tar -czf mysql-lib.tar.gz mysql-runtime/lib
       - uses: actions/upload-artifact@v4
         with:
           name: php-runtime
           path: php-runtime.tar.gz
       - uses: actions/upload-artifact@v4
         with:
-          name: mysql-runtime
-          path: mysql-runtime.tar.gz
+          name: mysql-bin
+          path: mysql-bin.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mysql-lib
+          path: mysql-lib.tar.gz
