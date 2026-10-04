@@ -1,4 +1,4 @@
-name: Этап 2 — проверка и сборка
+name: Stage 2 acceptance
 on:
   push:
     branches: [main]
@@ -6,49 +6,31 @@ on:
 permissions:
   contents: read
 jobs:
-  runtime:
-    if: contains(github.event.head_commit.message, '[runtime]')
+  core:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-test-password
+          MYSQL_DATABASE: choppro_ci
+        ports: [3306:3306]
+        options: --health-cmd="mysqladmin ping -pci-test-password" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: choppro_ci
+      DB_USERNAME: root
+      DB_PASSWORD: ci-test-password
+      CHOPPRO_STORAGE_ROOT: ${{ runner.temp }}/choppro-private
     steps:
+      - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo_mysql, pdo_sqlite, curl, mbstring, gd
-      - shell: bash
-        run: |
-          mkdir -p runtime/bin runtime/lib runtime/ext mysql-runtime/bin mysql-runtime/lib
-          cp "$(command -v php)" runtime/bin/php
-          ext="$(php -r 'echo ini_get("extension_dir");')"
-          for module in pdo mysqlnd pdo_mysql pdo_sqlite curl mbstring gd fileinfo tokenizer; do test ! -f "$ext/$module.so" || cp "$ext/$module.so" runtime/ext/; done
-          python3 - <<'PY'
-          import pathlib,subprocess,shutil,re
-          for root,executables in [('runtime',[pathlib.Path('runtime/bin/php'),*pathlib.Path('runtime/ext').glob('*.so')]),('mysql-runtime',[pathlib.Path('/usr/sbin/mysqld'),pathlib.Path('/usr/bin/mysql')])]:
-              target=pathlib.Path(root)
-              for executable in executables:
-                  if not executable.exists(): continue
-                  if root=='mysql-runtime': shutil.copy2(executable,target/'bin'/executable.name)
-                  out=subprocess.run(['ldd',str(executable)],capture_output=True,text=True).stdout
-                  for path in re.findall(r'(/[^\s()]+)',out):
-                      source=pathlib.Path(path)
-                      if source.is_file(): shutil.copy2(source,target/'lib'/source.name)
-          PY
-          tar -czf php-runtime.tar.gz runtime
-          split -b 20000000 php-runtime.tar.gz php-part-
-          tar -czf mysql-bin.tar.gz mysql-runtime/bin
-          tar -czf mysql-lib.tar.gz mysql-runtime/lib
-      - uses: actions/upload-artifact@v4
-        with:
-          name: php-part-1
-          path: php-part-aa
-      - uses: actions/upload-artifact@v4
-        with:
-          name: php-part-2
-          path: php-part-ab
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mysql-bin
-          path: mysql-bin.tar.gz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mysql-lib
-          path: mysql-lib.tar.gz
+          extensions: pdo_mysql, mbstring, curl, gd
+          coverage: none
+      - name: PHP lint
+        run: find backend web acceptance-portal host-loader -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: MySQL acceptance scenarios
+        run: php backend/tests/stage2/integration.php

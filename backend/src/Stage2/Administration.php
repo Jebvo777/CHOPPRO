@@ -1,0 +1,61 @@
+<?php
+declare(strict_types=1);
+namespace Choppro\Stage2;
+final class Administration
+{
+    public function __construct(public Resources $r) {}
+    public function platform(): void { if($this->r->access->user['role']!=='platform_admin')throw new Problem(403,'PLATFORM_ONLY','Действие доступно оператору платформы'); }
+    public function tenants(array $input=[],?string $id=null): array
+    {
+        $this->platform();$db=$this->r->db();$a=$this->r->access;
+        if(!$input)return ['items'=>$db->all('SELECT * FROM cp_tenants WHERE deleted_at IS NULL ORDER BY name'),'total'=>(int)$db->scalar('SELECT COUNT(*) FROM cp_tenants WHERE deleted_at IS NULL')];
+        $data=array_intersect_key($input,array_flip(['name','slug','inn','domain','status','settings','features']));
+        if(!$id){foreach(['name','slug','inn']as$f)if(empty($data[$f]))throw new Problem(422,'VALIDATION','Заполните '.$f);if(!preg_match('/^[a-z0-9-]{3,64}$/',$data['slug']))throw new Problem(422,'SLUG_INVALID','Slug: латинские буквы, цифры и дефис');if(!preg_match('/^\d{10}(?:\d{2})?$/',$data['inn']))throw new Problem(422,'INN_INVALID','ИНН должен содержать 10 или 12 цифр');}
+        if(isset($data['settings']['timezone'])&&!in_array($data['settings']['timezone'],\DateTimeZone::listIdentifiers(),true))throw new Problem(422,'TIMEZONE_INVALID','Неизвестный часовой пояс');
+        return $db->transaction(function()use($id,$data,$input,$db,$a){if($id){$old=$db->one('SELECT * FROM cp_tenants WHERE id=? AND deleted_at IS NULL',[$id]);if(!$old)throw new Problem(404,'NOT_FOUND','Организация не найдена');$this->r->write('tenants',$id,$data,(int)($input['version']??0));if(($data['status']??'')!=='ACTIVE'&&isset($data['status']))$db->run('UPDATE cp_sessions s JOIN cp_users u ON u.id=s.user_id SET s.revoked_at=UTC_TIMESTAMP() WHERE u.tenant_id=?',[$id]);$a->audit('tenant.updated','tenants',$id,['old'=>$old,'new'=>$data]);return $db->one('SELECT * FROM cp_tenants WHERE id=?',[$id]);}
+            $tenant=Support::uuid();$settings=$data['settings']??['timezone'=>'Europe/Moscow','language'=>'ru','reminder_days'=>[30,14,7,1],'default_radius'=>150,'late_minutes'=>15];$db->run('INSERT INTO cp_tenants(id,name,slug,inn,domain,status,settings,features,created_at,updated_at)VALUES(?,?,?,?,?,?,?,?,?,?)',[$tenant,$data['name'],$data['slug'],$data['inn'],$data['domain']??null,'ACTIVE',Support::json($settings),Support::json($data['features']??['core'=>true,'compliance'=>true,'jobs'=>true]),Support::now(),Support::now()]);
+            $email=$input['owner_email']??'';if(!filter_var($email,FILTER_VALIDATE_EMAIL))throw new Problem(422,'OWNER_EMAIL','Укажите email владельца');$user=Support::uuid();$db->run("INSERT INTO cp_users(id,tenant_id,name,email,role,scopes,status,created_at,updated_at)VALUES(?,?,?,?,'tenant_admin','[]','INVITED',?,?)",[$user,$tenant,$input['owner_name']??'Владелец организации',$email,Support::now(),Support::now()]);$token=$this->invitation($user);$a->audit('tenant.created','tenants',$tenant,['name'=>$data['name'],'owner_id'=>$user]);return ['id'=>$tenant,'name'=>$data['name'],'invitation_token'=>$token];});
+    }
+    public function invitation(string $userId): string { $token=bin2hex(random_bytes(32));$this->r->db()->run('INSERT INTO cp_challenges(id,user_id,channel,code_hash,expires_at,payload)VALUES(?,?,?,?,?,?)',[Support::uuid(),$userId,'INVITE',hash('sha256',$token),gmdate('Y-m-d H:i:s',time()+604800),'{}']);return $token; }
+    public function saveUser(array $input,?string $id=null): array
+    {
+        $a=$this->r->access;$a->need('users.'.($id?'update':'create'));$tenant=$a->tenant();if(!$tenant)throw new Problem(422,'SELECT_TENANT','Выберите организацию');
+        $data=array_intersect_key($input,array_flip(['name','email','phone','role','status','customer_id','employee_id','scopes']));
+        $old=$id?$a->find('users',$id,false):[];$all=array_replace($old,$data);
+        if(empty($all['name'])||empty($all['email'])||!filter_var($all['email'],FILTER_VALIDATE_EMAIL))throw new Problem(422,'USER_INVALID','Укажите имя и корректный email');
+        $role=$all['role']??'guard';if($role==='platform_admin')throw new Problem(403,'ROLE_FORBIDDEN','Системная роль недоступна');
+        if(!isset(Access::ROLES[$role])&&!$this->r->db()->one('SELECT id FROM cp_roles WHERE tenant_id=? AND code=? AND deleted_at IS NULL',[$tenant,$role]))throw new Problem(422,'ROLE_INVALID','Неизвестная роль');
+        foreach(['customer_id'=>'customers','employee_id'=>'employees']as$f=>$kind)if(!empty($all[$f]))$a->reference($kind,$all[$f]);
+        $scopes=$data['scopes']??Support::decode($old['scopes']??'[]');if(!is_array($scopes))throw new Problem(422,'SCOPES_INVALID','Укажите список объектов');foreach($scopes as$s)$a->reference('facilities',$s);$data['scopes']=Support::json($scopes);
+        if($role==='customer'&&empty($all['customer_id']))throw new Problem(422,'CUSTOMER_REQUIRED','Укажите заказчика');if($role==='guard'&&empty($all['employee_id']))throw new Problem(422,'EMPLOYEE_REQUIRED','Укажите сотрудника');
+        if(!empty($data['phone']))$data['phone']=Support::phone($data['phone']);
+        if(isset($data['status'])&&!in_array($data['status'],['ACTIVE','INVITED','BLOCKED','DISMISSED'],true))throw new Problem(422,'STATUS_INVALID','Неизвестный статус');
+        return $this->r->db()->transaction(function()use($data,$old,$id,$tenant,$input,$a,$role){if($id){$this->r->write('users',$id,$data,(int)($input['version']??0));$this->r->db()->run('UPDATE cp_sessions SET revoked_at=UTC_TIMESTAMP() WHERE user_id=?',[$id]);$a->audit('user.updated','users',$id,['old_role'=>$old['role'],'new_role'=>$data['role']??$old['role'],'old_scopes'=>Support::decode($old['scopes']),'new_scopes'=>Support::decode($data['scopes'])]);return $a->safe('users',$a->find('users',$id,false));}
+            $user=$this->r->insert('users',[...$data,'role'=>$role,'status'=>'INVITED','password_hash'=>null],$tenant);$token=$this->invitation($user['id']);$a->audit('user.invited','users',$user['id'],['role'=>$role]);return [...$a->safe('users',$user),'invitation_token'=>$token];});
+    }
+    public function activateInvite(array $input): array
+    {
+        if(strlen($input['password']??'')<10)throw new Problem(422,'PASSWORD_WEAK','Пароль должен содержать минимум 10 символов');
+        return $this->r->db()->transaction(function()use($input){$c=$this->r->db()->one("SELECT * FROM cp_challenges WHERE code_hash=? AND channel='INVITE' AND used_at IS NULL AND expires_at>UTC_TIMESTAMP() FOR UPDATE",[hash('sha256',$input['token']??'')]);if(!$c)throw new Problem(401,'INVITE_EXPIRED','Приглашение недоступно');$this->r->db()->run("UPDATE cp_users SET password_hash=?,status='ACTIVE',updated_at=UTC_TIMESTAMP() WHERE id=? AND status='INVITED'",[password_hash($input['password'],PASSWORD_ARGON2ID),$c['user_id']]);$this->r->db()->run('UPDATE cp_challenges SET used_at=UTC_TIMESTAMP() WHERE id=?',[$c['id']]);return ['ok'=>true];});
+    }
+    public function settings(array $input=[]): array
+    {
+        $a=$this->r->access;if(!$a->tenant())throw new Problem(422,'SELECT_TENANT','Выберите организацию');$t=$this->r->db()->one('SELECT settings,version FROM cp_tenants WHERE id=?',[$a->tenant()]);$settings=Support::decode($t['settings']);if(!$input)return ['settings'=>$settings,'version'=>$t['version']];$a->need('settings.update');$allowed=['timezone','language','reminder_days','default_radius','late_minutes','checkin_early_minutes','checkin_late_minutes','gps_max_accuracy','weekly_hours_warning','expiring_days'];$new=array_replace($settings,array_intersect_key($input,array_flip($allowed)));if(!in_array($new['timezone'],\DateTimeZone::listIdentifiers(),true))throw new Problem(422,'TIMEZONE_INVALID','Неизвестный часовой пояс');foreach(['default_radius','late_minutes','checkin_early_minutes','checkin_late_minutes','gps_max_accuracy','weekly_hours_warning','expiring_days']as$f)if(isset($new[$f])&&(!is_numeric($new[$f])||$new[$f]<0||$new[$f]>10000))throw new Problem(422,'SETTING_INVALID','Некорректная настройка: '.$f);$this->r->write('tenants',$a->tenant(),['settings'=>$new],(int)($input['version']??0));$a->audit('tenant.settings','tenants',$a->tenant(),['old'=>$settings,'new'=>$new]);return ['settings'=>$new];
+    }
+    public function import(string $kind,array $input,bool $apply=false): array
+    {
+        if(!in_array($kind,['employees','facilities','customers'],true)||($input['template_version']??0)!=1)throw new Problem(422,'TEMPLATE_INVALID','Используйте шаблон версии 1');$this->r->access->need($kind.'.create');$csv=$input['csv']??'';if(strlen($csv)>2*1024*1024)throw new Problem(422,'IMPORT_TOO_LARGE','Импорт не больше 2 МБ');$stream=fopen('php://temp','r+');fwrite($stream,$csv);rewind($stream);$header=fgetcsv($stream,0,',','"','');if(!$header)throw new Problem(422,'IMPORT_EMPTY','Файл пуст');$header[0]=ltrim($header[0],"\xEF\xBB\xBF");$rows=[];$inserted=[];$line=1;
+        while(($values=fgetcsv($stream,0,',','"',''))!==false){if(++$line>2001)throw new Problem(422,'IMPORT_TOO_LARGE','Не больше 2000 строк');try{if(count($header)!==count($values))throw new Problem(422,'COLUMN_COUNT','Количество колонок не совпадает');$raw=array_combine($header,$values);$data=$this->r->normalize($kind,$raw);$row=['line'=>$line,'valid'=>true,'data'=>$data];if($apply){$created=$this->r->create($kind,$raw);$row['id']=$created['id'];$inserted[]=$created['id'];}$rows[]=$row;}catch(Problem$e){$rows[]=['line'=>$line,'valid'=>false,'error'=>$e->getMessage(),'details'=>$e->details];}}
+        fclose($stream);$batch=null;if($apply){$batch=Support::uuid();$this->r->db()->run("INSERT INTO cp_challenges(id,user_id,channel,expires_at,payload)VALUES(?,?,'IMPORT',?,?)",[$batch,$this->r->access->user['id'],gmdate('Y-m-d H:i:s',time()+604800),Support::json(['kind'=>$kind,'tenant'=>$this->r->access->tenant(),'ids'=>$inserted])]);$this->r->access->audit('import.completed',$kind,null,['batch_id'=>$batch,'inserted'=>count($inserted),'errors'=>count(array_filter($rows,fn($r)=>!$r['valid']))]);}return ['rows'=>$rows,'valid'=>count(array_filter($rows,fn($r)=>$r['valid'])),'errors'=>count(array_filter($rows,fn($r)=>!$r['valid'])),'batch_id'=>$batch,'inserted'=>count($inserted)];
+    }
+    public function rollbackImport(string $batch,array $input): array
+    {
+        $c=$this->r->db()->one("SELECT * FROM cp_challenges WHERE id=? AND user_id=? AND channel='IMPORT'",[$batch,$this->r->access->user['id']]);if(!$c)throw new Problem(404,'NOT_FOUND','Импорт не найден');$p=Support::decode($c['payload']);if($p['tenant']!==$this->r->access->tenant())throw new Problem(404,'NOT_FOUND','Импорт не найден');$n=0;foreach($input['ids']??$p['ids']as$id){if(!in_array($id,$p['ids'],true))throw new Problem(422,'IMPORT_ROW_INVALID','Строка не относится к импорту');$this->r->remove($p['kind'],$id);$n++;}return ['rolled_back'=>$n];
+    }
+    public function pin(string $id,array $input): array
+    {
+        $a=$this->r->access;$a->need('vacancies.pin');$job=$a->find('vacancies',$id,false);$rank=$input['rank']??null;if($rank!==null&&(!is_numeric($rank)||(int)$rank<1||(int)$rank>3))throw new Problem(422,'PIN_RANK','Выберите место 1, 2 или 3');
+        $lock='choppro:pins:'.$this->r->config['database']['name'];if((int)$this->r->db()->scalar('SELECT GET_LOCK(?,5)',[$lock])!==1)throw new Problem(409,'PIN_BUSY','Закреп обновляется. Повторите действие.');
+        try{return $this->r->db()->transaction(function()use($rank,$id,$a,$job){if($rank!==null){$other=$this->r->db()->one('SELECT * FROM cp_vacancies WHERE pinned_rank=? AND id<>? AND deleted_at IS NULL',[(int)$rank,$id]);if($other){if($a->user['role']!=='platform_admin'&&$other['tenant_id']!==$a->tenant())throw new Problem(409,'PIN_OCCUPIED','Место занято. Изменить общий закреп может оператор платформы.');$this->r->write('vacancies',$other['id'],['pinned_rank'=>null,'pinned_at'=>null]);}}$this->r->write('vacancies',$id,['pinned_rank'=>$rank!==null?(int)$rank:null,'pinned_at'=>$rank!==null?Support::now():null]);$a->audit('vacancy.pinned','vacancies',$id,['old'=>$job['pinned_rank'],'new'=>$rank]);return $a->safe('vacancies',$a->find('vacancies',$id,false));});}finally{$this->r->db()->run('SELECT RELEASE_LOCK(?)',[$lock]);}
+    }
+}

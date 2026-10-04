@@ -1,63 +1,22 @@
 <?php
-
 declare(strict_types=1);
-
-require dirname(__DIR__) . '/src/Core/Autoloader.php';
-
-use Choppro\Core\App;
-use Choppro\Database\Connection;
-use Choppro\Http\Request;
-use Choppro\Http\Response;
-use Choppro\Http\Router;
-
-header('Content-Type: application/json; charset=utf-8');
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('Referrer-Policy: no-referrer');
-
-try {
-    $config = require dirname(__DIR__) . '/config/app.php';
-    $database = Connection::fromConfig(require dirname(__DIR__) . '/config/database.php');
-
-    $router = new Router();
-    $router->get('/api/v1/health', static fn (): Response => Response::json([
-        'status' => 'ok',
-        'service' => 'choppro-api',
-        'version' => '0.2.0-stage1',
-        'time' => gmdate('c'),
-    ]));
-
-    $router->get('/api/v1/ready', static function () use ($database): Response {
-        $database->pdo()->query('SELECT 1');
-        $redisHost = getenv('REDIS_HOST') ?: '127.0.0.1';
-        $redisPort = (int) (getenv('REDIS_PORT') ?: 6379);
-        $socket = @fsockopen($redisHost, $redisPort, $errno, $errstr, 1.0);
-        $redis = $socket !== false ? 'ok' : 'unavailable';
-        if (is_resource($socket)) { fclose($socket); }
-
-        return Response::json([
-            'status' => $redis === 'ok' ? 'ready' : 'degraded',
-            'database' => 'ok',
-            'redis' => $redis,
-            'time' => gmdate('c'),
-        ], $redis === 'ok' ? 200 : 503);
-    });
-
-    $router->get('/api/v1/version', static fn (): Response => Response::json([
-        'name' => 'ЧОППРО',
-        'api' => 'v1',
-        'version' => '0.2.0-stage1',
-    ]));
-
-    $app = new App($router, $config);
-    $response = $app->handle(Request::fromGlobals());
-    $response->send();
-} catch (Throwable $exception) {
-    http_response_code(500);
-    echo json_encode([
-        'type' => 'about:blank',
-        'title' => 'Internal Server Error',
-        'status' => 500,
-        'code' => 'INTERNAL_ERROR',
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-}
+require dirname(__DIR__).'/src/Core/Autoloader.php';
+use Choppro\Stage2\{Auth,Config,Db,Kernel,Problem,Support};
+$GLOBALS['correlation_id']=Support::uuid();
+header('Content-Type: application/json; charset=utf-8');header('X-Content-Type-Options: nosniff');header('X-Frame-Options: DENY');header('Referrer-Policy: no-referrer');header('Cache-Control: no-store');header('X-Correlation-Id: '.$GLOBALS['correlation_id']);
+try{
+    $config=Config::load();Auth::start($config);
+    $path=$_GET['path']??parse_url($_SERVER['REQUEST_URI']??'/v1/health',PHP_URL_PATH);$path=preg_replace('~^.*?/api(?=/v1)~','',$path);
+    if($path==='/v1/csrf')$output=['csrf'=>$_SESSION['csrf']];
+    else{
+        $input=$_POST;
+        if(str_contains($_SERVER['CONTENT_TYPE']??'','application/json')){
+            $raw=file_get_contents('php://input',false,null,0,2097153);if(strlen($raw)>2097152)throw new Problem(413,'BODY_TOO_LARGE','Слишком большой запрос');
+            try{$input=Support::decode($raw?:'{}');}catch(Throwable){throw new Problem(422,'JSON_INVALID','Некорректный JSON');}
+        }
+        $output=(new Kernel(new Db($config['database']),$config))->dispatch($_SERVER['REQUEST_METHOD']??'GET',$path,$input,$_GET,$_FILES);
+    }
+    echo Support::json($output);
+}catch(Problem $e){http_response_code($e->status);echo Support::json(['code'=>$e->codeName,'message'=>$e->getMessage(),'details'=>$e->details,'correlation_id'=>$GLOBALS['correlation_id']]);}
+catch(PDOException $e){$number=(int)($e->errorInfo[1]??0);$setup=in_array($number,[1045,1049,1146,2002],true);http_response_code($setup?503:($number===1062?409:500));error_log('CHOPPRO '.$GLOBALS['correlation_id'].' '.$e->getMessage());echo Support::json(['code'=>$setup?'DATABASE_SETUP_REQUIRED':($number===1062?'DUPLICATE':'DATABASE_ERROR'),'message'=>$setup?'Актуализируйте БД на портале':($number===1062?'Такая запись уже существует':'Ошибка операции. Код обращения: '.$GLOBALS['correlation_id'])]);}
+catch(Throwable $e){http_response_code(500);error_log('CHOPPRO '.$GLOBALS['correlation_id'].' '.$e->getMessage());echo Support::json(['code'=>'INTERNAL_ERROR','message'=>'Ошибка операции. Код обращения: '.$GLOBALS['correlation_id']]);}
