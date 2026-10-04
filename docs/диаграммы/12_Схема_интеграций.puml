@@ -3,15 +3,13 @@ skinparam monochrome true
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 left to right direction
-rectangle "ЧОППРО
-PHP REST API" as API
+rectangle "ЧОППРО\nPHP REST API" as API
 rectangle "Outbox / Worker" as Worker
 database "MySQL 8" as DB
 rectangle "Redis" as Redis
 cloud "SMS / OTP" as SMS
 cloud "Email / Telegram / Web Push" as EXT
-cloud "Mobile Push
-Android / iOS" as PUSH
+cloud "Mobile Push\nAndroid / iOS" as PUSH
 cloud "Карты / геокодер" as MAPS
 cloud "S3 РФ" as S3
 cloud "Антивирус" as AV

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="810px" preserveAspectRatio="none" style="width:1129px;height:810px;" version="1.1" viewBox="0 0 1129 810" width="1129px" zoomAndPan="magnify"><defs/><g><!--MD5=[e6e61d846f7ebc290f4b7ed94825158d]
+cluster HTTP--><polygon fill="#FFFFFF" points="561,24,608,24,615,46.2969,911,46.2969,911,207,561,207,561,24" style="stroke: #000000; stroke-width: 1.5;"/><line style="stroke: #000000; stroke-width: 1.5;" x1="561" x2="615" y1="46.2969" y2="46.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="41" x="565" y="38.9951">HTTP</text><!--MD5=[4e1a3510868d06a507f098bb08f0dae0]
+cluster Middleware--><polygon fill="#FFFFFF" points="606,231,703,231,710,253.2969,907,253.2969,907,510,606,510,606,231" style="stroke: #000000; stroke-width: 1.5;"/><line style="stroke: #000000; stroke-width: 1.5;" x1="606" x2="710" y1="253.2969" y2="253.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="91" x="610" y="245.9951">Middleware</text><!--MD5=[3bffc1be5a5fe462467ffab32b176715]
+cluster Модули--><polygon fill="#FFFFFF" points="22,24,91,24,98,46.2969,537,46.2969,537,318,22,318,22,24" style="stroke: #000000; stroke-width: 1.5;"/><line style="stroke: #000000; stroke-width: 1.5;" x1="22" x2="98" y1="46.2969" y2="46.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="63" x="26" y="38.9951">Модули</text><!--MD5=[803676c608361542fa2a9acd19af607b]
+cluster Инфраструктура--><polygon fill="#FFFFFF" points="510,615,653,615,660,637.2969,1107,637.2969,1107,798,510,798,510,615" style="stroke: #000000; stroke-width: 1.5;"/><line style="stroke: #000000; stroke-width: 1.5;" x1="510" x2="660" y1="637.2969" y2="637.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="137" x="514" y="629.9951">Инфраструктура</text><!--MD5=[2190077e39bd9f85fa6f9f9847df785c]
+entity Front Controller--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="127" x="767.5" y="59"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="762.5" y="64"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="762.5" y="85.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="107" x="777.5" y="81.9951">Front Controller</text><!--MD5=[953a8c67cfe21abaf9bf45dad8506ca8]
+entity Router--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="67" x="797.5" y="155"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="792.5" y="160"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="792.5" y="181.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="807.5" y="177.9951">Router</text><!--MD5=[50a14000eb80ba1ff31091ccbeb1f6c9]
+entity Request/Response--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="155" x="577.5" y="59"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="572.5" y="64"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="572.5" y="85.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="135" x="587.5" y="81.9951">Request/Response</text><!--MD5=[2761986561326581c43d55402af5f14e]
+entity Authentication--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="120" x="771" y="266"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="766" y="271"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="766" y="292.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="100" x="781" y="288.9951">Authentication</text><!--MD5=[30fb08015fdbe2f2532fb073ce1bb4c4]
+entity Tenant Context--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="127" x="763.5" y="362"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="758.5" y="367"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="758.5" y="388.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="107" x="773.5" y="384.9951">Tenant Context</text><!--MD5=[e2e501cb905ca5a3d839068a61c30cc0]
+entity RBAC--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="59" x="797.5" y="458"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="792.5" y="463"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="792.5" y="484.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="39" x="807.5" y="480.9951">RBAC</text><!--MD5=[6862c585bfab1db7dccb324f53e513cc]
+entity Correlation ID--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="113" x="622.5" y="266"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="617.5" y="271"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="617.5" y="292.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="93" x="632.5" y="288.9951">Correlation ID</text><!--MD5=[39222abbbfd087a4fdab60e627dc976f]
+entity Auth--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="52" x="63" y="59"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="58" y="64"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="58" y="85.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="32" x="73" y="81.9951">Auth</text><!--MD5=[02717f454a264e415f038afc80b64672]
+entity Tenants--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="77" x="150.5" y="59"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="145.5" y="64"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="145.5" y="85.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="57" x="160.5" y="81.9951">Tenants</text><!--MD5=[feb5939ce823acf5a8245c3205b3c7a1]
+entity Users--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="60" x="263" y="59"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="258" y="64"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="258" y="85.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="40" x="273" y="81.9951">Users</text><!--MD5=[f1cf4895171720f7d7dbebb70272d69c]
+entity HR--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="40" x="358" y="59"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="353" y="64"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="353" y="85.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="20" x="368" y="81.9951">HR</text><!--MD5=[9fa95a6bc9cc4737dc3f36095608d11b]
+entity Compliance--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="101" x="38.5" y="155"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="33.5" y="160"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="33.5" y="181.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="81" x="48.5" y="177.9951">Compliance</text><!--MD5=[4ad2245b87709673b7e120f60cb4341f]
+entity Facilities--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="78" x="175" y="155"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="170" y="160"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="170" y="181.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="58" x="185" y="177.9951">Facilities</text><!--MD5=[68a90ab2da37f512f734ac57fc6e0cf5]
+entity Scheduling--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="97" x="288.5" y="155"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="283.5" y="160"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="283.5" y="181.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="77" x="298.5" y="177.9951">Scheduling</text><!--MD5=[0a023f47caf2959f436df8601eab3914]
+entity Attendance--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="100" x="421" y="155"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="416" y="160"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="416" y="181.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="80" x="431" y="177.9951">Attendance</text><!--MD5=[25e738cd72acb52b55715a8ee137fb19]
+entity Patrols--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="67" x="55.5" y="266"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="50.5" y="271"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="50.5" y="292.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="65.5" y="288.9951">Patrols</text><!--MD5=[cb924919984831f3da4c548ad5fc716f]
+entity Incidents--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="83" x="157.5" y="266"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="152.5" y="271"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="152.5" y="292.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="63" x="167.5" y="288.9951">Incidents</text><!--MD5=[21f0274b17d5afdebd0633d213e2a0e3]
+entity Reporting--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="88" x="276" y="266"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="271" y="271"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="271" y="292.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="68" x="286" y="288.9951">Reporting</text><!--MD5=[99cbb757e0c7a8a66517a3e5acdeef2a]
+entity Audit--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="55" x="399.5" y="266"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="394.5" y="271"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="394.5" y="292.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="35" x="409.5" y="288.9951">Audit</text><!--MD5=[a55a29aadb9051dac3d24643a597646d]
+entity PDO Repositories--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="142" x="949" y="650"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="944" y="655"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="944" y="676.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="122" x="959" y="672.9951">PDO Repositories</text><!--MD5=[993e0d4fdeccee87e9dafe04241cdfbd]
+entity MySQL--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="66" x="987" y="746"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="982" y="751"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="982" y="772.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="46" x="997" y="768.9951">MySQL</text><!--MD5=[f96d690baea4a0823d36c98ba0c3a2b4]
+entity Redis--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="59" x="854.5" y="650"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="849.5" y="655"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="849.5" y="676.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="39" x="864.5" y="672.9951">Redis</text><!--MD5=[f356ba77996eb39911871277ba8d2fab]
+entity S3 Adapter--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="96" x="723" y="650"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="718" y="655"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="718" y="676.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="76" x="733" y="672.9951">S3 Adapter</text><!--MD5=[65b0b7bc17522fec8cb5ada6fab1c03d]
+entity Notification Adapters--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="162" x="526" y="650"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="521" y="655"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="521" y="676.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="142" x="536" y="672.9951">Notification Adapters</text><!--MD5=[b0bce9fcca31d15d7c5287ba6fc3275a]
+entity Модули--><rect fill="#F8F8F8" height="36.2969" style="stroke: #383838; stroke-width: 1.5;" width="76" x="789" y="554"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="784" y="559"/><rect fill="#F8F8F8" height="5" style="stroke: #383838; stroke-width: 1.5;" width="10" x="784" y="580.2969"/><text fill="#000000" font-family="Times New Roman" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="56" x="799" y="576.9951">Модули</text><!--MD5=[c44099c3644807fb95a684f88b99ff5d]
+link Front Controller to Router--><path d="M831,95.24 C831,110.48 831,132.81 831,149.46 " fill="none" id="Front Controller-&gt;Router" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="831,154.87,835,145.87,831,149.87,827,145.87,831,154.87" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[4ae7b043ab93567a1fad279072306733]
+link Router to Authentication--><path d="M831,191.03 C831,209.8 831,240.05 831,260.7 " fill="none" id="Router-&gt;Authentication" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="831,265.73,835,256.73,831,260.73,827,256.73,831,265.73" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[4c6d005de17f4679b285ee176998c2ed]
+link Authentication to Tenant Context--><path d="M830.27,302.24 C829.62,317.48 828.67,339.81 827.96,356.46 " fill="none" id="Authentication-&gt;Tenant Context" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="827.73,361.87,832.1117,353.0495,827.9441,356.8746,824.119,352.707,827.73,361.87" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[92a89447472cf5c2b3dd52458a7ac999]
+link Tenant Context to RBAC--><path d="M827,398.24 C827,413.48 827,435.81 827,452.46 " fill="none" id="Tenant Context-&gt;RBAC" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="827,457.87,831,448.87,827,452.87,823,448.87,827,457.87" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[91354ef61207ea2728defa8728fb507b]
+link RBAC to Модули--><path d="M827,494.24 C827,509.48 827,531.81 827,548.46 " fill="none" id="RBAC-&gt;Модули" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="827,553.87,831,544.87,827,548.87,823,544.87,827,553.87" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[eb8630debf16438bc56ba5e63a1668ef]
+link Модули to PDO Repositories--><path d="M865.05,582.69 C885.18,588.49 910.01,596.74 931,607 C953.53,618.01 976.97,634.03 994.14,646.75 " fill="none" id="Модули-&gt;PDO Repositories" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="998.36,649.9,993.56,641.3,994.36,646.9,988.76,647.7,998.36,649.9" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[656be776dbb66ebd75b9089740db0061]
+link PDO Repositories to MySQL--><path d="M1020,686.24 C1020,701.48 1020,723.81 1020,740.46 " fill="none" id="PDO Repositories-&gt;MySQL" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="1020,745.87,1024,736.87,1020,740.87,1016,736.87,1020,745.87" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[0cf73769140c43ebf6dacd67c5b388b0]
+link Модули to Redis--><path d="M837.45,590.24 C846.86,605.74 860.71,628.59 870.85,645.32 " fill="none" id="Модули-&gt;Redis" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="873.61,649.87,872.3856,640.0975,871.027,645.5888,865.5357,644.2303,873.61,649.87" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[2b704d7a317ca9d1c594aabb9ec08ef7]
+link Модули to S3 Adapter--><path d="M816.73,590.24 C807.49,605.74 793.89,628.59 783.92,645.32 " fill="none" id="Модули-&gt;S3 Adapter" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="781.21,649.87,789.2482,644.179,783.7657,645.5725,782.3722,640.09,781.21,649.87" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[a9624161441d663578f48b9a60852d23]
+link Модули to Notification Adapters--><path d="M788.75,580.94 C764.48,586.66 732.72,595.4 706,607 C680.97,617.86 654.66,634.07 635.45,646.91 " fill="none" id="Модули-&gt;Notification Adapters" style="stroke: #383838; stroke-width: 1.0;"/><polygon fill="#383838" points="631.22,649.76,640.9206,648.0574,635.3692,646.97,636.4566,641.4187,631.22,649.76" style="stroke: #383838; stroke-width: 1.0;"/><!--MD5=[cd892c486d348bb0e3be053becaf06b6]
+link Auth to Tenants--><!--MD5=[4ef1992813ed105e02d6b6a1340e6f4d]
+link Tenants to Users--><!--MD5=[fa15090073dddfe7aaa8b49998e46f16]
+link Users to HR--><!--MD5=[37be69e672afd878ebb760f289dba08b]
+link Auth to Compliance--><!--MD5=[ae8f3a2422e71ce95acda06dcf76d6bd]
+link Compliance to Facilities--><!--MD5=[46bc661da05cf8b3cf48bcec86b2cf2b]
+link Facilities to Scheduling--><!--MD5=[35bc9b5b9ee88205352619c629f388a7]
+link Scheduling to Attendance--><!--MD5=[43c95063b20a5b44f415096dce400e36]
+link Compliance to Patrols--><!--MD5=[a7811503793528c7e66c38d2b4faa9eb]
+link Patrols to Incidents--><!--MD5=[cb7199c8e0cf8aa8b6d73a50aed5a705]
+link Incidents to Reporting--><!--MD5=[b5147556df71fa8aebb7ee1ebfe7d948]
+link Reporting to Audit--><!--MD5=[8f6c52e9e164142a701a92a1d48e5bc2]
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+package "HTTP" {
+  [Front Controller]
+  [Router]
+  [Request/Response]
+}
+package "Middleware" {
+  [Authentication]
+  [Tenant Context]
+  [RBAC]
+  [Correlation ID]
+}
+package "Модули" {
+  [Auth]
+  [Tenants]
+  [Users]
+  [HR]
+  [Compliance]
+  [Facilities]
+  [Scheduling]
+  [Attendance]
+  [Patrols]
+  [Incidents]
+  [Reporting]
+  [Audit]
+}
+package "Инфраструктура" {
+  [PDO Repositories]
+  [MySQL]
+  [Redis]
+  [S3 Adapter]
+  [Notification Adapters]
+}
+[Front Controller] - -> [Router]
+[Router] - -> [Authentication]
+[Authentication] - -> [Tenant Context]
+[Tenant Context] - -> [RBAC]
+[RBAC] - -> [Модули]
+[Модули] - -> [PDO Repositories]
+[PDO Repositories] - -> [MySQL]
+[Модули] - -> [Redis]
+[Модули] - -> [S3 Adapter]
+[Модули] - -> [Notification Adapters]
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 10:22:07 UTC 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 17.0.20.1+1
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

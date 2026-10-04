@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "autodiscover_sections": true,
+  "project": {
+    "name": "ЧОППРО",
+    "subtitle": "Документация, архитектура, прототипы и приемка из GitHub",
+    "status": "Этап 1 завершен; проектная база подготовлена для Этапа 2 «Core MVP — backend и web».",
+    "stack": [
+      "PHP 8.3+ / PDO",
+      "Модульный монолит",
+      "MySQL 8 / InnoDB",
+      "Redis",
+      "S3-совместимое хранилище",
+      "REST JSON /api/v1",
+      "PHP / HTML / CSS / JavaScript",
+      "React Native · Android / iOS"
+    ],
+    "decisions": [
+      {
+        "title": "Backend на PHP 8.3+",
+        "text": "Laravel исключен. Работа с MySQL — через PDO и подготовленные запросы; архитектура — модульный монолит."
+      },
+      {
+        "title": "Самостоятельные мобильные приложения",
+        "text": "Мобильный контур — отдельные Android- и iOS-приложения. PWA исключена сознательно."
+      },
+      {
+        "title": "UI/UX в GitHub",
+        "text": "Результат проектирования — версионируемые интерактивные HTML/CSS/JS-прототипы. Figma в поставку не входит."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "type": "overview",
+      "title": "Обзор",
+      "icon": "◫",
+      "path": "README.md"
+    },
+    {
+      "id": "docs",
+      "type": "docs",
+      "title": "Документация",
+      "icon": "≡",
+      "directory": "docs",
+      "description": "Новые и измененные документы появляются здесь автоматически."
+    },
+    {
+      "id": "diagrams",
+      "type": "diagrams",
+      "title": "Диаграммы",
+      "icon": "◇",
+      "directory": "docs/диаграммы",
+      "description": "Актуальные PUML-исходники и SVG/PNG, собранные в GitHub."
+    },
+    {
+      "id": "prototypes",
+      "type": "prototypes",
+      "title": "Прототипы",
+      "icon": "▦",
+      "directory": "prototypes",
+      "entry": "prototypes/index.html",
+      "launches": [
+        {
+          "title": "Admin / ЧОП",
+          "description": "Операционное управление, персонал, документы, графики и отчеты.",
+          "path": "prototypes/index.html",
+          "query": {
+            "app": "admin",
+            "screen": "dashboard"
+          }
+        },
+        {
+          "title": "Mobile Android/iOS",
+          "description": "Смена, QR, геолокация, обходы и offline queue.",
+          "path": "prototypes/index.html",
+          "query": {
+            "app": "mobile",
+            "screen": "home"
+          }
+        },
+        {
+          "title": "Client / Platform",
+          "description": "Кабинет заказчика и системное управление платформой.",
+          "path": "prototypes/index.html",
+          "query": {
+            "app": "client",
+            "screen": "dashboard"
+          }
+        },
+        {
+          "title": "Карта экранов",
+          "path": "prototypes/index.html",
+          "query": {
+            "app": "map",
+            "screen": "map"
+          }
+        }
+      ]
+    },
+    {
+      "id": "design",
+      "type": "prototypes",
+      "title": "UI/UX дизайн",
+      "icon": "◈",
+      "directory": "prototypes",
+      "entry": "prototypes/index.html",
+      "description": "Интерактивные HTML-прототипы из текущего коммита GitHub."
+    },
+    {
+      "id": "stories",
+      "type": "stories",
+      "title": "Сценарии",
+      "icon": "→",
+      "path": "docs/20_Каталог_пользовательских_сценариев_ЧОППРО.md"
+    },
+    {
+      "id": "requirements",
+      "type": "requirements",
+      "title": "Матрица требований",
+      "icon": "⌕",
+      "path": "docs/Матрица_требований_ЧОППРО.csv"
+    },
+    {
+      "id": "openapi",
+      "type": "file",
+      "title": "OpenAPI",
+      "icon": "{}",
+      "path": "docs/openapi.yaml",
+      "description": "Контракт API из текущего коммита репозитория."
+    },
+    {
+      "id": "github",
+      "type": "github",
+      "title": "GitHub",
+      "icon": "⌘"
+    },
+    {
+      "id": "acceptance",
+      "type": "acceptance",
+      "title": "Приемка",
+      "icon": "✓",
+      "path": "docs/18_План_и_чеклист_приемки_Этапа_1.md"
+    },
+    {
+      "id": "delivery",
+      "type": "delivery",
+      "title": "Поставка",
+      "icon": "↓"
+    }
+  ],
+  "scenario_screens": {
+    "UC-01": [
+      "platform-tenants",
+      "admin-mfa",
+      "admin-import",
+      "admin-import-result",
+      "admin-schedule"
+    ],
+    "UC-02": [
+      "mobile-home",
+      "mobile-shift",
+      "mobile-checkin",
+      "mobile-qr",
+      "mobile-checkin-result",
+      "admin-attendance"
+    ],
+    "UC-03": [
+      "mobile-shift",
+      "mobile-offline",
+      "mobile-sync",
+      "mobile-sync-result",
+      "admin-attendance"
+    ],
+    "UC-04": [
+      "mobile-incident",
+      "mobile-incident-submit",
+      "admin-incidents",
+      "admin-incident-review",
+      "client-incidents"
+    ],
+    "UC-05": [
+      "admin-reports",
+      "admin-report-draft",
+      "admin-report-published",
+      "client-reports"
+    ],
+    "FLOW-01": [
+      "mobile-patrol",
+      "mobile-qr",
+      "mobile-patrol-progress",
+      "mobile-patrol-result",
+      "admin-patrols"
+    ],
+    "FLOW-02": [
+      "admin-documents",
+      "admin-document",
+      "admin-notifications",
+      "admin-document-review",
+      "admin-employee"
+    ],
+    "FLOW-03": [
+      "admin-login",
+      "admin-dashboard",
+      "admin-facilities",
+      "admin-access-denied",
+      "admin-audit"
+    ],
+    "FLOW-04": [
+      "admin-attendance",
+      "admin-attendance-review",
+      "admin-attendance-review",
+      "admin-attendance-decision",
+      "admin-audit"
+    ],
+    "FLOW-05": [
+      "admin-report-draft",
+      "admin-report-review",
+      "admin-report-published",
+      "client-report-view",
+      "client-report-ack"
+    ]
+  }
+}

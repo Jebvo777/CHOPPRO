@@ -10,8 +10,7 @@ node "Рабочая станция разработчика" as Dev {
     component "Redis" as LocalRedis
   }
 }
-cloud "GitHub
-Jebvo777/CHOPPRO" as GH
+cloud "GitHub\nJebvo777/CHOPPRO" as GH
 node "Staging сервер" as Stage {
   component "PHP Web/API" as StageApp
   database "MySQL staging" as StageDB

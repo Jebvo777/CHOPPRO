@@ -1,0 +1,16 @@
+Options -Indexes
+DirectoryIndex index.php
+AcceptPathInfo On
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(?:app|bootstrap|storage|tests|bin|deploy)(?:/|$) - [F,L]
+  RewriteRule ^(?:config\.php|portal\.json|\.env.*|.*\.md)$ - [F,L]
+</IfModule>
+<FilesMatch "^(config\.php|portal\.json|\.env.*)$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "no-referrer"
+</IfModule>
