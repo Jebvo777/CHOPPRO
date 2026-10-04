@@ -56,10 +56,10 @@ final class Auth
             if(!$c||(int)$c['attempts']>=5)throw new Problem(401,'CHALLENGE_EXPIRED','Код недоступен. Войдите заново.');
             $this->db->run('UPDATE cp_challenges SET attempts=attempts+1 WHERE id=?',[$c['id']]);
             $p=Support::decode($c['payload']);$secret=Support::decrypt($p['secret'],$this->config['key']);
-            if(!Totp::verify($secret,(string)($input['code']??'')))return ['_error'=>new Problem(401,'INVALID_MFA','Неверный код подтверждения')];
+            $step=Totp::matchedStep($secret,(string)($input['code']??''));if($step===null)return ['_error'=>new Problem(401,'INVALID_MFA','Неверный код подтверждения')];
             $u=$this->db->one("SELECT * FROM cp_users WHERE id=? AND status='ACTIVE' AND deleted_at IS NULL FOR UPDATE",[$c['user_id']]);
             if(!$u)throw new Problem(401,'INVALID_LOGIN','Доступ отозван');
-            $step=(int)floor(time()/30);if(!$p['setup'] && (int)($u['mfa_last_step']??0)>=$step)throw new Problem(401,'MFA_REPLAY','Этот код уже использован');
+            if(!$p['setup'] && (int)($u['mfa_last_step']??0)>=$step)throw new Problem(401,'MFA_REPLAY','Этот код уже использован');
             $this->db->run('UPDATE cp_users SET mfa_secret=?,mfa_enabled=1,mfa_last_step=? WHERE id=?',[$p['secret'],$step,$u['id']]);
             $this->db->run('UPDATE cp_challenges SET used_at=UTC_TIMESTAMP() WHERE id=?',[$c['id']]);return $this->issue($u);
         });

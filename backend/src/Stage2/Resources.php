@@ -14,6 +14,7 @@ final class Resources
         $this->feature($kind);[$where,$args]=$this->access->where($kind);
         foreach(['status','employee_id','customer_id','facility_id','post_id','shift_id','type_id'] as $f) if(isset($fields[$f])&&!empty($query[$f])){$where.=' AND t.`'.$f.'`=?';$args[]=$query[$f];}
         if(!empty($query['q'])){$search=['name'];foreach(['phone','email','address','number','city']as$f)if(isset($fields[$f]))$search[]=$f;$where.=' AND ('.implode(' OR ',array_map(fn($f)=>'t.`'.$f.'` LIKE ?',$search)).')';foreach($search as$f)$args[]='%'.mb_substr($query['q'],0,100).'%';}
+        if($kind==='employees'&&!empty($query['expires_before'])){$where.=' AND EXISTS(SELECT 1 FROM cp_documents d WHERE d.employee_id=t.id AND d.tenant_id=t.tenant_id AND d.expires_at<=? AND d.deleted_at IS NULL)';$args[]=$query['expires_before'];}
         if($kind==='documents'&&!empty($query['expires_before'])){$where.=' AND t.expires_at<=?';$args[]=$query['expires_before'];}
         if($kind==='shifts')foreach(['from'=>'starts_at','to'=>'ends_at']as$key=>$field)if(!empty($query[$key])){$where.=' AND t.'.$field.($key==='from'?'>=?':'<=?');$args[]=$query[$key];}
         $limit=min(500,max(1,(int)($query['limit']??50)));$page=max(1,(int)($query['page']??1));$offset=($page-1)*$limit;
