@@ -19,7 +19,7 @@ final class Config
             'storage' => $storage,
             'key' => $site['key'] ?? trim((string)@file_get_contents($keyPath)),
             'demo' => getenv('CHOPPRO_DEMO') !== '0',
-            'database' => ['host' => getenv('DB_HOST') ?: 'localhost', 'port' => (int)(getenv('DB_PORT') ?: 3306), 'name' => getenv('DB_DATABASE') ?: 'system404_chopro', 'user' => getenv('DB_USERNAME') ?: 'system404_chopro', 'password' => getenv('DB_PASSWORD') ?: ''],
+            'database' => ['host' => getenv('DB_HOST') ?: 'localhost', 'port' => (int)(getenv('DB_PORT') ?: 3306), 'name' => getenv('DB_DATABASE') ?: getenv('DB_NAME') ?: 'system404_chopro', 'user' => getenv('DB_USERNAME') ?: getenv('DB_USER') ?: 'system404_chopro', 'password' => getenv('DB_PASSWORD') ?: ''],
             'scanner' => ['host' => getenv('CLAMAV_HOST') ?: '', 'port' => (int)(getenv('CLAMAV_PORT') ?: 3310)],
             'otp' => ['url' => getenv('OTP_PROVIDER_URL') ?: '', 'token' => getenv('OTP_PROVIDER_TOKEN') ?: ''],
             'base' => defined('CHOPPRO_HOST_BASE') ? CHOPPRO_HOST_BASE : '',

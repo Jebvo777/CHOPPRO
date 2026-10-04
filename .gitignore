@@ -11,3 +11,12 @@
 coverage/
 
 dist/
+
+.private/
+.loader/
+backend/var/
+var/
+stage2-preview/
+*.local.php
+site-private.php
+dist/

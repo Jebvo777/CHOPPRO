@@ -33,7 +33,7 @@ $diagramFiles = array_filter($catalog->files(), static fn($entry, $path) => str_
 <title><?=e($title)?> — <?=e($project['name'] ?? 'ЧОППРО')?></title>
 <link rel="stylesheet" href="<?=e(defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/style.css&release='.CHOPPRO_RELEASE_SHA:'assets/style.css?v=6')?>"><script src="<?=e(defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/app.js&release='.CHOPPRO_RELEASE_SHA:'assets/app.js?v=6')?>" defer></script>
 </head>
-<body data-sha="<?=e($sha)?>" data-repository="<?=e($repository->config['owner'].'/'.$repository->config['repository'])?>">
+<body data-base="<?=e(defined('CHOPPRO_HOST_BASE')?CHOPPRO_HOST_BASE:'')?>" data-sha="<?=e($sha)?>" data-repository="<?=e($repository->config['owner'].'/'.$repository->config['repository'])?>">
 <div class="shell">
 <header class="header">
 <div><div class="logo"><?=e($project['name'] ?? 'ЧОППРО')?> / ПОРТАЛ ПРОЕКТА</div><div class="subtitle"><?=e($project['subtitle'] ?? 'Документация и приемка')?></div></div>

@@ -10,7 +10,7 @@ if metadata and 'tree' in metadata:metadata={e['path']:e for e in metadata['tree
 entries={}
 def allowed(path):
  if path in ['README.md','site-release.json']:return True
- return bool(re.match(r'^(backend/(src|config|database|public|scripts|assets)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))',path)) and not re.search(r'\.(pdf|part\d+)$',path,re.I)
+ return bool(re.match(r'^(backend/(src|config|database|public|scripts|assets)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|control|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))',path)) and not re.search(r'\.(pdf|part\d+)$',path,re.I)
 for p in sorted(source.rglob('*')):
  if not p.is_file():continue
  path=p.relative_to(source).as_posix()
@@ -20,8 +20,8 @@ for p in sorted(source.rglob('*')):
  entries[path]={'path':path,'sha':blob,'size':len(content),'mode':'100644','type':'blob'}
  dest=release/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(content);(private/'objects'/blob).write_bytes(content)
 for p in (source/'host-loader').glob('*.php'):shutil.copyfile(p,loader/p.name)
-for route in ['index','api','file','prototype','demo','demo-api']:(root/(route+'.php')).write_text('<?php\ndeclare(strict_types=1);\n$hostRoute='+json.dumps(route)+';\nrequire __DIR__."/.loader/dispatch.php";\n')
-for file,target in [('asset.php','asset.php'),('control.php','control.php'),('release-status.php','status.php'),('site-cron.php','cron.php')]:(root/file).write_text('<?php\ndeclare(strict_types=1);\nrequire __DIR__."/.loader/'+target+'";\n')
+for route in ['index','control','api','file','prototype','demo','demo-api']:(root/(route+'.php')).write_text('<?php\ndeclare(strict_types=1);\n$hostRoute='+json.dumps(route)+';\nrequire __DIR__."/.loader/dispatch.php";\n')
+for file,target in [('asset.php','asset.php'),('release-status.php','status.php'),('site-cron.php','cron.php')]:(root/file).write_text('<?php\ndeclare(strict_types=1);\nrequire __DIR__."/.loader/'+target+'";\n')
 (root/'.htaccess').write_text('Options -Indexes\nDirectoryIndex index.php\n<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteRule ^(?:\\.private|\\.loader)(?:/|$) - [F,L]\nRewriteRule ^demo/(admin|client|platform|jobs)/?$ demo.php?app=$1 [QSA,L]\n</IfModule>\n<FilesMatch "^(INSTALL|installation|site-config|source-metadata).*">\nRequire all denied\n</FilesMatch>\n')
 for d in [private,loader]:(d/'.htaccess').write_text('Require all denied\nDeny from all\n');(d/'index.html').write_text('')
 (root/'robots.txt').write_text('User-agent: *\nDisallow: /\n')

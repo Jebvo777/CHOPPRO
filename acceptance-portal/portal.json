@@ -4,16 +4,15 @@
   "project": {
     "name": "ЧОППРО",
     "subtitle": "Документация, архитектура, прототипы и приемка из GitHub",
-    "status": "Этап 1 завершен; проектная база подготовлена для Этапа 2 «Core MVP — backend и web».",
+    "status": "Реализован Этап 2 «Core MVP — backend и web». Рабочие приложения, миграции и наполненное демо подготовлены для проверки заказчиком.",
     "stack": [
       "PHP 8.3+ / PDO",
       "Модульный монолит",
       "MySQL 8 / InnoDB",
-      "Redis",
-      "S3-совместимое хранилище",
-      "REST JSON /api/v1",
+      "Приватное файловое хранилище",
+      "REST JSON /v1",
       "PHP / HTML / CSS / JavaScript",
-      "React Native · Android / iOS"
+      "Нативные Android / iOS · Этап 3"
     ],
     "decisions": [
       {
@@ -37,6 +36,13 @@
       "title": "Обзор",
       "icon": "◫",
       "path": "README.md"
+    },
+    {
+      "id": "stage2",
+      "type": "file",
+      "title": "Приёмка Этапа 2",
+      "icon": "✓",
+      "path": "docs/Этап_2_приемка.md"
     },
     {
       "id": "docs",

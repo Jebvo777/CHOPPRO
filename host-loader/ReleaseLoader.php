@@ -3,7 +3,7 @@ declare(strict_types=1);
 final class ReleaseLoader
 {
     public string $private;
-    public function __construct(public string $root){$this->private=$root.'/.private';}
+    public function __construct(public string $root,public ?Closure $transport=null){$this->private=$root.'/.private';}
     public function json(string $path):array{if(!is_file($path))return[];try{return json_decode(file_get_contents($path),true,512,JSON_THROW_ON_ERROR)?:[];}catch(Throwable){return[];}}
     public function atomic(string $path,string $text):void{if(!is_dir(dirname($path)))mkdir(dirname($path),0700,true);$temp=$path.'.'.bin2hex(random_bytes(5)).'.tmp';if(file_put_contents($temp,$text,LOCK_EX)!==strlen($text)||!rename($temp,$path))throw new RuntimeException('Не удалось сохранить состояние');chmod($path,0600);}
     public function state():array{return $this->json($this->private.'/current.json');}
@@ -13,11 +13,12 @@ final class ReleaseLoader
     {
         if(str_contains($path,'..')||str_contains($path,'\\')||str_starts_with($path,'/')||preg_match('/[\x00-\x1f]/',$path))return false;
         if(in_array($path,['README.md','site-release.json'],true))return true;
-        return preg_match('~^(backend/(src|config|database|public|scripts|assets)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))~u',$path)===1&&!preg_match('~\.(?:pdf|part\d+)$~i',$path);
+        return preg_match('~^(backend/(src|config|database|public|scripts|assets)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|control|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))~u',$path)===1&&!preg_match('~\.(?:pdf|part\d+)$~i',$path);
     }
     public function request(string $url):string
     {
         if(!str_starts_with($url,'https://api.github.com/repos/Jebvo777/CHOPPRO/')&&!str_starts_with($url,'https://raw.githubusercontent.com/Jebvo777/CHOPPRO/'))throw new RuntimeException('Недопустимый источник');
+        if($this->transport)return($this->transport)($url);
         $c=curl_init($url);$headers=['Accept: application/vnd.github+json','User-Agent: CHOPPRO-Shared-Host/2','X-GitHub-Api-Version: 2022-11-28'];$token=getenv('CHOPPRO_GITHUB_TOKEN')?:'';if($token&&str_starts_with($url,'https://api.github.com/'))$headers[]='Authorization: Bearer '.$token;
         curl_setopt_array($c,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_CONNECTTIMEOUT=>8,CURLOPT_TIMEOUT=>25,CURLOPT_HTTPHEADER=>$headers,CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_PROTOCOLS=>CURLPROTO_HTTPS]);$body=curl_exec($c);$code=curl_getinfo($c,CURLINFO_HTTP_CODE);if($body===false||$code!==200)throw new RuntimeException($code===403||$code===429?'GitHub временно ограничил запросы. Используется сохранённая версия.':'GitHub временно недоступен. Используется сохранённая версия.');if(strlen($body)>12*1024*1024)throw new RuntimeException('Размер файла превышает ограничение');return$body;
     }
