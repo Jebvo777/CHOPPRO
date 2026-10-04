@@ -145,6 +145,7 @@ try {
     $reviewFiles = ['README.md' => "# Review\n", 'acceptance-portal/portal.json' => json_encode($manifest)];
     $transitionConfig = $config;
     $transitionConfig['cache_dir'] = $temp.'/transition';
+    $transitionConfig['transition_branch'] = 'portal/github-auto-sync';
     $transitionTransport = function ($url, $headers) use (&$merged, $reviewFiles): array {
         $defaultSha = str_repeat($merged ? '3' : '1', 40);
         $reviewSha = str_repeat('2', 40);

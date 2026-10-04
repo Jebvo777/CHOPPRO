@@ -10,7 +10,7 @@ if metadata and 'tree' in metadata:metadata={e['path']:e for e in metadata['tree
 entries={}
 def allowed(path):
  if path in ['README.md','site-release.json']:return True
- return bool(re.match(r'^(backend/(src|config|database|public|scripts)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))',path)) and not re.search(r'\.(pdf|part\d+)$',path,re.I)
+ return bool(re.match(r'^(backend/(src|config|database|public|scripts|assets)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))',path)) and not re.search(r'\.(pdf|part\d+)$',path,re.I)
 for p in sorted(source.rglob('*')):
  if not p.is_file():continue
  path=p.relative_to(source).as_posix()

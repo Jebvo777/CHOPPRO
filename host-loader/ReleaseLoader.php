@@ -13,7 +13,7 @@ final class ReleaseLoader
     {
         if(str_contains($path,'..')||str_contains($path,'\\')||str_starts_with($path,'/')||preg_match('/[\x00-\x1f]/',$path))return false;
         if(in_array($path,['README.md','site-release.json'],true))return true;
-        return preg_match('~^(backend/(src|config|database|public|scripts)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))~u',$path)===1&&!preg_match('~\.(?:pdf|part\d+)$~i',$path);
+        return preg_match('~^(backend/(src|config|database|public|scripts|assets)/|web/|docs/|prototypes/|acceptance-portal/(app/|assets/|prototypes/|(?:index|config|api|file|prototype)\.php$|portal\.json$|robots\.txt$))~u',$path)===1&&!preg_match('~\.(?:pdf|part\d+)$~i',$path);
     }
     public function request(string $url):string
     {

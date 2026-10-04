@@ -42,6 +42,7 @@ jobs:
       - name: Build shared hosting distribution
         run: |
           export CHOPPRO_OWNER_PASSWORD_HASH="$(php -r 'echo password_hash("CiOwner2026!",PASSWORD_ARGON2ID);')"
+          export CHOPPRO_BOOTSTRAP_KEY="$(cat "$CHOPPRO_STORAGE_ROOT/key")"
           python3 tools/build_hosting.py --sha "$GITHUB_SHA" --output dist/CHOPPRO_stage2.zip --directory "$RUNNER_TEMP/choppro-site"
           php -S 127.0.0.1:8092 -t "$RUNNER_TEMP/choppro-site" tools/hosting_router.php > "$RUNNER_TEMP/stage2-php.log" 2>&1 &
       - name: Browser dependencies

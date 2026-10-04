@@ -9,7 +9,7 @@ final class Access
         'hr'=>['dashboard.read','employees.*','documents.*','document_types.*','document_reviews.read','users.read','facilities.read','posts.read','personal_cards.*','notifications.read','audit.read'],
         'operations'=>['dashboard.read','employees.read','facilities.*','posts.*','instructions.*','qr_points.*','shift_templates.*','shifts.*','assignments.*','attendance.*','vacancies.*','applications.*','patrols.read','incidents.read','reports.read','notifications.read','audit.read'],
         'object_manager'=>['dashboard.read','employees.read','facilities.read','posts.read','instructions.read','qr_points.read','shifts.read','assignments.*','attendance.*','notifications.read'],
-        'customer'=>['dashboard.read','facilities.read','posts.read','shifts.read','patrols.read','incidents.read','reports.read','reports.acknowledge','notifications.read','audit.read'],
+        'customer'=>['dashboard.read','facilities.read','posts.read','shifts.read','patrols.read','incidents.read','reports.read','reports.acknowledge','reports.download','notifications.read','audit.read'],
         'guard'=>['dashboard.read','employees.read','documents.read','facilities.read','posts.read','instructions.read','instructions.acknowledge','shifts.read','assignments.read','assignments.confirm','attendance.read','attendance.create','notifications.read'],
     ];
     public function __construct(public Db $db, public array $user, public ?string $selectedTenant=null) {}
