@@ -45,14 +45,15 @@ final class ReleaseLoader
     }
     public function prepare(string $sha,array $entries,array $commit):void
     {
-        $final=$this->private.'/releases/'.$sha;if(is_file($final.'/.release.json'))return;if(count($entries)>2000)throw new RuntimeException('Слишком много файлов');$stage=$this->private.'/releases/.staging-'.$sha.'-'.bin2hex(random_bytes(4));mkdir($stage,0700,true);$size=0;
+        $final=$this->private.'/releases/'.$sha;if(is_file($final.'/.release.json'))return;if(count($entries)>2000)throw new RuntimeException('Слишком много файлов');$stage=$this->private.'/releases/.staging-'.$sha.'-'.bin2hex(random_bytes(4));mkdir($stage,0700,true);$size=0;try{
         foreach($entries as$path=>$e){$size+=(int)$e['size'];if($size>100*1024*1024||(int)$e['size']>10*1024*1024)throw new RuntimeException('Размер комплекта превышает ограничение');$object=$this->private.'/objects/'.$e['sha'];if(!is_file($object)||sha1('blob '.filesize($object)."\0".file_get_contents($object))!==$e['sha']){$content=$this->request('https://raw.githubusercontent.com/Jebvo777/CHOPPRO/'.$sha.'/'.implode('/',array_map('rawurlencode',explode('/',$path))));if(sha1('blob '.strlen($content)."\0".$content)!==$e['sha'])throw new RuntimeException('Контрольная сумма не совпала: '.$path);$this->atomic($object,$content);}
             $dest=$stage.'/'.$path;if(!is_dir(dirname($dest)))mkdir(dirname($dest),0700,true);if(!copy($object,$dest))throw new RuntimeException('Не удалось подготовить комплект');
         }
         foreach(['site-release.json','acceptance-portal/index.php','backend/public/index.php','web/shared/app.php']as$required)if(!isset($entries[$required]))throw new RuntimeException('В комплекте отсутствует '.$required);
         $manifest=$this->json($stage.'/site-release.json');if(($manifest['format']??0)!==1||version_compare(PHP_VERSION,$manifest['php']??'8.3','<'))throw new RuntimeException('Версия PHP хостинга не совместима с обновлением');
-        $this->catalog($stage,$sha,$entries,$commit);$this->atomic($stage.'/.release.json',json_encode(['sha'=>$sha,'files'=>$entries,'created_at'=>time()]));if(!rename($stage,$final))throw new RuntimeException('Не удалось опубликовать комплект');
+        $this->catalog($stage,$sha,$entries,$commit);$this->atomic($stage.'/.release.json',json_encode(['sha'=>$sha,'files'=>$entries,'created_at'=>time()]));if(!rename($stage,$final))throw new RuntimeException('Не удалось опубликовать комплект');}finally{if(is_dir($stage))$this->removeDir($stage);}
     }
+    private function removeDir(string $dir):void{foreach(scandir($dir)as$name)if($name!=='.'&&$name!=='..'){$path=$dir.'/'.$name;if(is_dir($path)&&!is_link($path))$this->removeDir($path);else @unlink($path);}@rmdir($dir);}
     public function catalog(string $dir,string $sha,array $entries,array $commit):void
     {
         $cache=$dir.'/.portal-cache';mkdir($cache.'/blobs',0700,true);$files=[];

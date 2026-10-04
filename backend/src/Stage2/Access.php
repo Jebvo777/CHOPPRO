@@ -76,6 +76,7 @@ final class Access
     {
         unset($row['password_hash'],$row['mfa_secret'],$row['mfa_last_step'],$row['file_path']);
         if($kind==='employees'&&(!$this->allows('employees.sensitive')||($this->user['role']==='platform_admin'&&!$this->canDownloadDocuments())))$row['passport']='•••• ••••••';
+        if($kind==='employees'&&$this->user['role']==='platform_admin'&&!$this->canDownloadDocuments()){foreach(['phone','email','personal_card']as$field)if(isset($row[$field]))$row[$field]='••••';}
         if($kind==='documents'&&!$this->canDownloadDocuments())$row['number']='••••';
         if(in_array($this->user['role'],['customer','guard'],true))unset($row['internal_note'],$row['passport'],$row['override_reason']);
         foreach($row as $k=>$v) if(is_string($v)&&(str_starts_with($v,'[')||str_starts_with($v,'{'))) {try{$row[$k]=Support::decode($v);}catch(\Throwable){}}
