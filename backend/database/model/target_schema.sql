@@ -1,6 +1,6 @@
--- ЧОППРО. Целевая архитектурная схема данных MVP.
--- НЕ является production-миграцией. Реальные миграции создаются по этапам 2-4.
--- MySQL 8 / InnoDB / utf8mb4.
+
+
+
 
 CREATE TABLE employees (
   id CHAR(36) PRIMARY KEY,

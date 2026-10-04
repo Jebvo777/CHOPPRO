@@ -77,7 +77,7 @@ final class Kernel
     }
     public function jobs(array $query): array
     {
-        $where="v.status='PUBLISHED' AND v.deleted_at IS NULL AND t.status='ACTIVE' AND t.deleted_at IS NULL AND COALESCE(JSON_EXTRACT(t.features,'$.jobs'),true)=true";$args=[];
+        $where="v.status='PUBLISHED' AND v.deleted_at IS NULL AND t.status='ACTIVE' AND t.deleted_at IS NULL AND COALESCE(JSON_UNQUOTE(JSON_EXTRACT(t.features,'$.jobs')),'true')<>'false'";$args=[];
         if(!empty($query['city'])){$where.=' AND v.city=?';$args[]=$query['city'];}if(!empty($query['q'])){$where.=' AND (v.name LIKE ? OR v.description LIKE ? OR t.name LIKE ?)';$q='%'.mb_substr($query['q'],0,100).'%';array_push($args,$q,$q,$q);}if(!empty($query['salary'])){$where.=' AND v.salary_to>=?';$args[]=(float)$query['salary'];}
         $rows=$this->db->all('SELECT v.id,v.name,v.city,v.salary_from,v.salary_to,v.schedule,v.qualification,v.description,v.pinned_rank,t.name tenant_name FROM cp_vacancies v JOIN cp_tenants t ON t.id=v.tenant_id WHERE '.$where.' ORDER BY v.pinned_rank IS NULL,v.pinned_rank,v.created_at DESC LIMIT 200',$args);
         return ['items'=>$rows,'total'=>count($rows),'cities'=>array_column($this->db->all("SELECT DISTINCT city FROM cp_vacancies WHERE status='PUBLISHED' AND deleted_at IS NULL ORDER BY city"),'city')];
