@@ -8,7 +8,7 @@
 2. Хостинг должен выполнять PHP 8.3+, иметь доступ по HTTPS к api.github.com и raw.githubusercontent.com и разрешать запись в каталог `storage/`. cURL ускоряет скачивание; без него используется HTTPS через PHP streams (allow_url_fopen + OpenSSL).
 3. Откройте сайт. Настройки уже указывают на правильный репозиторий; публичный GitHub работает без токена.
 
-До слияния PR № 2 с основной веткой автоматически используется ветка portal/github-auto-sync. После слияния портал сам перейдет на default branch GitHub; менять архив или настройки сайта не потребуется.
+Портал автоматически отслеживает основную ветку GitHub (`main`). PR № 2 объединен с сохранением истории. Ранее переданный архив сам переключится с portal/github-auto-sync на main; удаление вспомогательных веток не требует замены архива или настроек сайта.
 
 На Apache применяются вложенные .htaccess. На Nginx используйте `deploy/nginx.conf`, включая PATH_INFO для prototype.php и запрет доступа к app, bootstrap, storage, tests, bin, deploy и config.php. Кэш также можно вынести за web-root через CHOPPRO_CACHE_DIR.
 

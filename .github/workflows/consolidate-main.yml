@@ -1,0 +1,51 @@
+name: Завершить объединение веток в main
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/consolidate-main.yml']
+permissions:
+  contents: write
+concurrency:
+  group: consolidate-main
+  cancel-in-progress: false
+jobs:
+  remove-merged-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Проверить историю и удалить только объединенные ветки
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+          declare -A expected=(
+            [develop]=be8fc6b43f6a7f97fc8b3864ce60009fcc201fe0
+            [portal/github-auto-sync]=4c7b315cde2539cef7b5cd8aaa74c4b50f715c00
+            [upload-signed-documents-20261002]=d755cf21cfd57914bba4433ce7207f20f716573e
+          )
+          branches=(develop portal/github-auto-sync upload-signed-documents-20261002)
+          leases=()
+          deletions=()
+          for branch in "${branches[@]}"; do
+            current="$(git ls-remote --heads origin "refs/heads/$branch" | cut -f1)"
+            if [[ -z "$current" ]]; then
+              continue
+            fi
+            if [[ "$current" != "${expected[$branch]}" ]]; then
+              echo "Ветка $branch изменилась после проверки; удаление остановлено."
+              exit 1
+            fi
+            git merge-base --is-ancestor "$current" refs/remotes/origin/main
+            echo "История $branch полностью включена в main: $current"
+            leases+=("--force-with-lease=refs/heads/$branch:$current")
+            deletions+=(":refs/heads/$branch")
+          done
+          if (( ${#deletions[@]} )); then
+            git push --atomic "${leases[@]}" origin "${deletions[@]}"
+          fi
+          remaining="$(git ls-remote --heads origin | awk '{print $2}' | sort)"
+          test "$remaining" = refs/heads/main
+          echo 'Проверено: осталась только main.'
