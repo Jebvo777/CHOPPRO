@@ -22,7 +22,7 @@ jobs:
       DB_DATABASE: choppro_ci
       DB_USERNAME: root
       DB_PASSWORD: ci-test-password
-      CHOPPRO_STORAGE_ROOT: ${{ runner.temp }}/choppro-private
+      CHOPPRO_STORAGE_ROOT: /home/runner/work/_temp/choppro-private
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
