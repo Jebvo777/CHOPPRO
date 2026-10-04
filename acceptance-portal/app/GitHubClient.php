@@ -116,7 +116,7 @@ final class GitHubClient
             CURLOPT_HTTPHEADER => $this->headers($auth, $etag),
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
             CURLOPT_WRITEFUNCTION => function ($ch, string $data) use (&$response): int {
-                // Base64 API envelopes need more room than the decoded blob.
+                
                 if (strlen($response['body']) + strlen($data) > max(16 * 1024 * 1024, $this->config['max_file_bytes'] * 2)) {
                     return 0;
                 }
@@ -147,7 +147,7 @@ final class GitHubClient
             curl_close($ch);
             return $response;
         }
-        // Shared hosting fallback: no Composer, cURL or shell access required.
+        
         $context = stream_context_create([
             'http' => [
                 'method' => 'GET', 'header' => implode("\r\n", $this->headers($auth, $etag)),

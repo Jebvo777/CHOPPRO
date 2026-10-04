@@ -6,7 +6,7 @@ namespace Choppro\Http;
 
 final class Router
 {
-    /** @var array<string, callable> */
+    
     private array $routes = [];
 
     public function get(string $path, callable $handler): void

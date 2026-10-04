@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-// Export the real PHP output for repeatable UI checks without an external GitHub call.
+
 $root = dirname(__DIR__);
 $config = require $root.'/config.php';
 $cache = $config['cache_dir'];

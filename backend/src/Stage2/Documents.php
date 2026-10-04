@@ -32,13 +32,13 @@ final class Documents
     public function review(string $id,array $input): array
     {
         $a=$this->r->access;$a->need('documents.review');$d=$a->find('documents',$id,false);
-        $decision=$input['decision']??'';if(!in_array($decision,['VALID','REJECTED'],true))throw new Problem(422,'DECISION_REQUIRED','Выберите решение');
+        $settings=Support::decode($this->r->db()->scalar('SELECT settings FROM cp_tenants WHERE id=?',[$a->tenant()]));$threshold=(int)($settings['expiring_days']??30);$decision=$input['decision']??'';if(!in_array($decision,['VALID','REJECTED'],true))throw new Problem(422,'DECISION_REQUIRED','Выберите решение');
         if($decision==='VALID'){
             if($d['scan_status']!=='CLEAN')throw new Problem(409,'SCAN_REQUIRED','Файл ожидает антивирусной проверки');
             $type=$a->reference('document_types',$d['type_id']);foreach(Support::decode($type['required_fields'])as$f)if(empty($d[$f]))throw new Problem(422,'DOCUMENT_INCOMPLETE','Не заполнено поле: '.(Schema::labels()[$f]??$f));
         }
         if($decision==='REJECTED'&&mb_strlen(trim($input['reason']??''))<5)throw new Problem(422,'REASON_REQUIRED','Укажите причину отклонения');
-        return $this->r->db()->transaction(function()use($a,$d,$decision,$input){$status=$decision;if($decision==='VALID'){$days=(strtotime($d['expires_at']??'+100 years')-strtotime(gmdate('Y-m-d')))/86400;$status=$days<0?'EXPIRED':($days<=30?'EXPIRING':'VALID');}$history=$this->r->insert('document_reviews',['name'=>'Проверка документа','document_id'=>$d['id'],'decision'=>$decision,'reason'=>$input['reason']??'Проверено','actor_id'=>$a->user['id']]);$this->r->write('documents',$d['id'],['status'=>$status]);$a->audit('document.reviewed','documents',$d['id'],['decision'=>$decision,'review_id'=>$history['id']]);return $a->safe('documents',$a->find('documents',$d['id'],false));});
+        return $this->r->db()->transaction(function()use($a,$d,$decision,$input,$threshold){$status=$decision;if($decision==='VALID'){$days=(strtotime($d['expires_at']??'+100 years')-strtotime(gmdate('Y-m-d')))/86400;$status=$days<0?'EXPIRED':($days<=$threshold?'EXPIRING':'VALID');}$history=$this->r->insert('document_reviews',['name'=>'Проверка документа','document_id'=>$d['id'],'decision'=>$decision,'reason'=>$input['reason']??'Проверено','actor_id'=>$a->user['id']]);$this->r->write('documents',$d['id'],['status'=>$status]);$a->audit('document.reviewed','documents',$d['id'],['decision'=>$decision,'review_id'=>$history['id']]);return $a->safe('documents',$a->find('documents',$d['id'],false));});
     }
     public function download(string $id): never
     {

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Deliberately renders Markdown without evaluating raw HTML or PHP.
+
 final class Markdown
 {
     public static function render(string $source, ?Closure $resolve = null): string

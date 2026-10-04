@@ -25,7 +25,7 @@ final class Repository
 
     public function synchronize(bool $force = false): void
     {
-        // Shared PHP hosts often allow 30 seconds; typical updates fetch only changed blobs.
+        
         if (function_exists('set_time_limit')) {
             @set_time_limit(90);
         }
@@ -46,7 +46,7 @@ final class Repository
             return;
         }
         try {
-            // Re-read after the lock, so concurrent visitors never repeat a sync.
+            
             $this->state = $this->readJson($dir.'/state.json');
             if (!$force && ($this->state['next_check_at'] ?? 0) > $now) {
                 return;
@@ -101,7 +101,7 @@ final class Repository
                         ], $commits),
                     ];
                     $this->writeJson($dir.'/snapshots/'.$new['sha'].'.json', $new);
-                    $this->writeJson($dir.'/current.json', $new); // Atomic publish, after all blobs.
+                    $this->writeJson($dir.'/current.json', $new); 
                     $this->snapshot = $new;
                 }
             $this->state['checked_at'] = $now;
@@ -229,7 +229,7 @@ final class Repository
         $response = $this->client->api('/git/trees/'.$sha.'?recursive=1')['data'];
         $entries = $response['tree'] ?? [];
         if ($response['truncated'] ?? false) {
-            // GitHub's recursive tree can be truncated; never publish a partial catalog.
+            
             $entries = [];
             $queue = [['sha' => $sha, 'prefix' => '']];
             for ($i = 0; $i < count($queue); $i++) {
@@ -336,7 +336,7 @@ final class Repository
 
     private function prune(): void
     {
-        // Keep ten previous releases for open immutable links; remove unreferenced cached blobs.
+        
         $dir = $this->config['cache_dir'];
         $snapshots = glob($dir.'/snapshots/*.json') ?: [];
         usort($snapshots, static fn($a, $b) => filemtime($b) <=> filemtime($a));

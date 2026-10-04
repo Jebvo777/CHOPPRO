@@ -15,7 +15,7 @@ final class RbacMiddleware
 
     public function handle(Request $request, callable $next): Response
     {
-        // Проверка разрешений подключается к репозиторию ролей на Этапе 2.
+        
         return $next($request);
     }
 }

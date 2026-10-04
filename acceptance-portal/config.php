@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-// No token is shipped. Environment variables are read only on the server.
+
 $token = getenv('CHOPPRO_GITHUB_TOKEN') ?: getenv('GITHUB_TOKEN') ?: '';
 return [
     'owner' => 'Jebvo777',
     'repository' => 'CHOPPRO',
     'branch' => getenv('CHOPPRO_GITHUB_BRANCH') ?: '',
-    // Bootstrap from the review branch until the default branch contains the portal.
-    // After merging, the default branch is selected automatically; no redeploy is needed.
+    
+    
     'transition_branch' => '',
     'token' => $token,
     'interval' => max(60, (int)(getenv('CHOPPRO_SYNC_INTERVAL') ?: ($token ? 60 : 300))),

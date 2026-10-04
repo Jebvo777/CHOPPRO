@@ -6,7 +6,7 @@ $status = $repository->viewStatus();
 $sha = $status['sha'];
 $page = input('page', 'overview');
 if ($page === 'figma') {
-    $page = 'design'; // Compatibility with old bookmarks.
+    $page = 'design'; 
 }
 $section = $catalog->section($page);
 if ($page !== 'doc' && !$section) {

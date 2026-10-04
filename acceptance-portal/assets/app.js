@@ -3,7 +3,7 @@
   const key = 'choppro-acceptance-v3:' + body.dataset.repository;
   const boxes = [...document.querySelectorAll('[data-accept]')];
   const read = () => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; } };
-  const save = value => { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Private mode or quota. */ } };
+  const save = value => { try { localStorage.setItem(key, JSON.stringify(value)); } catch {  } };
   function progress() {
     const state = read();
     let checked = 0;
@@ -50,7 +50,7 @@
     const query = event.target.value.toLocaleLowerCase('ru');
     document.querySelectorAll('[data-doc]').forEach(el => el.hidden = !el.textContent.toLocaleLowerCase('ru').includes(query));
   });
-  // A visible tab checks itself; acceptance input is preserved until the user opens the new version.
+  
   let checking = false;
   async function checkVersion() {
     if (document.hidden || checking) return;
@@ -62,7 +62,7 @@
       if (status.sha && status.sha !== body.dataset.sha) {
         document.querySelector('[data-sync-notice]').hidden = false;
       }
-    } catch { /* The saved page remains usable during an outage. */ }
+    } catch {  }
     finally { checking = false; }
   }
   setInterval(checkVersion, 60000);
