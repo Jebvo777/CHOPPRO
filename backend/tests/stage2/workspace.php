@@ -55,6 +55,9 @@ problem(fn()=>$ops->move($draft['id'],['version'=>$moved['version'],'day'=>'2026
 problem(fn()=>$ops->move($draft['id'],['version'=>$moved['version'],'day'=>'2020-01-01']),'SHIFT_PAST');
 $duplicate=$r->create('shifts',['name'=>'Занятое время поста','post_id'=>$draft['post_id'],'starts_at'=>$later.' 12:25:00Z','ends_at'=>$later.' 14:25:00Z']);
 problem(fn()=>$ops->move($draft['id'],['version'=>$moved['version'],'day'=>$later]),'SHIFT_DUPLICATE');
+$available=$r->create('employees',['name'=>'Перенос с назначением','qualification'=>6,'status'=>'ACTIVE']);$ops->assign(['name'=>'Состав переносимой смены','shift_id'=>$draft['id'],'employee_id'=>$available['id']]);
+$occupied=$r->create('shifts',['name'=>'Другая смена сотрудника','post_id'=>Seeder::id('post-0-1'),'starts_at'=>$later.' 12:25:00Z','ends_at'=>$later.' 14:25:00Z']);$ops->assign(['name'=>'Занятость сотрудника','shift_id'=>$occupied['id'],'employee_id'=>$available['id']]);
+$r->write('shifts',$duplicate['id'],['status'=>'CANCELLED']);problem(fn()=>$ops->move($draft['id'],['version'=>$moved['version'],'day'=>$later]),'ASSIGNMENT_CONFLICT');
 $planner=$workspace->planner(['facility_id'=>$current['id'],'q'=>'Перенос черновика']);
 check($planner['total']===1&&$planner['items'][0]['facility_id']===$current['id']&&$planner['items'][0]['timezone']==='Europe/Moscow','Planner enriches only selected facility');
 $clientPlanner=(new Workspace($cr))->planner([]);foreach($clientPlanner['items']as$s)check(in_array($s['facility_id'],$cr->access->facilities(),true),'Planner respects client object scope');
