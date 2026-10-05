@@ -51,7 +51,7 @@ final class Access
             if(!$facilities){$parts[]='1=0';}
             else {
                 $in=implode(',',array_fill(0,count($facilities),'?'));
-                $scope=match($kind) { 'facilities'=>'t.id', 'posts','qr_points','employees','vacancies','incidents','patrols','reports'=>'t.facility_id', 'instructions','shifts','shift_templates'=>"(SELECT p.facility_id FROM cp_posts p WHERE p.id=t.post_id)", 'assignments','attendance'=>"(SELECT p.facility_id FROM cp_posts p JOIN cp_shifts s ON s.post_id=p.id WHERE s.id=".($kind==='assignments'?'t.shift_id':'(SELECT a.shift_id FROM cp_assignments a WHERE a.id=t.assignment_id)').")", 'documents'=>"(SELECT e.facility_id FROM cp_employees e WHERE e.id=t.employee_id)", default=>null };
+                $scope=match($kind) { 'facilities'=>'t.id', 'posts','qr_points','employees','vacancies','incidents','patrols','reports'=>'t.facility_id', 'instructions','shifts','shift_templates'=>"(SELECT p.facility_id FROM cp_posts p WHERE p.id=t.post_id)", 'assignments','attendance'=>"(SELECT p.facility_id FROM cp_posts p JOIN cp_shifts s ON s.post_id=p.id WHERE s.id=".($kind==='assignments'?'t.shift_id':'(SELECT a.shift_id FROM cp_assignments a WHERE a.id=t.assignment_id)').")", 'applications'=>"(SELECT v.facility_id FROM cp_vacancies v WHERE v.id=t.vacancy_id)", 'documents'=>"(SELECT e.facility_id FROM cp_employees e WHERE e.id=t.employee_id)", default=>null };
                 if($scope){$parts[]=$scope.' IN ('.$in.')';array_push($args,...$facilities);}
             }
         }

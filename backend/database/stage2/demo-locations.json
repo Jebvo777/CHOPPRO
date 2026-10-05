@@ -1,0 +1,150 @@
+{
+  "verified_at": "2026-10-05",
+  "source": "Яндекс.Карты",
+  "cities": [
+    {
+      "city": "Пенза",
+      "timezone": "Europe/Moscow",
+      "locations": [
+        {
+          "address": "Пенза, Московская улица, 73",
+          "lat": 53.194815,
+          "lng": 45.017633,
+          "source": "https://yandex.ru/maps/49/penza/house/moskovskaya_ulitsa_73/YEwYdgZnT0YEQFtpfX14dXRiYQ==/"
+        },
+        {
+          "address": "Пенза, улица Суворова, 144А",
+          "lat": 53.202572,
+          "lng": 44.997861,
+          "source": "https://yandex.ru/maps/49/penza/house/ulitsa_suvorova_144a/YE0Yfw5nQUMGQFtpfX5xc3lkZg==/"
+        },
+        {
+          "address": "Пенза, улица Кирова, 73",
+          "lat": 53.198117,
+          "lng": 45.021307,
+          "source": "https://yandex.ru/maps/49/penza/house/ulitsa_kirova_73/YEwYdgVhSkUAQFtpfX14eX1iYw==/"
+        },
+        {
+          "address": "Пенза, Московская улица, 83",
+          "lat": 53.197065,
+          "lng": 45.019035,
+          "source": "https://yandex.ru/maps/49/penza/house/moskovskaya_ulitsa_83/YEwYdgZpSUYCQFtpfX14dnxlYQ==/"
+        }
+      ]
+    },
+    {
+      "city": "Москва",
+      "timezone": "Europe/Moscow",
+      "locations": [
+        {
+          "address": "Москва, Пресненская набережная, 12",
+          "lat": 55.749633,
+          "lng": 37.537434,
+          "source": "https://yandex.ru/maps/213/moscow/house/presnenskaya_naberezhnaya_12/Z04YcwRnTUYDQFtvfXt1eHpgZw==/"
+        },
+        {
+          "address": "Москва, Автозаводская улица, 18",
+          "lat": 55.705042,
+          "lng": 37.639824,
+          "source": "https://yandex.ru/maps/213/moscow/house/avtozavodskaya_ulitsa_18/Z04YcARpQUcDQFtvfXtxdHxnZg==/"
+        },
+        {
+          "address": "Москва, Профсоюзная улица, 61А",
+          "lat": 55.656037,
+          "lng": 37.541512,
+          "source": "https://yandex.ru/maps/213/moscow/house/profsoyuznaya_ulitsa_61a/Z04YcwNhTEQFQFtvfXp0d3xgYw==/"
+        },
+        {
+          "address": "Москва, Ленинградское шоссе, 16А",
+          "lat": 55.823879,
+          "lng": 37.497216,
+          "source": "https://yandex.ru/maps/213/moscow/house/leningradskoye_shosse_16a/Z04Ycg5nS0QBQFtvfXRzcnRkbQ==/"
+        }
+      ]
+    },
+    {
+      "city": "Самара",
+      "timezone": "Europe/Samara",
+      "locations": [
+        {
+          "address": "Самара, Московское шоссе, 17",
+          "lat": 53.203068,
+          "lng": 50.156374,
+          "source": "https://yandex.ru/maps/51/samara/house/moskovskoye_shosse_17/YUkYdwJmSkIDQFtpfX5xcnxlbA==/"
+        },
+        {
+          "address": "Самара, Московское шоссе, 185А",
+          "lat": 53.248751,
+          "lng": 50.220594,
+          "source": "https://yandex.ru/maps/51/samara/house/moskovskoye_shosse_185a/YUkYdAVgTEwDQFtpfX51eXtmZQ==/"
+        },
+        {
+          "address": "Самара, Ново-Садовая улица, 160М",
+          "lat": 53.224606,
+          "lng": 50.167953,
+          "source": "https://yandex.ru/maps/51/samara/house/novo_sadovaya_ulitsa_160m/YUkYdwFnQEAEQFtpfX5zdXpjYg==/"
+        },
+        {
+          "address": "Самара, Заводское шоссе, 18",
+          "lat": 53.19973,
+          "lng": 50.257012,
+          "source": "https://yandex.ru/maps/51/samara/house/zavodskoye_shosse_18/YUkYdAJnSUQFQFtpfX14eHtgZA==/"
+        }
+      ]
+    },
+    {
+      "city": "Санкт-Петербург",
+      "timezone": "Europe/Moscow",
+      "locations": [
+        {
+          "address": "Санкт-Петербург, Лиговский проспект, 30",
+          "lat": 59.927563,
+          "lng": 30.360613,
+          "source": "https://yandex.ru/maps/2/saint-petersburg/house/ligovskiy_prospekt_30/Z0kYdQFgT0QEQFtjfXVzdnllZw==/"
+        },
+        {
+          "address": "Санкт-Петербург, Невский проспект, 114–116",
+          "lat": 59.932112,
+          "lng": 30.359203,
+          "source": "https://yandex.ru/maps/2/saint-petersburg/house/nevskiy_prospekt_114_116/Z0kYdQJpS0UEQFtjfXVyc31iZg==/"
+        },
+        {
+          "address": "Санкт-Петербург, проспект Энгельса, 154",
+          "lat": 60.059014,
+          "lng": 30.335011,
+          "source": "https://yandex.ru/maps/2/saint-petersburg/house/prospekt_engelsa_154/Z0kYdQRlSUQGQFhqfXx0eHxiYA==/"
+        },
+        {
+          "address": "Санкт-Петербург, Брантовская дорога, 3",
+          "lat": 59.94015,
+          "lng": 30.418366,
+          "source": "https://yandex.ru/maps/2/saint-petersburg/house/brantovskaya_doroga_3/Z0kYcgZoSkMBQFtjfXV1cX1mZA==/"
+        }
+      ]
+    },
+    {
+      "city": "Нижний Новгород",
+      "timezone": "Europe/Moscow",
+      "locations": [
+        {
+          "address": "Нижний Новгород, Большая Покровская улица, 82",
+          "lat": 56.308975,
+          "lng": 43.987292,
+          "source": "https://yandex.ru/maps/47/nizhny-novgorod/house/bolshaya_pokrovskaya_ulitsa_82/YEoYfw9nS0wFQFtsfX9xeXVkYQ==/"
+        },
+        {
+          "address": "Нижний Новгород, улица Белинского, 124",
+          "lat": 56.319409,
+          "lng": 44.02672,
+          "source": "https://yandex.ru/maps/47/nizhny-novgorod/house/ulitsa_belinskogo_124/YE0YdgVmTkcHQFtsfX9weHhjbQ==/"
+        },
+        {
+          "address": "Нижний Новгород, проспект Ленина, 33",
+          "lat": 56.287337,
+          "lng": 43.928219,
+          "source": "https://yandex.ru/maps/47/nizhny-novgorod/house/prospekt_lenina_33/YEoYfwVoS0QOQFtsfX55dn9gYw==/"
+        }
+      ]
+    }
+  ]
+}

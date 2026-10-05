@@ -40,12 +40,21 @@ final class Documents
         if($decision==='REJECTED'&&mb_strlen(trim($input['reason']??''))<5)throw new Problem(422,'REASON_REQUIRED','Укажите причину отклонения');
         return $this->r->db()->transaction(function()use($a,$d,$decision,$input,$threshold){$status=$decision;if($decision==='VALID'){$days=(strtotime($d['expires_at']??'+100 years')-strtotime(gmdate('Y-m-d')))/86400;$status=$days<0?'EXPIRED':($days<=$threshold?'EXPIRING':'VALID');}$history=$this->r->insert('document_reviews',['name'=>'Проверка документа','document_id'=>$d['id'],'decision'=>$decision,'reason'=>$input['reason']??'Проверено','actor_id'=>$a->user['id']]);$this->r->write('documents',$d['id'],['status'=>$status]);$a->audit('document.reviewed','documents',$d['id'],['decision'=>$decision,'review_id'=>$history['id']]);return $a->safe('documents',$a->find('documents',$d['id'],false));});
     }
-    public function download(string $id): never
+    public function content(string $id):array
     {
         $a=$this->r->access;$d=$a->find('documents',$id);if(!$a->canDownloadDocuments())throw new Problem(403,'DOWNLOAD_FORBIDDEN','Нет отдельного права на скачивание');
         if($d['scan_status']!=='CLEAN'||$d['status']==='REJECTED')throw new Problem(409,'FILE_QUARANTINED','Файл ещё не разрешён к выдаче');
         $name=basename($d['file_path']??'');$path=$this->r->config['storage'].'/uploads/'.$d['tenant_id'].'/'.$name;
         if(!$name||!is_file($path)||!hash_equals($d['sha256'],hash_file('sha256',$path)))throw new Problem(404,'FILE_NOT_FOUND','Файл недоступен');
-        $a->audit('document.downloaded','documents',$id);header('Content-Type: '.$d['mime']);header('Content-Disposition: attachment; filename="document-'.substr($id,0,8).'.'.pathinfo($name,PATHINFO_EXTENSION).'"');header('Content-Length: '.filesize($path));header('Cache-Control: private, no-store');readfile($path);exit;
+        $bytes=file_get_contents($path);
+        return ['bytes'=>$bytes,'mime'=>$d['mime'],'name'=>$d['name'].'.'.pathinfo($name,PATHINFO_EXTENSION)];
+    }
+    public function download(string $id,bool $preview=false):never
+    {
+        $file=$this->content($id);$this->r->access->audit($preview?'document.previewed':'document.downloaded','documents',$id);
+        header('Content-Type: '.$file['mime']);header('Content-Disposition: '.($preview?'inline':'attachment').'; filename="document-'.substr($id,0,8).'.'.pathinfo($file['name'],PATHINFO_EXTENSION).'"; filename*=UTF-8\'\''.rawurlencode($file['name']));
+        header('Content-Length: '.strlen($file['bytes']));header('Cache-Control: private, no-store');header('X-Content-Type-Options: nosniff');
+        if($preview){header('X-Frame-Options: SAMEORIGIN');header("Content-Security-Policy: default-src 'none'; frame-ancestors 'self'");}
+        echo$file['bytes'];exit;
     }
 }

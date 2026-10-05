@@ -12,16 +12,27 @@ final class Resources
         if($kind==='users')return $this->users($query);
         $fields=Schema::fields($kind);$this->access->need($kind.'.read');
         $this->feature($kind);[$where,$args]=$this->access->where($kind);
-        foreach(['status','employee_id','customer_id','facility_id','post_id','shift_id','type_id'] as $f) if(isset($fields[$f])&&!empty($query[$f])){$where.=' AND t.`'.$f.'`=?';$args[]=$query[$f];}
-        if(!empty($query['q'])){$search=['name'];foreach(['phone','email','address','number','city']as$f)if(isset($fields[$f]))$search[]=$f;$where.=' AND ('.implode(' OR ',array_map(fn($f)=>'t.`'.$f.'` LIKE ?',$search)).')';foreach($search as$f)$args[]='%'.mb_substr($query['q'],0,100).'%';}
+        foreach(array_keys($fields) as $f) if($f!=='status'&&(str_ends_with($f,'_id')||in_array($f,['qualification','severity','role','category','mime','published'],true))&&!empty($query[$f])){$where.=' AND t.`'.$f.'`=?';$args[]=$query[$f];}
+        if(!empty($query['q'])){$search=['name'];foreach(['phone','email','address','number','city']as$f)if(isset($fields[$f]))$search[]=$f;$where.=' AND ('.implode(' OR ',array_map(fn($f)=>'t.`'.$f.'` LIKE ?',$search)).')';foreach($search as$f)$args[]='%'.mb_substr((string)$query['q'],0,100).'%';$where=substr($where,0,-1);foreach(['employee_id'=>'employees','facility_id'=>'facilities','contract_id'=>'contracts','vacancy_id'=>'vacancies','post_id'=>'posts']as$key=>$resource)if(isset($fields[$key])){$where.=' OR EXISTS(SELECT 1 FROM cp_'.$resource.' ref WHERE ref.id=t.`'.$key.'` AND ref.tenant_id=t.tenant_id AND ref.deleted_at IS NULL AND ref.name LIKE ?)';$args[]='%'.mb_substr((string)$query['q'],0,100).'%';}$where.=')';}
         if($kind==='employees'&&!empty($query['expires_before'])){$where.=' AND EXISTS(SELECT 1 FROM cp_documents d WHERE d.employee_id=t.id AND d.tenant_id=t.tenant_id AND d.expires_at<=? AND d.deleted_at IS NULL)';$args[]=$query['expires_before'];}
         if($kind==='documents'&&!empty($query['expires_before'])){$where.=' AND t.expires_at<=?';$args[]=$query['expires_before'];}
+        if(!empty($query['facility_id'])&&!isset($fields['facility_id'])){
+            $scope=match($kind){'documents'=>"(SELECT e.facility_id FROM cp_employees e WHERE e.id=t.employee_id)",'shifts','shift_templates','instructions'=>"(SELECT p.facility_id FROM cp_posts p WHERE p.id=t.post_id)",'assignments'=>"(SELECT p.facility_id FROM cp_shifts s JOIN cp_posts p ON p.id=s.post_id WHERE s.id=t.shift_id)",default=>null};
+            if($scope){$where.=' AND '.$scope.'=?';$args[]=$query['facility_id'];}
+        }
+        if($kind==='documents'){
+            if(($query['expiry']??'')==='expired')$where.=' AND t.expires_at<CURDATE()';
+            if(($query['expiry']??'')==='undated')$where.=' AND t.expires_at IS NULL';
+            if(in_array((string)($query['expiry']??''),['7','30'],true))$where.=' AND t.expires_at>=CURDATE() AND t.expires_at<=DATE_ADD(CURDATE(),INTERVAL '.(int)$query['expiry'].' DAY)';
+        }
         if($kind==='shifts')foreach(['from'=>'starts_at','to'=>'ends_at']as$key=>$field)if(!empty($query[$key])){$where.=' AND t.'.$field.($key==='from'?'>=?':'<=?');$args[]=$query[$key];}
+        if($kind==='shifts'&&!empty($query['starts_before'])){$where.=' AND t.starts_at<?';$args[]=$query['starts_before'];}
+        $summaryWhere=$where;$summaryArgs=$args;if(isset($fields['status'])&&!empty($query['status'])){$where.=' AND t.status=?';$args[]=$query['status'];}
         $limit=min(500,max(1,(int)($query['limit']??50)));$page=max(1,(int)($query['page']??1));$offset=($page-1)*$limit;
         $sort=$query['sort']??'created_at';if(!in_array($sort,[...array_keys($fields),'created_at','updated_at'],true))$sort='created_at';$direction=($query['direction']??'desc')==='asc'?'ASC':'DESC';
         $count=(int)$this->db()->scalar('SELECT COUNT(*) FROM cp_'.$kind.' t WHERE '.$where,$args);
         $rows=$this->db()->all('SELECT t.* FROM cp_'.$kind.' t WHERE '.$where.' ORDER BY t.`'.$sort.'` '.$direction.',t.id LIMIT '.$limit.' OFFSET '.$offset,$args);
-        $summary=isset($fields['status'])?$this->db()->all('SELECT t.status label,COUNT(*) count FROM cp_'.$kind.' t WHERE '.$where.' GROUP BY t.status',$args):[];return ['summary'=>$summary,'items'=>array_map(fn($r)=>$this->access->safe($kind,$r),$rows),'total'=>$count,'page'=>$page,'pages'=>(int)ceil($count/$limit)];
+        $summary=isset($fields['status'])?$this->db()->all('SELECT t.status label,COUNT(*) count FROM cp_'.$kind.' t WHERE '.$summaryWhere.' GROUP BY t.status',$summaryArgs):[];return ['summary'=>$summary,'items'=>array_map(fn($r)=>$this->access->safe($kind,$r),$rows),'total'=>$count,'page'=>$page,'pages'=>(int)ceil($count/$limit)];
     }
     public function feature(string $kind): void
     {
@@ -56,6 +67,7 @@ final class Resources
             if((float)$combined['lat']<-90||(float)$combined['lat']>90||(float)$combined['lng']<-180||(float)$combined['lng']>180||(int)$combined['radius']<10||(int)$combined['radius']>10000)throw new Problem(422,'GEOFENCE_INVALID','Проверьте координаты и радиус геозоны');
             if(!in_array($combined['timezone'],\DateTimeZone::listIdentifiers(),true))throw new Problem(422,'TIMEZONE_INVALID','Неизвестный часовой пояс');
         }
+        if($kind==='shift_templates'){if(!preg_match('/^(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$/',(string)($combined['start_time']??''))||(float)($combined['duration_hours']??0)<1||(float)($combined['duration_hours']??0)>48)throw new Problem(422,'TEMPLATE_TIME_INVALID','Укажите время начала и длительность от 1 до 48 часов');$weekdays=Support::decode($combined['weekdays']??'[]');if(!$weekdays||count($weekdays)>7)throw new Problem(422,'TEMPLATE_DAYS_INVALID','Выберите рабочие дни');foreach($weekdays as$day)if(!is_numeric($day)||(int)$day!=(float)$day||(int)$day<1||(int)$day>7)throw new Problem(422,'TEMPLATE_DAYS_INVALID','Выберите дни с понедельника по воскресенье');}
         if($kind==='employees'&&((int)$combined['qualification']<1||(int)$combined['qualification']>6))throw new Problem(422,'QUALIFICATION_INVALID','Разряд должен быть от 1 до 6');
         if($kind==='shifts' && ($combined['ends_at']<=$combined['starts_at']||strtotime($combined['ends_at'])-strtotime($combined['starts_at'])>172800))throw new Problem(422,'SHIFT_TIME_INVALID','Смена должна длиться от 1 минуты до 48 часов');
         if($kind==='posts'&&((int)$combined['headcount']<1||(int)$combined['headcount']>100))throw new Problem(422,'HEADCOUNT_INVALID','Укажите численность от 1 до 100');

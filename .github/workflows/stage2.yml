@@ -44,7 +44,7 @@ jobs:
           node-version: '22'
       - name: Check JavaScript
         if: ${{ !cancelled() }}
-        run: node --check web/shared/app.js && node --check web/shared/qr.js && node --check web/shared/map.js && node --check web/shared/ux.js && node tools/map_tests.cjs
+        run: node --check web/shared/app.js && node --check web/shared/qr.js && node --check web/shared/map.js && node --check web/shared/ux.js && node --check web/shared/workspace.js && node tools/map_tests.cjs
       - name: Build shared hosting distribution
         if: ${{ !cancelled() }}
         run: |

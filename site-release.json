@@ -1,8 +1,8 @@
 {
   "format": 1,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "php": "8.3",
-  "schema": 5,
+  "schema": 6,
   "demos": [
     {
       "app": "admin",

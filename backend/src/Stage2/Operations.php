@@ -48,6 +48,27 @@ final class Operations
         $days=Support::decode($t['weekdays']);$rows=[];
         return $this->r->db()->transaction(function()use($from,$to,$t,$days,$a,&$rows){for($d=$from;$d<=$to;$d=$d->modify('+1 day')){if($days&&!in_array((int)$d->format('N'),array_map('intval',$days),true))continue;$start=$d->setTime((int)substr($t['start_time'],0,2),(int)substr($t['start_time'],3,2));$end=$start->modify('+'.(int)((float)$t['duration_hours']*60).' minutes');$utc=$start->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');if($this->r->db()->scalar('SELECT COUNT(*) FROM cp_shifts WHERE tenant_id=? AND post_id=? AND starts_at=? AND deleted_at IS NULL',[$a->tenant(),$t['post_id'],$utc]))continue;$rows[]=$this->r->create('shifts',['name'=>$t['name'].' · '.$d->format('d.m'),'post_id'=>$t['post_id'],'starts_at'=>$start->format('c'),'ends_at'=>$end->format('c')]);}return ['created'=>count($rows),'items'=>$rows];});
     }
+    public function move(string $id,array $input):array
+    {
+        $a=$this->r->access;$a->need('shifts.update');
+        if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',(string)($input['day']??'')))throw new Problem(422,'DATE_INVALID','Выберите день переноса');
+        return $this->r->db()->transaction(function()use($id,$input,$a){
+            $this->r->db()->run('SELECT id FROM cp_shifts WHERE id=? FOR UPDATE',[$id]);$old=$a->find('shifts',$id,false);
+            if((int)($input['version']??0)!==(int)$old['version'])throw new Problem(409,'VERSION_CONFLICT','Смена изменилась. Обновите планировщик.');
+            if((int)$old['published']||$old['status']!=='DRAFT')throw new Problem(409,'SHIFT_PUBLISHED','Перенос доступен для черновика. Для опубликованной смены используйте отмену и новое назначение.');
+            $post=$a->reference('posts',$old['post_id']);$facility=$a->reference('facilities',$post['facility_id']);$zone=new \DateTimeZone($facility['timezone']);
+            $previous=(new \DateTimeImmutable($old['starts_at'],new \DateTimeZone('UTC')))->setTimezone($zone);
+            $start=\DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$input['day'].' '.$previous->format('H:i:s'),$zone);
+            if(!$start||$start->format('Y-m-d')!==$input['day'])throw new Problem(422,'DATE_INVALID','Некорректная дата');
+            $startUtc=$start->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');$endUtc=gmdate('Y-m-d H:i:s',$start->getTimestamp()+strtotime($old['ends_at'])-strtotime($old['starts_at']));
+            if($startUtc<=Support::now())throw new Problem(422,'SHIFT_PAST','Выберите будущий день');
+            if($this->r->db()->scalar("SELECT COUNT(*) FROM cp_shifts WHERE tenant_id=? AND post_id=? AND starts_at=? AND id<>? AND status<>'CANCELLED' AND deleted_at IS NULL",[$a->tenant(),$old['post_id'],$startUtc,$id]))throw new Problem(409,'SHIFT_DUPLICATE','На посту уже есть смена с этим временем начала');
+            $employees=$this->r->db()->all("SELECT e.id FROM cp_employees e JOIN cp_assignments a ON a.employee_id=e.id WHERE a.shift_id=? AND a.status IN ('ASSIGNED','CONFIRMED') AND a.deleted_at IS NULL ORDER BY e.id FOR UPDATE",[$id]);
+            foreach($employees as$employee)if($this->r->db()->scalar("SELECT COUNT(*) FROM cp_assignments a JOIN cp_shifts s ON s.id=a.shift_id WHERE a.employee_id=? AND a.tenant_id=? AND a.shift_id<>? AND a.deleted_at IS NULL AND a.status IN ('ASSIGNED','CONFIRMED') AND s.deleted_at IS NULL AND s.status<>'CANCELLED' AND s.starts_at<? AND s.ends_at>?",[$employee['id'],$a->tenant(),$id,$endUtc,$startUtc]))throw new Problem(409,'ASSIGNMENT_CONFLICT','Назначенный сотрудник занят в выбранное время');
+            $row=$this->r->update('shifts',$id,['version'=>$old['version'],'starts_at'=>$startUtc.'Z','ends_at'=>$endUtc.'Z']);
+            $a->audit('shift.rescheduled','shifts',$id,['from'=>$old['starts_at'],'to'=>$startUtc]);return$row;
+        });
+    }
     public function attendance(array $input): array
     {
         $a=$this->r->access;$a->need('attendance.create');$key=(string)($input['idempotency_key']??($_SERVER['HTTP_IDEMPOTENCY_KEY']??''));

@@ -9,7 +9,7 @@ final class Kernel
     {
         $path='/'.trim($path,'/');
         if($method!=='GET')$this->auth->csrf();
-        if($path==='/v1/health'||$path==='/v1/ready')return ['status'=>'ready','version'=>'2.1.0','database'=>$this->db->scalar('SELECT 1')==1?'ok':'error'];
+        if($path==='/v1/health'||$path==='/v1/ready')return ['status'=>'ready','version'=>'2.2.0','database'=>$this->db->scalar('SELECT 1')==1?'ok':'error'];
         if($path==='/v1/auth/login'&&$method==='POST')return $this->auth->login($input);
         if($path==='/v1/auth/mfa/verify'&&$method==='POST'){ $out=$this->auth->verifyMfa($input);if(isset($out['_error']))throw$out['_error'];return$out; }
         if($path==='/v1/auth/otp/request'&&$method==='POST')return $this->auth->requestOtp($input);
@@ -19,9 +19,9 @@ final class Kernel
         if($path==='/v1/public/jobs'&&$method==='GET')return $this->jobs($query);
         if(preg_match('~^/v1/public/jobs/([a-f0-9-]+)/apply$~',$path,$m)&&$method==='POST')return $this->applyJob($m[1],$input);
         $u=$this->auth->user();$a=new Access($this->db,$u,$u['role']==='platform_admin'?($query['tenant']??null):null);$r=new Resources($a,$this->config);$admin=new Administration($r);$ops=new Operations($r);
-        if(!preg_match('~^/v1/(auth|me|schema|settings|tenants|support|audit|health|retention|worker)(?:/|$)~',$path))$r->feature($path==='/v1/compliance-events'?'compliance_tasks':explode('/',trim($path,'/'))[1]);
+        if(!preg_match('~^/v1/(auth|me|schema|settings|tenants|support|audit|health|retention|worker|search|planner)(?:/|$)~',$path))$r->feature($path==='/v1/compliance-events'?'compliance_tasks':explode('/',trim($path,'/'))[1]);
         if($path==='/v1/auth/logout'&&$method==='POST')return $this->auth->logout($u);
-        if($path==='/v1/me'){$tenant=$u['tenant_id']?$this->db->one('SELECT id,name,slug,settings,features FROM cp_tenants WHERE id=?',[$u['tenant_id']]):null;if($tenant){$tenant['settings']=Support::decode($tenant['settings']);$tenant['features']=Support::decode($tenant['features']);}return ['user'=>$a->safe('users',$u),'tenant'=>$tenant,'permissions'=>$a->permissions(),'csrf'=>$_SESSION['csrf']??'','version'=>'2.1.0'];}
+        if($path==='/v1/me'){$tenant=$u['tenant_id']?$this->db->one('SELECT id,name,slug,settings,features FROM cp_tenants WHERE id=?',[$u['tenant_id']]):null;if($tenant){$tenant['settings']=Support::decode($tenant['settings']);$tenant['features']=Support::decode($tenant['features']);}return ['user'=>$a->safe('users',$u),'tenant'=>$tenant,'permissions'=>$a->permissions(),'csrf'=>$_SESSION['csrf']??'','version'=>'2.2.0'];}
         if($path==='/v1/schema'){ $fields=Schema::all();$fields['users']=['name'=>'varchar(200)','email'=>'varchar(200)','phone'=>'varchar(32)','role'=>'varchar(64)','status'=>'varchar(32)','customer_id'=>'char(36)','employee_id'=>'char(36)','scopes'=>'json'];return ['resources'=>array_filter($fields,fn($v,$k)=>$a->allows($k.'.read'),ARRAY_FILTER_USE_BOTH),'names'=>Schema::names(),'labels'=>Schema::labels(),'references'=>Schema::references(),'statuses'=>array_combine(array_keys($fields),array_map([Schema::class,'statuses'],array_keys($fields))),'defaults'=>array_combine(array_keys($fields),array_map([Schema::class,'defaults'],array_keys($fields))),'required'=>array_combine(array_keys($fields),array_map([Schema::class,'required'],array_keys($fields))),'roles'=>array_values(array_unique([...array_keys(Access::ROLES),...array_column($this->db->all('SELECT code FROM cp_roles WHERE tenant_id=? AND deleted_at IS NULL',[$a->tenant()]),'code')]))]; }
         if(preg_match('~^/v1/(licenses|contracts|compliance_tasks)/([a-f0-9-]+)/files$~',$path,$m)){if($method==='GET')return(new Attachments($r))->listing($m[1],$m[2]);if($method==='POST')return(new Attachments($r))->upload($m[1],$m[2],$files['file']??[]);}
         if(preg_match('~^/v1/files/([a-f0-9-]+)/download$~',$path,$m)&&$method==='GET')(new Attachments($r))->download($m[1]);
@@ -33,6 +33,9 @@ final class Kernel
         if(preg_match('~^/v1/users/([a-f0-9-]+)/invite$~',$path,$m)&&$method==='POST'){$a->need('users.update');$a->find('users',$m[1],false);return['invitation_token'=>$admin->invitation($m[1])];}
         if(preg_match('~^/v1/reports/([a-f0-9-]+)/pdf$~',$path,$m)&&$method==='GET'){$a->need('reports.download');$report=$a->safe('reports',$a->find('reports',$m[1]));if(!(int)$report['published'])throw new Problem(409,'NOT_PUBLISHED','Отчёт ещё не опубликован');$tenant=$this->db->scalar('SELECT name FROM cp_tenants WHERE id=?',[$report['tenant_id']]);$pdf=Pdf::render([$report['name'],$tenant,'Период: '.$report['period'],'Версия: '.$report['version'],$report['content']??'']);$a->audit('report.downloaded','reports',$report['id'],['version'=>$report['version']]);header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="report-'.substr($report['id'],0,8).'.pdf"');echo$pdf;exit;}
         if(preg_match('~^/v1/reports/([a-f0-9-]+)/history$~',$path,$m)&&$method==='GET'){$a->find('reports',$m[1]);return['items'=>$this->db->all('SELECT revision,snapshot,created_at FROM cp_report_versions WHERE report_id=? AND tenant_id=? ORDER BY revision DESC',[$m[1],$a->tenant()])];}
+        if($path==='/v1/search'&&$method==='GET')return(new Workspace($r))->search($query);
+        if($path==='/v1/planner'&&$method==='GET')return(new Workspace($r))->planner($query);
+        if(preg_match('~^/v1/shifts/([a-f0-9-]+)/move$~',$path,$m)&&$method==='POST')return$ops->move($m[1],$input);
         if($path==='/v1/dashboard')return $this->dashboard($a,$r);
         if($path==='/v1/settings')return $admin->settings($method==='GET'?[]:$input);
         if($path==='/v1/tenants'){if($method==='GET')return $admin->tenants();if($method==='POST')return $admin->tenants($input);}
@@ -52,8 +55,8 @@ final class Kernel
         if(preg_match('~^/v1/imports/(employees|facilities|customers)/(preview|apply)$~',$path,$m)&&$method==='POST')return $admin->import($m[1],$input,$m[2]==='apply');
         if(preg_match('~^/v1/imports/([a-f0-9-]+)/rollback$~',$path,$m)&&$method==='POST')return $admin->rollbackImport($m[1],$input);
         if($path==='/v1/documents/upload'&&$method==='POST')return (new Documents($r))->upload($input,$files['file']??[]);
-        if(preg_match('~^/v1/documents/([a-f0-9-]+)/(review|download|history)$~',$path,$m)){
-            if($m[2]==='download'&&$method==='GET')(new Documents($r))->download($m[1]);
+        if(preg_match('~^/v1/documents/([a-f0-9-]+)/(review|download|preview|history)$~',$path,$m)){
+            if(in_array($m[2],['download','preview'],true)&&$method==='GET')(new Documents($r))->download($m[1],$m[2]==='preview');
             if($m[2]==='review'&&$method==='POST')return(new Documents($r))->review($m[1],$input);
             if($m[2]==='history'&&$method==='GET'){ $a->need('documents.review');$a->find('documents',$m[1],false);return ['items'=>$this->db->all('SELECT name,decision,reason,actor_id,created_at FROM cp_document_reviews WHERE tenant_id=? AND document_id=? ORDER BY created_at',[$a->tenant(),$m[1]])]; }
         }
@@ -86,15 +89,23 @@ final class Kernel
     }
     public function jobs(array $query): array
     {
-        $where="v.status='PUBLISHED' AND v.deleted_at IS NULL AND t.status='ACTIVE' AND t.deleted_at IS NULL AND COALESCE(JSON_UNQUOTE(JSON_EXTRACT(t.features,'$.jobs')),'true')<>'false'";$args=[];
-        if(!empty($query['city'])){$where.=' AND v.city=?';$args[]=$query['city'];}if(!empty($query['q'])){$where.=' AND (v.name LIKE ? OR v.description LIKE ? OR t.name LIKE ?)';$q='%'.mb_substr($query['q'],0,100).'%';array_push($args,$q,$q,$q);}if(!empty($query['salary'])){$where.=' AND v.salary_to>=?';$args[]=(float)$query['salary'];}
-        $rows=$this->db->all('SELECT v.id,v.name,v.city,v.salary_from,v.salary_to,v.schedule,v.qualification,v.description,v.pinned_rank,t.name tenant_name FROM cp_vacancies v JOIN cp_tenants t ON t.id=v.tenant_id WHERE '.$where.' ORDER BY v.pinned_rank IS NULL,v.pinned_rank,v.created_at DESC LIMIT 200',$args);
-        return ['items'=>$rows,'total'=>count($rows),'cities'=>array_column($this->db->all("SELECT DISTINCT v.city FROM cp_vacancies v JOIN cp_tenants t ON t.id=v.tenant_id WHERE t.status='ACTIVE' AND t.deleted_at IS NULL AND COALESCE(JSON_UNQUOTE(JSON_EXTRACT(t.features,'$.jobs')),'true')<>'false' AND v.status='PUBLISHED' AND v.deleted_at IS NULL ORDER BY v.city"),'city')];
+        $base="v.status='PUBLISHED' AND v.deleted_at IS NULL AND t.status='ACTIVE' AND t.deleted_at IS NULL AND COALESCE(JSON_UNQUOTE(JSON_EXTRACT(t.features,'$.jobs')),'true')<>'false'";$where=$base;$args=[];
+        foreach(['city','schedule','qualification']as$key)if(!empty($query[$key])){$where.=' AND v.'.$key.'=?';$args[]=$query[$key];}
+        if(!empty($query['q'])){$where.=' AND (v.name LIKE ? OR v.description LIKE ? OR t.name LIKE ? OR f.address LIKE ?)';$q='%'.mb_substr((string)$query['q'],0,100).'%';array_push($args,$q,$q,$q,$q);}
+        if(!empty($query['salary'])){$where.=' AND v.salary_to>=?';$args[]=max(0,(float)$query['salary']);}
+        if(!empty($query['ids'])){$ids=array_values(array_filter(explode(',',(string)$query['ids']),fn($id)=>preg_match('/^[a-f0-9-]{36}$/',$id)));$ids=array_slice($ids,0,100);if(!$ids)$where.=' AND 1=0';else{$where.=' AND v.id IN ('.implode(',',array_fill(0,count($ids),'?')).')';array_push($args,...$ids);}}
+        $join=' FROM cp_vacancies v JOIN cp_tenants t ON t.id=v.tenant_id LEFT JOIN cp_facilities f ON f.id=v.facility_id AND f.deleted_at IS NULL AND f.tenant_id=v.tenant_id';
+        $total=(int)$this->db->scalar('SELECT COUNT(*)'.$join.' WHERE '.$where,$args);$limit=min(200,max(1,(int)($query['limit']??200)));$page=max(1,(int)($query['page']??1));
+        $sort=match($query['sort']??'date'){'salary'=>'v.salary_to DESC','salary_asc'=>'v.salary_from ASC',default=>'v.created_at DESC'};
+        $rows=$this->db->all('SELECT v.id,v.name,v.city,v.salary_from,v.salary_to,v.schedule,v.qualification,v.description,v.pinned_rank,t.name tenant_name,f.name facility_name,f.address,f.lat,f.lng'.$join.' WHERE '.$where.' ORDER BY v.pinned_rank IS NULL,v.pinned_rank,'.$sort.',v.id LIMIT '.$limit.' OFFSET '.(($page-1)*$limit),$args);
+        $facets=$this->db->all('SELECT DISTINCT v.city,v.schedule'.$join.' WHERE '.$base);
+        $cities=array_values(array_unique(array_column($facets,'city')));sort($cities);$schedules=array_values(array_unique(array_column($facets,'schedule')));sort($schedules);
+        return ['items'=>$rows,'total'=>$total,'page'=>$page,'pages'=>(int)ceil($total/$limit),'cities'=>$cities,'schedules'=>$schedules,'employers'=>(int)$this->db->scalar('SELECT COUNT(DISTINCT v.tenant_id)'.$join.' WHERE '.$where,$args)];
     }
     public function applyJob(string $id,array $input): array
     {
         $this->auth->limit('job-application',8,600);$v=$this->db->one("SELECT v.id,v.tenant_id FROM cp_vacancies v JOIN cp_tenants t ON t.id=v.tenant_id WHERE v.id=? AND v.status='PUBLISHED' AND v.deleted_at IS NULL AND t.status='ACTIVE' AND COALESCE(JSON_UNQUOTE(JSON_EXTRACT(t.features,'$.jobs')),'true')<>'false'",[$id]);if(!$v)throw new Problem(404,'NOT_FOUND','Вакансия недоступна');if(mb_strlen(trim($input['name']??''))<2||!preg_match('/^\+\d{10,15}$/',Support::phone($input['phone']??'')))throw new Problem(422,'APPLICATION_INVALID','Укажите имя и телефон');
-        $r=new Resources(new Access($this->db,['id'=>null,'role'=>'tenant_admin','tenant_id'=>$v['tenant_id'],'scopes'=>'[]']),$this->config);$data=$r->normalize('applications',['name'=>$input['name'],'phone'=>$input['phone'],'email'=>$input['email']??null,'message'=>$input['message']??'','vacancy_id'=>$id,'status'=>'ACTIVE']);$row=$r->insert('applications',$data);return ['ok'=>true,'id'=>$row['id']];
+        $r=new Resources(new Access($this->db,['id'=>null,'role'=>'tenant_admin','tenant_id'=>$v['tenant_id'],'scopes'=>'[]']),$this->config);$data=$r->normalize('applications',['name'=>$input['name'],'phone'=>$input['phone'],'email'=>$input['email']??null,'message'=>$input['message']??'','vacancy_id'=>$id,'status'=>'NEW']);$row=$r->insert('applications',$data);return ['ok'=>true,'id'=>$row['id']];
     }
     public function dashboard(Access $a,Resources $r): array
     {

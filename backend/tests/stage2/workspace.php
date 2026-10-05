@@ -1,0 +1,71 @@
+<?php
+declare(strict_types=1);
+use Choppro\Stage2\{Workspace,DemoData,Seeder,Documents,Resources,Access,Support};
+
+$workspace=new Workspace($r);
+check($workspace->search(['q'=>'И'])['total']===0,'Search ignores one-character query');
+$search=$workspace->search(['q'=>'Изменённое имя']);
+check(in_array($employee['id'],array_merge(...array_map(fn($g)=>array_column($g['items'],'id'),$search['groups'])),true),'Search returns actual employee');
+$clientSearch=(new Workspace($cr))->search(['q'=>'Иванов']);
+check(!in_array('employees',array_column($clientSearch['groups'],'kind'),true),'Search respects client permissions');
+$scoped=(new Workspace($mr))->search(['q'=>'']);check($scoped['total']===0,'Scoped empty search');
+$features=$db->scalar('SELECT features FROM cp_tenants WHERE id=?',[$a->tenant()]);
+$db->run("UPDATE cp_tenants SET features=JSON_SET(features,'$.jobs',false) WHERE id=?",[$a->tenant()]);
+check(!in_array('vacancies',array_column($workspace->search(['q'=>'Охранник'])['groups'],'kind'),true),'Search excludes disabled module');
+$db->run('UPDATE cp_tenants SET features=? WHERE id=?',[$features,$a->tenant()]);
+
+$location=DemoData::location(0,0);$current=$a->find('facilities',Seeder::id('facility-0-0'));
+check($current['address']===$location['address']&&abs((float)$current['lat']-$location['lat'])<0.000001&&abs((float)$current['lng']-$location['lng'])<0.000001,'Real demo address and map point agree');
+check((int)$db->scalar("SELECT COUNT(*) FROM cp_documents WHERE mime='application/pdf'")===3000,'All seeded documents are PDF');
+check((int)$db->scalar("SELECT COUNT(DISTINCT file_path) FROM cp_documents WHERE file_path LIKE 'demo-%.pdf'")===3000,'Each seeded document has its own persisted PDF');
+$seedEmployee=$a->find('employees',Seeder::id('employee-0-0'));
+$found=$r->list('documents',['q'=>$seedEmployee['name'],'employee_id'=>$seedEmployee['id']]);
+check($found['total']===3,'Document search includes employee name');
+$filtered=$r->list('documents',['employee_id'=>$seedEmployee['id'],'type_id'=>Seeder::id('type-0-1')]);
+check($filtered['total']===1&&$filtered['items'][0]['type_id']===Seeder::id('type-0-1'),'Document type filter');
+check($r->list('documents',['expiry'=>'expired','expires_before'=>gmdate('Y-m-d')])['total']>0,'Expired document date filter');
+$document=Seeder::id('doc-0-1-0');$content=(new Documents($r))->content($document);
+check(str_starts_with($content['bytes'],'%PDF-')&&str_contains($content['bytes'],'/ToUnicode'),'PDF contains selectable text');
+$stored=$a->find('documents',$document);$filePath=$config['storage'].'/uploads/'.$a->tenant().'/'.$stored['file_path'];
+check(hash('sha256',$content['bytes'])===$stored['sha256'],'Served PDF matches stored checksum');
+problem(fn()=>(new Documents($gr))->content($document),'NOT_FOUND');
+$db->run("UPDATE cp_documents SET sha256=? WHERE id=?",[str_repeat('0',64),$document]);problem(fn()=>(new Documents($r))->content($document),'FILE_NOT_FOUND');
+$db->run('UPDATE cp_documents SET sha256=?,scan_status=? WHERE id=?',[$stored['sha256'],'PENDING_SCAN',$document]);problem(fn()=>(new Documents($r))->content($document),'FILE_QUARANTINED');
+$db->run("UPDATE cp_documents SET scan_status='CLEAN' WHERE id=?",[$document]);
+
+$candidate=$r->list('applications',['vacancy_id'=>Seeder::id('vacancy-0-0'),'limit'=>100]);
+check($candidate['total']===4,'Candidates populated by vacancy');
+$scopedRecruiter=$operationUser;$scopedRecruiter['scopes']=Support::json([$current['id']]);$scopedApplications=(new Resources(new Access($db,$scopedRecruiter),$config))->list('applications',[]);check($scopedApplications['total']===4,'Candidate list respects facility scope');
+$row=$candidate['items'][0];$changed=$r->update('applications',$row['id'],['version'=>$row['version'],'status'=>'INTERVIEW']);
+check($changed['status']==='INTERVIEW','Candidate stage persists');problem(fn()=>$r->update('applications',$row['id'],['version'=>$row['version'],'status'=>'HIRED']),'VERSION_CONFLICT');
+$summary=$r->list('applications',['vacancy_id'=>$row['vacancy_id'],'status'=>'INTERVIEW']);
+check(array_sum(array_column($summary['summary'],'count'))===4,'Funnel counts remain useful with selected stage');
+$management->pin(Seeder::id('vacancy-0-0'),['rank'=>1]);$jobs=$kernel->jobs(['limit'=>24]);check($jobs['total']===80&&count($jobs['items'])===24&&$jobs['pages']===4,'Jobs use actual totals and pagination');
+check(count(array_filter($jobs['items'],fn($v)=>$v['pinned_rank']!==null))===3,'Manual pins remain first');
+$page2=$kernel->jobs(['limit'=>24,'page'=>2]);check(!array_intersect(array_column($jobs['items'],'id'),array_column($page2['items'],'id')),'Job pages do not repeat records');
+$samara=$kernel->jobs(['city'=>'Самара','qualification'=>6,'salary'=>50000]);foreach($samara['items']as$job)check($job['city']==='Самара'&&(int)$job['qualification']===6&&(float)$job['salary_to']>=50000&&$job['address'],'Public job filters and real facility address');
+check($kernel->jobs(['ids'=>$jobs['items'][0]['id']])['total']===1&&$kernel->jobs(['ids'=>'none'])['total']===0,'Saved jobs use server-side filter');
+
+$start=gmdate('Y-m-d',time()+35*86400).' 12:25:00';$next=gmdate('Y-m-d',strtotime($start)+86400);$later=gmdate('Y-m-d',strtotime($start)+2*86400);
+$draft=$r->create('shifts',['name'=>'Перенос черновика','post_id'=>Seeder::id('post-0-0'),'starts_at'=>$start.'Z','ends_at'=>gmdate('c',strtotime($start)+7200)]);
+$moved=$ops->move($draft['id'],['version'=>$draft['version'],'day'=>$next]);
+check($moved['starts_at']===$next.' 12:25:00'&&strtotime($moved['ends_at'])-strtotime($moved['starts_at'])===7200,'Move preserves local time and duration');
+problem(fn()=>$ops->move($draft['id'],['version'=>$draft['version'],'day'=>$later]),'VERSION_CONFLICT');
+problem(fn()=>$ops->move($draft['id'],['version'=>$moved['version'],'day'=>'2026-02-31']),'DATE_INVALID');
+problem(fn()=>$ops->move($draft['id'],['version'=>$moved['version'],'day'=>'2020-01-01']),'SHIFT_PAST');
+$duplicate=$r->create('shifts',['name'=>'Занятое время поста','post_id'=>$draft['post_id'],'starts_at'=>$later.' 12:25:00Z','ends_at'=>$later.' 14:25:00Z']);
+problem(fn()=>$ops->move($draft['id'],['version'=>$moved['version'],'day'=>$later]),'SHIFT_DUPLICATE');
+$planner=$workspace->planner(['facility_id'=>$current['id'],'q'=>'Перенос черновика']);
+check($planner['total']===1&&$planner['items'][0]['facility_id']===$current['id']&&$planner['items'][0]['timezone']==='Europe/Moscow','Planner enriches only selected facility');
+$clientPlanner=(new Workspace($cr))->planner([]);foreach($clientPlanner['items']as$s)check(in_array($s['facility_id'],$cr->access->facilities(),true),'Planner respects client object scope');
+$ops->publish($draft['id']);$published=$a->find('shifts',$draft['id']);problem(fn()=>$ops->move($draft['id'],['version'=>$published['version'],'day'=>$later]),'SHIFT_PUBLISHED');
+
+$templateInput=['name'=>'Неделя с одним рабочим днём','post_id'=>Seeder::id('post-0-0'),'start_time'=>'15:17','duration_hours'=>2.5,'weekdays'=>[1]];
+problem(fn()=>$r->create('shift_templates',[...$templateInput,'weekdays'=>[8]]),'TEMPLATE_DAYS_INVALID');
+problem(fn()=>$r->create('shift_templates',[...$templateInput,'weekdays'=>[]]),'TEMPLATE_DAYS_INVALID');
+problem(fn()=>$r->create('shift_templates',[...$templateInput,'start_time'=>'25:00']),'TEMPLATE_TIME_INVALID');
+problem(fn()=>$r->create('shift_templates',[...$templateInput,'duration_hours'=>49]),'TEMPLATE_TIME_INVALID');
+$template=$r->create('shift_templates',$templateInput);$from=(new DateTimeImmutable('+42 days'))->modify('monday this week')->format('Y-m-d');$to=gmdate('Y-m-d',strtotime($from)+6*86400);
+$generated=$ops->repeat($template['id'],['from'=>$from,'to'=>$to]);check($generated['created']===1,'Visual template creates selected weekdays');
+check(strtotime($generated['items'][0]['ends_at'])-strtotime($generated['items'][0]['starts_at'])===9000,'Template fractional duration preserved');
+check($ops->repeat($template['id'],['from'=>$from,'to'=>$to])['created']===0,'Template generation is idempotent');

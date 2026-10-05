@@ -27,6 +27,7 @@ final class Migrator
                 try{$this->db->transaction(function(){(new Seeder($this->db,$this->config))->fill();$this->db->run('INSERT INTO cp_installation(id,seed_version,seeded_at) VALUES(1,1,?)',[Support::now()]);});$seeded=true;}finally{$this->db->pdo->exec('SET FOREIGN_KEY_CHECKS='.$fk);}
             }
             (new RuntimeUpgrade($this->db,$this->config))->apply();
+            (new DemoData($this->db,$this->config))->upgrade();
             $version=(int)$this->db->scalar('SELECT COALESCE(MAX(version),0) FROM cp_schema_migrations');
             Support::atomic($this->config['storage'].'/schema.json',Support::json(['version'=>$version,'updated_at'=>Support::now()]));
             return ['version'=>$version,'migrations'=>$changes,'seeded'=>$seeded,'tenants'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_tenants'),'employees'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_employees'),'shifts'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_shifts')];
