@@ -74,7 +74,7 @@ $diagramFiles = array_filter($catalog->files(), static fn($entry, $path) => str_
 <div class="filters doc-filters"><input data-doc-search placeholder="Название документа или тема…" aria-label="Найти документ"></div>
 <?php $docGroups=[];foreach($catalog->documents as$doc)$docGroups[document_group($doc['path'])][]=$doc;foreach(['Актуальная спецификация','Архитектура и данные','Требования и сценарии','Результаты и решения по этапам']as$group):?>
 <section class="document-section"><div class="document-section-title"><?=portal_icon(['Актуальная спецификация'=>'code','Архитектура и данные'=>'layers','Требования и сценарии'=>'target','Результаты и решения по этапам'=>'check'][$group])?><h2><?=e($group)?></h2><span><?=count($docGroups[$group]??[])?></span></div><div class="doc-list">
-<?php foreach($docGroups[$group]??[]as$doc):?><article class="doc" data-doc><h3><?=e($doc['title'])?></h3><p class="small muted"><?=e(str_replace('docs/','',$doc['path']))?></p><div class="toolbar"><a class="btn primary" href="<?=e(nav_url('doc',['path'=>$doc['path']]))?>">Читать</a><a class="btn" href="<?=e(asset_url($doc['path'],$sha,true))?>">Скачать</a></div></article><?php endforeach;?></div></section><?php endforeach;?>
+<?php foreach($docGroups[$group]??[]as$doc):?><article class="doc" data-doc><h3><?=e($doc['title'])?></h3><p class="small muted"><?=e(str_replace('docs/','',$doc['path']))?></p><div class="toolbar"><a class="btn primary" href="<?=e(nav_url('doc',['path'=>$doc['path']]))?>">Читать</a><?php if($doc['docx']):?><a class="btn" href="<?=e(asset_url($doc['docx'],$sha,true))?>">Скачать Word</a><?php endif;?><a class="btn" href="<?=e(asset_url($doc['path'],$sha,true))?>">Скачать исходник</a></div></article><?php endforeach;?></div></section><?php endforeach;?>
 
 <?php elseif ($type === 'doc' || $type === 'file'): ?>
 <?php
@@ -90,7 +90,7 @@ $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 <?php if (!$entry): http_response_code(404); ?><div class="warning">Файл не найден в текущей версии GitHub.</div>
 <?php else: ?>
 <?php if ($type === 'doc'): ?><div class="page-title"><div><h1><?=e(file_title($path))?></h1><p class="small"><?=e($path)?></p></div></div><?php endif; ?>
-<div class="toolbar"><a class="btn primary" href="<?=e(asset_url($path, $sha, true))?>">Скачать исходник</a><a class="btn" href="<?=e($repository->repoUrl($path))?>" target="_blank" rel="noopener">Открыть в GitHub ↗</a></div>
+<?php $wordPath=preg_replace('/\.(md|markdown)$/i','.docx',$path);?><div class="toolbar"><?php if(in_array($extension,['md','markdown'],true)&&isset($catalog->files()[$wordPath])):?><a class="btn primary" href="<?=e(asset_url($wordPath,$sha,true))?>">Скачать Word</a><?php endif;?><a class="btn" href="<?=e(asset_url($path, $sha, true))?>">Скачать исходник</a><a class="btn" href="<?=e($repository->repoUrl($path))?>" target="_blank" rel="noopener">Открыть в GitHub ↗</a></div>
 <?php if (in_array($extension, ['md', 'markdown', 'txt', 'yaml', 'yml', 'json', 'sql', 'csv', 'tsv', 'puml', 'html', 'css', 'js', 'mjs'], true)): ?>
 <article class="viewer"><?=$catalog->render($path)?></article>
 <?php elseif (in_array($extension, ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'], true)): ?><article class="viewer"><img src="<?=e(asset_url($path, $sha))?>" alt="<?=e(file_title($path))?>"></article>
