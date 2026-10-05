@@ -3,6 +3,14 @@ declare(strict_types=1);
 namespace Choppro\Stage2;
 final class Pdf
 {
+    public static function textPages(string $bytes):array
+    {
+        if(!str_starts_with($bytes,'%PDF-')||!str_contains($bytes,'/BaseFont /DejaVuSans'))return[];
+        preg_match_all('~BT /F1 10 Tf 14 TL 48 790 Td\n(.*?)ET\nBT /F1 8 Tf 48 35 Td~s',$bytes,$streams);$pages=[];
+        foreach($streams[1]as$stream){preg_match_all('~<([0-9a-f]*)> Tj T\*~',$stream,$lines);$page=[];foreach($lines[1]as$hex){if(strlen($hex)%4)return[];$page[]=mb_convert_encoding(hex2bin($hex),'UTF-8','UTF-16BE');}$pages[]=$page;}
+        return$pages;
+    }
+
     public static function render(array $paragraphs):string
     {
         static $compact,$complete;$needsFull=(bool)preg_match('/[^\x{0000}-\x{00FF}\x{0400}-\x{052F}\x{2000}-\x{203F}\x{20AC}\x{20BD}\x{2116}\x{2190}\x{2192}\x{25CF}]/u',implode(' ',array_map('strval',$paragraphs)));$font=$needsFull?($complete??=file_get_contents(dirname(__DIR__,2).'/assets/fonts/DejaVuSans.ttf')):($compact??=base64_decode(file_get_contents(dirname(__DIR__,2).'/assets/fonts/DejaVuSansWorkspace.base64'),true));$u16=fn($p)=>unpack('n',substr($font,$p,2))[1];$u32=fn($p)=>unpack('N',substr($font,$p,4))[1];$tables=[];for($i=0;$i<$u16(4);$i++){$p=12+$i*16;$tables[substr($font,$p,4)]=$u32($p+8);}

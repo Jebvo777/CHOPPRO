@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-use Choppro\Stage2\{Workspace,DemoData,Seeder,Documents,Resources,Access,Support};
+use Choppro\Stage2\{Workspace,DemoData,Seeder,Documents,Resources,Access,Support,Pdf};
 
 $workspace=new Workspace($r);
 check($workspace->search(['q'=>'И'])['total']===0,'Search ignores one-character query');
@@ -28,6 +28,7 @@ $document=Seeder::id('doc-0-1-0');$content=(new Documents($r))->content($documen
 check(str_starts_with($content['bytes'],'%PDF-')&&str_contains($content['bytes'],'/ToUnicode'),'PDF contains selectable text');
 $stored=$a->find('documents',$document);$filePath=$config['storage'].'/uploads/'.$a->tenant().'/'.$stored['file_path'];
 check(hash('sha256',$content['bytes'])===$stored['sha256'],'Served PDF matches stored checksum');
+$text=(new Documents($r))->text($document);check(count($text['pages'])===1&&str_contains(implode(' ',$text['pages'][0]),$stored['number']),'Text view extracted from stored PDF');check(count(Pdf::textPages(Pdf::render(array_fill(0,40,'Проверка нескольких страниц'))))===2,'Text view preserves PDF page boundaries');
 problem(fn()=>(new Documents($gr))->content($document),'NOT_FOUND');
 $db->run("UPDATE cp_documents SET sha256=? WHERE id=?",[str_repeat('0',64),$document]);problem(fn()=>(new Documents($r))->content($document),'FILE_NOT_FOUND');
 $db->run('UPDATE cp_documents SET sha256=?,scan_status=? WHERE id=?',[$stored['sha256'],'PENDING_SCAN',$document]);problem(fn()=>(new Documents($r))->content($document),'FILE_QUARANTINED');

@@ -55,7 +55,8 @@ final class Kernel
         if(preg_match('~^/v1/imports/(employees|facilities|customers)/(preview|apply)$~',$path,$m)&&$method==='POST')return $admin->import($m[1],$input,$m[2]==='apply');
         if(preg_match('~^/v1/imports/([a-f0-9-]+)/rollback$~',$path,$m)&&$method==='POST')return $admin->rollbackImport($m[1],$input);
         if($path==='/v1/documents/upload'&&$method==='POST')return (new Documents($r))->upload($input,$files['file']??[]);
-        if(preg_match('~^/v1/documents/([a-f0-9-]+)/(review|download|preview|history)$~',$path,$m)){
+        if(preg_match('~^/v1/documents/([a-f0-9-]+)/(review|download|preview|text|history)$~',$path,$m)){
+            if($m[2]==='text'&&$method==='GET')return(new Documents($r))->text($m[1]);
             if(in_array($m[2],['download','preview'],true)&&$method==='GET')(new Documents($r))->download($m[1],$m[2]==='preview');
             if($m[2]==='review'&&$method==='POST')return(new Documents($r))->review($m[1],$input);
             if($m[2]==='history'&&$method==='GET'){ $a->need('documents.review');$a->find('documents',$m[1],false);return ['items'=>$this->db->all('SELECT name,decision,reason,actor_id,created_at FROM cp_document_reviews WHERE tenant_id=? AND document_id=? ORDER BY created_at',[$a->tenant(),$m[1]])]; }

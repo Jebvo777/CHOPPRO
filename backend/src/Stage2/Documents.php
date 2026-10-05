@@ -49,12 +49,18 @@ final class Documents
         $bytes=file_get_contents($path);
         return ['bytes'=>$bytes,'mime'=>$d['mime'],'name'=>$d['name'].'.'.pathinfo($name,PATHINFO_EXTENSION)];
     }
+    public function text(string $id):array
+    {
+        $file=$this->content($id);$row=$this->r->access->find('documents',$id);$pages=[];
+        if($file['mime']==='application/pdf'&&preg_match('/^demo-[a-f0-9-]{36}\.pdf$/',$row['file_path']))$pages=Pdf::textPages($file['bytes']);
+        $this->r->access->audit('document.previewed','documents',$id);return['name'=>$row['name'],'pages'=>$pages];
+    }
     public function download(string $id,bool $preview=false):never
     {
         $file=$this->content($id);$this->r->access->audit($preview?'document.previewed':'document.downloaded','documents',$id);
         header('Content-Type: '.$file['mime']);header('Content-Disposition: '.($preview?'inline':'attachment').'; filename="document-'.substr($id,0,8).'.'.pathinfo($file['name'],PATHINFO_EXTENSION).'"; filename*=UTF-8\'\''.rawurlencode($file['name']));
         header('Content-Length: '.strlen($file['bytes']));header('Cache-Control: private, no-store');header('X-Content-Type-Options: nosniff');
-        if($preview){header('X-Frame-Options: SAMEORIGIN');header("Content-Security-Policy: default-src 'none'; frame-ancestors 'self'");}
+        if($preview){header('X-Frame-Options: SAMEORIGIN');header("Content-Security-Policy: default-src 'none'; object-src 'self' blob:; frame-ancestors 'self'");}
         echo$file['bytes'];exit;
     }
 }

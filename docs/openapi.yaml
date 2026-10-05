@@ -15103,6 +15103,60 @@ paths:
       description: Требуется shifts.update и текущая version. Сохраняет время начала в часовом поясе объекта и длительность.
         Только неопубликованный DRAFT, будущий момент; проверяет дубликат поста и пересечения назначенных сотрудников.
         Конфликт версии, опубликованная смена или занятость возвращают 409.
+  /documents/{id}/text:
+    get:
+      tags:
+      - Документы сотрудников
+      summary: Текстовое содержимое демонстрационного PDF
+      operationId: get_documents_id_text
+      x-stage: 2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор записи
+      - name: tenant
+        in: query
+        schema:
+          type: string
+        description: Организация для оператора платформы; доступ к бизнес-данным требует активного временного доступа
+          поддержки
+      responses:
+        '200':
+          description: Страницы текста документа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  pages:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: string
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      description: Декодирует текст и границы страниц из физически сохранённого PDF, созданного системой. Использует
+        отдельное право скачивания, антивирусное состояние и SHA-256; просмотр фиксируется в аудите. Для пользовательских
+        файлов возвращает пустые pages, интерфейс использует штатный PDF-просмотр браузера.
 components:
   securitySchemes:
     BearerAuth:
