@@ -4,6 +4,7 @@ require_once dirname(__DIR__).'/app/Repository.php';
 require_once dirname(__DIR__).'/app/helpers.php';
 require_once dirname(__DIR__).'/app/Markdown.php';
 require_once dirname(__DIR__).'/app/Catalog.php';
+require_once dirname(__DIR__).'/app/ApiReference.php';
 
 $checks = 0;
 function check(bool $condition, string $message): void
@@ -170,6 +171,8 @@ try {
     $merged = true;
     $transition->synchronize(true);
     check(($transition->snapshot['branch'] ?? '') === 'main' && $transition->snapshot['sha'] === str_repeat('3', 40), 'After the merge the portal switches to the default branch without changing server configuration');
+    $catalogFile=dirname(__DIR__,2).'/docs/api-catalog.json';$spec=is_file($catalogFile)?json_decode(file_get_contents($catalogFile),true):null;
+    if($spec){set_error_handler(static function($severity,$message){throw new ErrorException($message);});try{$html=ApiReference::render($spec);}finally{restore_error_handler();}check(str_contains($html,'/v1/documents/{id}/text')&&str_contains($html,'Требуется вход'),'API reference resolves response descriptions without warnings');}
     echo "PASS ".$checks." checks".PHP_EOL;
 } finally {
     removeTree($temp);

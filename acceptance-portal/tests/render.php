@@ -15,12 +15,10 @@ foreach ($pages as $page) {
     $command = PHP_BINARY.' -r '.escapeshellarg(
         '$_GET["page"]='.var_export($page, true).';$_SERVER["REQUEST_URI"]="/?page='.$page.'";include '.var_export($root.'/index.php', true).';'
     );
-    $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-    $html = stream_get_contents($pipes[1]);
-    $error = stream_get_contents($pipes[2]);
-    fclose($pipes[1]); fclose($pipes[2]);
-    $code = proc_close($process);
-    if ($code !== 0 || $error !== '') throw new RuntimeException($page.': '.$error);
-    file_put_contents($out.'/'.$page.'.html', $html);
+    $target=$out.'/'.$page.'.html';$errorPath=$out.'/'.$page.'.error';
+    $process=proc_open($command,[1=>['file',$target,'w'],2=>['file',$errorPath,'w']],$pipes);
+    if(!is_resource($process))throw new RuntimeException('Не удалось запустить проверку страницы '.$page);
+    $code=proc_close($process);$html=file_get_contents($target);$error=file_get_contents($errorPath);unlink($errorPath);
+    if($code!==0||$error!=='')throw new RuntimeException($page.': '.$error);
     echo 'Rendered '.$page.' '.strlen($html).' bytes'.PHP_EOL;
 }
