@@ -20,12 +20,12 @@ final class MobileChecks: XCTestCase {
         home.name = "Вход на рабочий портал"
         home.lifetime = .keepAlways
         add(home)
-        app.buttons["Профиль"].tap()
+        app.descendants(matching: .any).matching(identifier: "Профиль").firstMatch.tap()
         XCTAssertTrue(app.staticTexts["Ваш профиль"].waitForExistence(timeout: 20))
         app.terminate()
         app.launch()
         XCTAssertTrue(app.staticTexts["Ваш рабочий день"].waitForExistence(timeout: 90), "Сессия и зашифрованные данные восстановлены")
-        app.buttons["Профиль"].tap()
+        app.descendants(matching: .any).matching(identifier: "Профиль").firstMatch.tap()
         app.buttons["Выйти"].tap()
         app.alerts.buttons["Продолжить"].tap()
         XCTAssertTrue(app.staticTexts["Вход сотрудника"].waitForExistence(timeout: 40))
