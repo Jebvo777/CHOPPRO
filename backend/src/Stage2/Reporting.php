@@ -8,7 +8,7 @@ final class Reporting
     private function bounds(array $q):array
     {
         $zone=Support::decode($this->r->db()->scalar('SELECT settings FROM cp_tenants WHERE id=?',[$this->r->access->tenant()])?:'{}')['timezone']??'Europe/Moscow';
-        $from=(string)($q['from']??gmdate('Y-m-01'));$to=(string)($q['to']??gmdate('Y-m-t'));foreach([$from,$to]as$v)if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$v)||!strtotime($v))throw new Problem(422,'DATE_INVALID','Выберите даты периода');$start=new \DateTimeImmutable($from,new \DateTimeZone($zone));$end=(new \DateTimeImmutable($to,new \DateTimeZone($zone)))->modify('+1 day');if($end<=$start||$end->getTimestamp()-$start->getTimestamp()>366*86400)throw new Problem(422,'DATE_RANGE','Период должен быть от одного дня до года');return[$start->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),$end->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),$from,$to];
+        $from=(string)($q['from']??gmdate('Y-m-01'));$to=(string)($q['to']??gmdate('Y-m-t'));foreach([$from,$to]as$v)if(!preg_match('/^\d{4}-\d{2}-\d{2}$/',$v)||!strtotime($v)||gmdate('Y-m-d',strtotime($v))!==$v)throw new Problem(422,'DATE_INVALID','Выберите даты периода');$start=new \DateTimeImmutable($from,new \DateTimeZone($zone));$end=(new \DateTimeImmutable($to,new \DateTimeZone($zone)))->modify('+1 day');if($end<=$start||$end->getTimestamp()-$start->getTimestamp()>366*86400)throw new Problem(422,'DATE_RANGE','Период должен быть от одного дня до года');return[$start->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),$end->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),$from,$to];
     }
     public function data(string $type,array $q):array
     {
@@ -33,7 +33,7 @@ final class Reporting
         return['type'=>$type,'title'=>self::TYPES[$type],'headers'=>$headers,'rows'=>$rows,'summary'=>$summary,'from'=>$dateFrom,'to'=>$dateTo,'generated_at'=>gmdate('c'),'total'=>count($rows)];
     }
     private static function status(string $value):string{return match($value){'VALID'=>'Действителен','EXPIRING'=>'Истекает','EXPIRED'=>'Истек','ACTIVE'=>'Активен','DRAFT'=>'Черновик','ENDED'=>'Завершен','OPEN'=>'Открыто','IN_PROGRESS'=>'В работе','RESOLVED'=>'Решено','OVERDUE'=>'Просрочено','DUE'=>'К исполнению','CONFIRMED'=>'Подтверждено','MARKED_SENT'=>'Отмечено отправленным',default=>'Требует проверки'};}
-    public static function cell(mixed $v):mixed{if(!is_string($v))return$v;return preg_match('/^[\s\x00-\x20]*[=+@-]/u',$v)?"'".$v:$v;}
+    public static function cell(mixed $v):mixed{if(!is_string($v))return$v;return preg_match('/^[\s\x00-\x20\x{FEFF}]*[=+@-]/u',$v)?"'".$v:$v;}
     public function export(string $type,array $q):never
     {
         $a=$this->r->access;$a->need('reporting.export');$data=$this->data($type,$q);$format=$q['format']??'csv';$a->audit('reporting.exported','reports',null,['type'=>$type,'rows'=>$data['total'],'format'=>$format,'from'=>$data['from'],'to'=>$data['to']]);header('Cache-Control: no-store');$name=$type.'-'.$data['from'].'-'.$data['to'];
