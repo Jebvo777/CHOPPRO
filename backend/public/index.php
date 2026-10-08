@@ -5,7 +5,9 @@ use Choppro\Stage2\{Auth,Config,Db,Kernel,Problem,Support};
 $GLOBALS['correlation_id']=Support::uuid();
 header('Content-Type: application/json; charset=utf-8');header('X-Content-Type-Options: nosniff');header('X-Frame-Options: DENY');header('Referrer-Policy: no-referrer');header('Cache-Control: no-store');header('X-Correlation-Id: '.$GLOBALS['correlation_id']);
 try{
-    $config=Config::load();Auth::start($config);
+    $config=Config::load();if(is_file($config['storage'].'/restore.json'))(new \Choppro\Stage2\Backup(new Db($config),$config))->recover();
+    $GLOBALS['maintenance_handle']=fopen($config['storage'].'/maintenance.lock','c');if(!flock($GLOBALS['maintenance_handle'],LOCK_SH|LOCK_NB))throw new Problem(503,'MAINTENANCE','Обслуживание системы. Повторите позже.');
+    register_shutdown_function(static function(){if(isset($GLOBALS['maintenance_handle'])&&is_resource($GLOBALS['maintenance_handle'])){flock($GLOBALS['maintenance_handle'],LOCK_UN);fclose($GLOBALS['maintenance_handle']);}});Auth::start($config);
     $path=$_GET['path']??parse_url($_SERVER['REQUEST_URI']??'/v1/health',PHP_URL_PATH);$path=preg_replace('~^.*?/api(?=/v1)~','',$path);
     if($path==='/v1/csrf')$output=['csrf'=>$_SESSION['csrf']];
     else{

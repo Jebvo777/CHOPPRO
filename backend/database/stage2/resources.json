@@ -322,5 +322,30 @@
     "authority": "varchar(200)",
     "receipt": "varchar(300)",
     "status": "varchar(32)"
+  },
+  "patrol_routes": {
+    "name": "varchar(200)",
+    "facility_id": "char(36)",
+    "status": "varchar(32)",
+    "ordered": "tinyint",
+    "window_minutes": "int",
+    "tolerance_minutes": "int"
+  },
+  "patrol_route_points": {
+    "name": "varchar(200)",
+    "route_id": "char(36)",
+    "qr_point_id": "char(36)",
+    "position": "int",
+    "lat": "decimal(10,7)",
+    "lng": "decimal(10,7)",
+    "radius": "int",
+    "offset_minutes": "int"
+  },
+  "mobile_policies": {
+    "name": "varchar(200)",
+    "basis": "varchar(200)",
+    "text": "text",
+    "revision": "int",
+    "status": "varchar(32)"
   }
 }

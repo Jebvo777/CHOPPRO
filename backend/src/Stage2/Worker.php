@@ -19,7 +19,10 @@ final class Worker
                 foreach($missing as$m){$n=$this->db->run("INSERT IGNORE INTO cp_no_shows(id,tenant_id,name,assignment_id,status,created_at,updated_at,version)VALUES(?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),1)",[Support::uuid(),$t['id'],'Неявка / опоздание',$m['id'],'ACTIVE'])->rowCount();if($n){$counts['no_shows']++;$this->notify($t['id'],'no-show:'.$m['id'],'Нет заступления: '.$m['name'],'assignments',$m['id'],[]);}}
             }
             $this->db->run("UPDATE cp_outbox SET status='DONE',updated_at=UTC_TIMESTAMP() WHERE topic='notification.created' AND status='PENDING'");
-            $counts['retention']=(new Retention($this->db,$this->config))->run();Support::atomic($this->config['storage'].'/worker.json',Support::json(['last_run'=>Support::now(),'result'=>$counts]));return $counts;
+            foreach($this->db->all("SELECT p.*,m.started_at,m.deadline FROM cp_patrols p JOIN cp_mobile_patrol_runs m ON m.patrol_id=p.id WHERE p.status='IN_PROGRESS' AND m.deadline<DATE_SUB(UTC_TIMESTAMP(),INTERVAL 24 HOUR) LIMIT 100")as$patrol){$status=(int)$patrol['completed_points']>0?'PARTIAL':'MISSED';$this->db->run('UPDATE cp_patrols SET status=?,finished_at=?,updated_at=UTC_TIMESTAMP(),version=version+1 WHERE id=? AND status=?',[$status,$patrol['deadline'],$patrol['id'],'IN_PROGRESS']);$this->db->run('UPDATE cp_mobile_patrol_runs SET auto_closed=1 WHERE patrol_id=?',[$patrol['id']]);$counts['patrols_expired']=($counts['patrols_expired']??0)+1;}
+            $counts['reports']=Reporting::work($this->db,$this->config);
+            $counts['retention']=(new Retention($this->db,$this->config))->run();if((new Backup($this->db,$this->config))->due())try{$counts['backup']=(new Backup($this->db,$this->config))->create();}catch(Problem $e){$counts['backup']=['status'=>$e->codeName];}
+            Support::atomic($this->config['storage'].'/worker.json',Support::json(['last_run'=>Support::now(),'result'=>$counts]));return $counts;
         }finally{$this->db->run('SELECT RELEASE_LOCK(?)',[$lock]);}
     }
     public function notify(string $tenant,string $key,string $name,string $kind,string $id,array $payload): int

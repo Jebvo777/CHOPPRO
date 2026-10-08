@@ -22,13 +22,14 @@ jobs:
       DB_DATABASE: choppro_ci
       DB_USERNAME: root
       DB_PASSWORD: ci-test-password
+      CHOPPRO_DISABLE_AUTO_BACKUP: '1'
       CHOPPRO_STORAGE_ROOT: /home/runner/work/_temp/choppro-private
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo_mysql, mbstring, curl, gd
+          extensions: pdo_mysql, mbstring, curl, gd, zip, openssl
           coverage: none
       - name: PHP lint
         run: find backend web acceptance-portal host-loader -name '*.php' -print0 | xargs -0 -n1 php -l

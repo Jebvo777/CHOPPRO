@@ -8,7 +8,7 @@ final class Auth
     {
         if(session_status()===PHP_SESSION_ACTIVE)return;
         $dir=$config['storage'].'/sessions';if(!is_dir($dir))mkdir($dir,0700,true);
-        session_save_path($dir);$space=$_GET['space']??'admin';if(!in_array($space,['admin','client','platform','jobs'],true))$space='admin';session_name('choppro_app_'.$space);
+        session_save_path($dir);$space=$_GET['space']??'admin';if(!in_array($space,['admin','client','platform','jobs','mobile'],true))$space='admin';session_name('choppro_app_'.$space);
         session_set_cookie_params(['lifetime'=>0,'path'=>($config['base']?:'').'/','secure'=>!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off','httponly'=>true,'samesite'=>'Lax']);
         ini_set('session.use_strict_mode','1');session_start();
         $_SESSION['csrf']??=bin2hex(random_bytes(32));
@@ -29,6 +29,8 @@ final class Auth
     public function csrf(): void
     {
         if(str_starts_with($_SERVER['HTTP_AUTHORIZATION']??'','Bearer '))return;
+        $path=$_GET['path']??'';
+        if(($_SERVER['HTTP_X_CHOPPRO_CLIENT']??'')==='native'&&empty($_SERVER['HTTP_COOKIE'])&&empty($_SERVER['HTTP_ORIGIN'])&&str_contains($_SERVER['CONTENT_TYPE']??'','application/json')&&in_array($path,['/v1/auth/otp/request','/v1/auth/otp/verify','/v1/auth/refresh'],true))return;
         if(!hash_equals($_SESSION['csrf']??'',$_SERVER['HTTP_X_CSRF_TOKEN']??($_POST['csrf']??'')))throw new Problem(403,'CSRF','Обновите страницу и повторите действие');
     }
     public function login(array $input): array
@@ -94,7 +96,7 @@ final class Auth
     {
         $access=bin2hex(random_bytes(32));$refresh=bin2hex(random_bytes(40));$id=Support::uuid();
         $this->db->run('INSERT INTO cp_sessions(id,user_id,access_hash,refresh_hash,expires_at,refresh_expires_at,created_at,ip) VALUES(?,?,?,?,?,?,?,?)',[$id,$u['id'],hash('sha256',$access),hash('sha256',$refresh),gmdate('Y-m-d H:i:s',time()+900),gmdate('Y-m-d H:i:s',time()+2592000),Support::now(),$_SERVER['REMOTE_ADDR']??'cli']);
-        if(session_status()===PHP_SESSION_ACTIVE){session_regenerate_id(true);$_SESSION['access_token']=$access;$_SESSION['refresh_token']=$refresh;}
+        if(session_status()===PHP_SESSION_ACTIVE&&($_SERVER['HTTP_X_CHOPPRO_CLIENT']??'')!=='native'){session_regenerate_id(true);$_SESSION['access_token']=$access;$_SESSION['refresh_token']=$refresh;}
         $a=new Access($this->db,$u);$a->audit('auth.login','users',$u['id']);
         return ['access_token'=>$access,'refresh_token'=>$refresh,'expires_in'=>900,'user'=>$a->safe('users',$u),'csrf'=>$_SESSION['csrf']??''];
     }

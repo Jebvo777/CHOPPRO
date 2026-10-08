@@ -1,8 +1,8 @@
 {
   "format": 1,
-  "version": "2.2.0",
+  "version": "3.0.0",
   "php": "8.3",
-  "schema": 6,
+  "schema": 7,
   "demos": [
     {
       "app": "admin",
@@ -26,5 +26,7 @@
     }
   ],
   "notifications_stage": 4,
-  "retention_years": 3
+  "retention_years": 3,
+  "notifications_status": "EXCLUDED",
+  "integrations_enabled": false
 }

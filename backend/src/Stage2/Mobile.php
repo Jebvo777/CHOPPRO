@@ -1,0 +1,111 @@
+<?php
+declare(strict_types=1);
+namespace Choppro\Stage2;
+final class Mobile
+{
+    public function __construct(public Resources $r){}
+    private function guard():Access
+    {
+        $a=$this->r->access;if($a->user['role']!=='guard'||empty($a->user['employee_id']))throw new Problem(403,'GUARD_ONLY','Мобильный рабочий контур доступен сотруднику охраны');$this->r->feature('shifts');return$a;
+    }
+    private function assignment(string $id):array
+    {
+        $a=$this->guard();$row=$a->find('assignments',$id);$shift=$a->reference('shifts',$row['shift_id']);$post=$a->reference('posts',$shift['post_id']);$facility=$a->reference('facilities',$post['facility_id']);
+        if(!in_array($row['status'],['ASSIGNED','CONFIRMED'],true)||!(int)$shift['published']||$shift['status']==='CANCELLED'||$post['status']!=='ACTIVE'||$facility['status']!=='ACTIVE')throw new Problem(409,'ASSIGNMENT_UNAVAILABLE','Назначение больше недоступно');return['assignment'=>$row,'shift'=>$shift,'post'=>$post,'facility'=>$facility];
+    }
+    public function snapshot():array
+    {
+        $a=$this->guard();$db=$this->r->db();[$where,$args]=$a->where('assignments');
+        $assignments=$db->all("SELECT t.id,t.name,t.status,t.version,t.shift_id,t.employee_id,s.starts_at,s.ends_at,s.status shift_status,p.id post_id,p.name post_name,p.instruction,p.instruction_version,f.id facility_id,f.name facility_name,f.address,f.city,f.lat,f.lng,f.radius,f.polygon,f.timezone,f.contact_name,f.phone,x.status presence_status,x.started_at,x.finished_at FROM cp_assignments t JOIN cp_shifts s ON s.id=t.shift_id JOIN cp_posts p ON p.id=s.post_id JOIN cp_facilities f ON f.id=p.facility_id LEFT JOIN cp_presence x ON x.assignment_id=t.id WHERE ".$where." AND t.status IN ('ASSIGNED','CONFIRMED') AND s.published=1 AND s.status<>'CANCELLED' AND s.deleted_at IS NULL AND p.deleted_at IS NULL AND f.deleted_at IS NULL AND s.starts_at>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 14 DAY) AND s.starts_at<DATE_ADD(UTC_TIMESTAMP(),INTERVAL 45 DAY) ORDER BY s.starts_at LIMIT 250",$args);
+        $posts=array_unique(array_column($assignments,'post_id'));$facilities=array_values(array_unique(array_column($assignments,'facility_id')));$instructions=[];
+        foreach($posts as$post){$i=$db->one('SELECT t.*,EXISTS(SELECT 1 FROM cp_instruction_receipts x WHERE x.instruction_id=t.id AND x.employee_id=?) acknowledged FROM cp_instructions t WHERE t.post_id=? AND t.tenant_id=? AND t.deleted_at IS NULL ORDER BY t.revision DESC LIMIT 1',[$a->user['employee_id'],$post,$a->tenant()]);if($i)$instructions[]=$a->safe('instructions',$i);}
+        $routes=[];$demo=[];foreach($facilities as$f){foreach($this->r->list('patrol_routes',['facility_id'=>$f,'status'=>'ACTIVE','limit'=>100])['items']as$route){$route['facility_name']=$db->scalar('SELECT name FROM cp_facilities WHERE id=?',[$f]);$route['points']=$db->all('SELECT id,name,qr_point_id,position,lat,lng,radius,offset_minutes FROM cp_patrol_route_points WHERE route_id=? AND tenant_id=? AND deleted_at IS NULL ORDER BY position,id',[$route['id'],$a->tenant()]);$routes[]=$route;}if($this->r->config['demo']&&(int)$a->user['is_demo'])array_push($demo,...$db->all("SELECT id,token,facility_id,post_id FROM cp_qr_points WHERE tenant_id=? AND facility_id=? AND status='ACTIVE' AND deleted_at IS NULL",[$a->tenant(),$f]));}
+        $patrols=$db->all('SELECT p.*,x.route_id,x.client_key,x.started_at,x.deadline FROM cp_patrols p JOIN cp_mobile_patrol_runs x ON x.patrol_id=p.id WHERE x.tenant_id=? AND x.employee_id=? AND p.deleted_at IS NULL ORDER BY p.created_at DESC LIMIT 100',[$a->tenant(),$a->user['employee_id']]);foreach($patrols as&$p)$p['scans']=$db->all('SELECT id,point_id,status,client_time,reasons FROM cp_patrol_scans WHERE tenant_id=? AND patrol_id=? ORDER BY client_time',[$a->tenant(),$p['id']]);unset($p);
+        $policy=$db->one("SELECT id,name,basis,text,revision FROM cp_mobile_policies WHERE tenant_id=? AND status='PUBLISHED' AND deleted_at IS NULL ORDER BY revision DESC LIMIT 1",[$a->tenant()]);
+        $incidents=$db->all('SELECT i.id,i.name,i.description,i.facility_id,i.category,i.severity,i.status,m.client_time,m.measures FROM cp_incidents i JOIN cp_mobile_incidents m ON m.incident_id=i.id WHERE m.tenant_id=? AND m.employee_id=? AND i.deleted_at IS NULL ORDER BY m.client_time DESC LIMIT 100',[$a->tenant(),$a->user['employee_id']]);
+        return['user'=>$a->safe('users',$a->user),'tenant'=>$db->one('SELECT id,name FROM cp_tenants WHERE id=?',[$a->tenant()]),'permissions'=>$a->permissions(),'server_time'=>gmdate('c'),'demo'=>$this->r->config['demo']&&(int)$a->user['is_demo'],'assignments'=>$assignments,'instructions'=>$instructions,'routes'=>$routes,'patrols'=>$patrols,'incidents'=>$incidents,'attendance'=>$this->r->list('attendance',['limit'=>500])['items'],'policy'=>$policy,'policy_acknowledged'=>$policy&&(bool)$db->scalar('SELECT id FROM cp_policy_receipts WHERE user_id=? AND policy_id=?',[$a->user['id'],$policy['id']]),'demo_points'=>$demo];
+    }
+    private static function canonical(mixed $value):mixed{if(is_array($value)){if(!array_is_list($value))ksort($value);foreach($value as$key=>$part)$value[$key]=self::canonical($part);}return$value;}
+    public function event(array $input):array
+    {
+        $a=$this->guard();$key=(string)($input['id']??'');$type=(string)($input['type']??'');$p=$input['payload']??[];$device=(string)($input['device_id']??'');
+        if(!preg_match('/^[a-f0-9-]{36}$/',$key)||!is_array($p)||strlen($device)<5||strlen($device)>100)throw new Problem(422,'EVENT_INVALID','Некорректная запись устройства');
+        try{$time=(new \DateTimeImmutable((string)($input['client_time']??'')))->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');}catch(\Throwable){throw new Problem(422,'TIME_INVALID','Некорректное время устройства');}
+        if(empty($input['client_time'])||strtotime($time)>time()+300||strtotime($time)<time()-86400*90)throw new Problem(422,'TIME_INVALID','Проверьте время устройства: события принимаются за последние 90 дней');
+        $hash=hash('sha256',Support::json(self::canonical(['type'=>$type,'time'=>$time,'device'=>$device,'payload'=>$p])));$db=$this->r->db();
+        return$db->transaction(function()use($a,$key,$type,$p,$device,$time,$hash,$db){
+            $db->run('SELECT id FROM cp_users WHERE id=? FOR UPDATE',[$a->user['id']]);
+            $old=$db->one('SELECT * FROM cp_mobile_events WHERE tenant_id=? AND user_id=? AND event_key=? FOR UPDATE',[$a->tenant(),$a->user['id'],$key]);
+            if($old){if(!hash_equals($old['payload_hash'],$hash))throw new Problem(409,'IDEMPOTENCY_CONFLICT','Повторный запрос содержит другие данные');return Support::decode($old['response']);}
+            $db->run('SELECT id FROM cp_users WHERE id=? FOR UPDATE',[$a->user['id']]);
+            $old=$db->one('SELECT * FROM cp_mobile_events WHERE tenant_id=? AND user_id=? AND event_key=?',[$a->tenant(),$a->user['id'],$key]);if($old){if(!hash_equals($old['payload_hash'],$hash))throw new Problem(409,'IDEMPOTENCY_CONFLICT','Данные события отличаются');return Support::decode($old['response']);}
+            if($type!=='POLICY_ACK'){$policy=$db->one("SELECT id FROM cp_mobile_policies WHERE tenant_id=? AND status='PUBLISHED' AND deleted_at IS NULL ORDER BY revision DESC LIMIT 1",[$a->tenant()]);if(!$policy||!$db->scalar('SELECT id FROM cp_policy_receipts WHERE user_id=? AND policy_id=?',[$a->user['id'],$policy['id']]))throw new Problem(409,'POLICY_ACK_REQUIRED','Ознакомьтесь с актуальными правилами работы');}
+            $result=match($type){
+                'POLICY_ACK'=>$this->policy($p,$time),
+                'ASSIGNMENT_CONFIRM'=>$this->confirm($p),
+                'INSTRUCTION_ACK'=>$this->instruction($p),
+                'CHECK_IN','CHECK_OUT'=>$this->attendance($type,$p,$time,$device,$key),
+                'PATROL_START'=>$this->start($p,$time,$key),
+                'CHECKPOINT_SCAN'=>$this->scan($p,$time,$device),
+                'PATROL_FINISH'=>$this->finish($p,$time),
+                'INCIDENT_CREATE'=>$this->incident($p,$time,$device),
+                'ATTENDANCE_EXPLAIN'=>$this->explain($p,$time),
+                default=>throw new Problem(422,'EVENT_TYPE_INVALID','Неизвестное рабочее действие')};
+            $db->run('INSERT INTO cp_mobile_events(id,tenant_id,user_id,event_key,event_type,payload_hash,response,client_time,created_at)VALUES(?,?,?,?,?,?,?,?,?)',[Support::uuid(),$a->tenant(),$a->user['id'],$key,$type,$hash,Support::json($result),$time,Support::now()]);return$result;
+        });
+    }
+    private function policy(array $p,string $time):array
+    {
+        $a=$this->guard();$db=$this->r->db();$policy=$db->one("SELECT * FROM cp_mobile_policies WHERE id=? AND tenant_id=? AND status='PUBLISHED' AND deleted_at IS NULL",[$p['policy_id']??'',$a->tenant()]);$latest=$db->scalar("SELECT MAX(revision) FROM cp_mobile_policies WHERE tenant_id=? AND status='PUBLISHED' AND deleted_at IS NULL",[$a->tenant()]);if(!$policy||(int)$policy['revision']!==(int)$latest)throw new Problem(409,'POLICY_SUPERSEDED','Ознакомьтесь с новой версией правил');
+        $db->run('INSERT IGNORE INTO cp_policy_receipts(id,tenant_id,user_id,policy_id,revision,client_time,created_at,ip)VALUES(?,?,?,?,?,?,?,?)',[Support::uuid(),$a->tenant(),$a->user['id'],$policy['id'],$policy['revision'],$time,Support::now(),$_SERVER['REMOTE_ADDR']??'cli']);$a->audit('policy.acknowledged','mobile_policies',$policy['id'],['revision'=>$policy['revision']]);return['ok'=>true,'revision'=>$policy['revision']];
+    }
+    private function confirm(array $p):array{$this->assignment((string)($p['assignment_id']??''));return(new Operations($this->r))->confirm($p['assignment_id'],$p);}
+    private function instruction(array $p):array
+    {
+        $a=$this->guard();$a->need('instructions.acknowledge');$i=$a->find('instructions',(string)($p['instruction_id']??''));$db=$this->r->db();$latest=$db->scalar('SELECT MAX(revision) FROM cp_instructions WHERE tenant_id=? AND post_id=? AND deleted_at IS NULL',[$a->tenant(),$i['post_id']]);if((int)$i['revision']!==(int)$latest)throw new Problem(409,'INSTRUCTION_SUPERSEDED','Инструкция изменилась');
+        if(!$db->scalar('SELECT id FROM cp_instruction_receipts WHERE instruction_id=? AND employee_id=?',[$i['id'],$a->user['employee_id']]))$this->r->insert('instruction_receipts',['name'=>'Ознакомление с инструкцией','instruction_id'=>$i['id'],'employee_id'=>$a->user['employee_id'],'acknowledged_at'=>Support::now()]);$a->audit('instruction.acknowledged','instructions',$i['id'],['revision'=>$latest]);return['ok'=>true,'revision'=>$latest];
+    }
+    private function attendance(string $type,array $p,string $time,string $device,string $key):array
+    {
+        $context=$this->assignment((string)($p['assignment_id']??''));$a=$this->guard();$i=$this->r->db()->one('SELECT id FROM cp_instructions WHERE tenant_id=? AND post_id=? AND deleted_at IS NULL ORDER BY revision DESC LIMIT 1',[$a->tenant(),$context['post']['id']]);if($i&&!$this->r->db()->scalar('SELECT id FROM cp_instruction_receipts WHERE instruction_id=? AND employee_id=?',[$i['id'],$a->user['employee_id']]))throw new Problem(409,'INSTRUCTION_ACK_REQUIRED','Сначала ознакомьтесь с актуальной инструкцией');
+        return(new Operations($this->r))->attendance([...$p,'event_type'=>$type,'client_time'=>$time,'device_id'=>$device,'idempotency_key'=>'mobile-'.$key]);
+    }
+    private function start(array $p,string $time,string $key):array
+    {
+        $context=$this->assignment((string)($p['assignment_id']??''));$a=$this->guard();$a->need('patrols.create');$db=$this->r->db();$route=$a->find('patrol_routes',(string)($p['route_id']??''));if($route['facility_id']!==$context['facility']['id']||$route['status']!=='ACTIVE')throw new Problem(422,'ROUTE_UNAVAILABLE','Маршрут не относится к смене');if(strtotime($time)<strtotime($context['shift']['starts_at'])-3600||strtotime($time)>strtotime($context['shift']['ends_at'])+7200)throw new Problem(422,'PATROL_TIME_INVALID','Обход должен относиться ко времени смены');
+        $points=$db->all('SELECT * FROM cp_patrol_route_points WHERE route_id=? AND tenant_id=? AND deleted_at IS NULL ORDER BY position,id',[$route['id'],$a->tenant()]);if(!$points)throw new Problem(422,'ROUTE_EMPTY','На маршруте нет контрольных точек');
+        $row=$this->r->insert('patrols',['name'=>$route['name'],'facility_id'=>$route['facility_id'],'shift_id'=>$context['shift']['id'],'status'=>'IN_PROGRESS','completed_points'=>0,'total_points'=>count($points)]);$deadline=gmdate('Y-m-d H:i:s',strtotime($time)+(int)$route['window_minutes']*60);$db->run('INSERT INTO cp_mobile_patrol_runs(patrol_id,tenant_id,route_id,assignment_id,employee_id,client_key,started_at,deadline,route_snapshot)VALUES(?,?,?,?,?,?,?,?,?)',[$row['id'],$a->tenant(),$route['id'],$context['assignment']['id'],$a->user['employee_id'],$key,$time,$deadline,Support::json(['route'=>$route,'points'=>$points])]);$a->audit('patrol.started','patrols',$row['id'],['assignment_id'=>$context['assignment']['id'],'route_id'=>$route['id']]);return$row;
+    }
+    private function run(array $p):array
+    {
+        $a=$this->guard();$run=$this->r->db()->one('SELECT * FROM cp_mobile_patrol_runs WHERE tenant_id=? AND employee_id=? AND client_key=? FOR UPDATE',[$a->tenant(),$a->user['employee_id'],$p['patrol_key']??'']);if(!$run)throw new Problem(404,'PATROL_NOT_FOUND','Начало обхода еще не отправлено');$this->assignment($run['assignment_id']);$row=$a->find('patrols',$run['patrol_id']);return['run'=>$run,'patrol'=>$row,'snapshot'=>Support::decode($run['route_snapshot'])];
+    }
+    private function scan(array $p,string $time,string $device):array
+    {
+        $a=$this->guard();$a->need('patrols.update');$context=$this->run($p);$run=$context['run'];$db=$this->r->db();if($context['patrol']['status']!=='IN_PROGRESS'&&!(int)$run['auto_closed'])throw new Problem(409,'PATROL_FINISHED','Обход уже завершен');$point=null;foreach($context['snapshot']['points']as$item)if($item['id']===($p['point_id']??''))$point=$item;if(!$point)throw new Problem(422,'POINT_UNAVAILABLE','Точка не относится к маршруту');
+        if($db->scalar('SELECT id FROM cp_patrol_scans WHERE patrol_id=? AND point_id=?',[$run['patrol_id'],$point['id']]))throw new Problem(409,'POINT_ALREADY_SCANNED','Точка уже отмечена');$reasons=[];$qr=$db->one("SELECT token FROM cp_qr_points WHERE id=? AND tenant_id=? AND status='ACTIVE' AND deleted_at IS NULL",[$point['qr_point_id'],$a->tenant()]);if(!$qr||!hash_equals($qr['token'],(string)($p['qr_token']??'')))throw new Problem(422,'QR_REVOKED','QR-код точки недействителен или отозван');
+        $explanation=trim((string)($p['explanation']??''));$gps=isset($p['lat'],$p['lng'],$p['accuracy'])&&is_numeric($p['lat'])&&is_numeric($p['lng'])&&is_numeric($p['accuracy']);if(!$gps&&mb_strlen($explanation)<10)throw new Problem(422,'GPS_EXPLANATION_REQUIRED','Опишите причину отсутствия GPS');if($gps&&(abs((float)$p['lat'])>90||abs((float)$p['lng'])>180||(float)$p['accuracy']<0))throw new Problem(422,'COORDINATES_INVALID','Некорректные координаты');
+        if(!$gps)$reasons[]='Координаты недоступны';else{if((float)$p['accuracy']>100)$reasons[]='Недостаточная точность GPS';if(Support::distance((float)$p['lat'],(float)$p['lng'],(float)$point['lat'],(float)$point['lng'])>(int)$point['radius'])$reasons[]='Вне геозоны контрольной точки';}
+        $route=$context['snapshot']['route'];$tolerance=(int)$route['tolerance_minutes']*60;if($time<$run['started_at']||strtotime($time)>strtotime($run['deadline'])+$tolerance)$reasons[]='Нарушено временное окно';if((int)$point['offset_minutes']>0&&abs(strtotime($time)-strtotime($run['started_at'])-(int)$point['offset_minutes']*60)>$tolerance)$reasons[]='Отклонение от времени контрольной точки';
+        if((int)$route['ordered'])foreach($context['snapshot']['points']as$previous)if((int)$previous['position']<(int)$point['position']&&!$db->scalar('SELECT id FROM cp_patrol_scans WHERE patrol_id=? AND point_id=?',[$run['patrol_id'],$previous['id']]))$reasons[]='Нарушен порядок контрольных точек';if($reasons&&mb_strlen($explanation)<10)throw new Problem(422,'SCAN_EXPLANATION_REQUIRED','Добавьте объяснение отклонения',['reasons'=>$reasons]);
+        $id=Support::uuid();$status=$reasons?'REQUIRES_REVIEW':'VALID';$db->run('INSERT INTO cp_patrol_scans(id,tenant_id,patrol_id,point_id,status,client_time,server_time,lat,lng,accuracy,device_id,qr_hash,reasons,explanation)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$a->tenant(),$run['patrol_id'],$point['id'],$status,$time,Support::now(),$gps?$p['lat']:null,$gps?$p['lng']:null,$gps?$p['accuracy']:null,$device,hash('sha256',(string)($p['qr_token']??'')),Support::json($reasons),$explanation]);$count=(int)$db->scalar("SELECT COUNT(*) FROM cp_patrol_scans WHERE patrol_id=? AND status='VALID'",[$run['patrol_id']]);$this->r->write('patrols',$run['patrol_id'],['completed_points'=>$count,...((int)$run['auto_closed']?['status'=>$count===(int)$context['patrol']['total_points']?'COMPLETED':($count?'PARTIAL':'MISSED')]:[])]);$a->audit('patrol.point_scanned','patrols',$run['patrol_id'],['point_id'=>$point['id'],'status'=>$status,'client_time'=>$time]);return['id'=>$id,'status'=>$status,'reasons'=>$reasons,'client_time'=>$time];
+    }
+    private function finish(array $p,string $time):array
+    {
+        $a=$this->guard();$a->need('patrols.update');$context=$this->run($p);$patrol=$context['patrol'];if($patrol['status']!=='IN_PROGRESS'&&!(int)$context['run']['auto_closed'])return$patrol;if($time<$context['run']['started_at'])throw new Problem(422,'TIME_INVALID','Завершение обхода раньше начала');$count=(int)$this->r->db()->scalar("SELECT COUNT(*) FROM cp_patrol_scans WHERE patrol_id=? AND status='VALID'",[$patrol['id']]);$status=$count===(int)$patrol['total_points']?'COMPLETED':($count?'PARTIAL':'MISSED');$this->r->write('patrols',$patrol['id'],['status'=>$status,'completed_points'=>$count,'finished_at'=>$time]);$this->r->db()->run('UPDATE cp_mobile_patrol_runs SET auto_closed=0 WHERE patrol_id=?',[$patrol['id']]);$a->audit('patrol.finished','patrols',$patrol['id'],['status'=>$status,'completed_points'=>$count]);return$a->safe('patrols',$a->find('patrols',$patrol['id']));
+    }
+    private function incident(array $p,string $time,string $device):array
+    {
+        $context=$this->assignment((string)($p['assignment_id']??''));$a=$this->guard();$a->need('incidents.create');foreach(['name'=>3,'description'=>10]as$field=>$min)if(mb_strlen(trim((string)($p[$field]??'')))<$min)throw new Problem(422,'INCIDENT_INVALID','Заполните название и описание');if(!in_array($p['severity']??'',['LOW','MEDIUM','HIGH','CRITICAL'],true)||!in_array($p['category']??'',['SECURITY','FIRE','MEDICAL','TECHNICAL','OTHER'],true))throw new Problem(422,'INCIDENT_INVALID','Выберите важность и категорию');if(strlen((string)($p['measures']??''))>60000)throw new Problem(422,'INCIDENT_INVALID','Слишком большой текст');
+        $data=$this->r->normalize('incidents',['name'=>$p['name'],'facility_id'=>$context['facility']['id'],'category'=>$p['category'],'severity'=>$p['severity'],'status'=>'OPEN','published'=>0,'description'=>$p['description'],'internal_note'=>'']);$row=$this->r->insert('incidents',$data);$this->r->db()->run('INSERT INTO cp_mobile_incidents(incident_id,tenant_id,employee_id,assignment_id,client_time,measures,device_id)VALUES(?,?,?,?,?,?,?)',[$row['id'],$a->tenant(),$a->user['employee_id'],$context['assignment']['id'],$time,trim((string)($p['measures']??'')),$device]);$a->audit('incident.created','incidents',$row['id'],['severity'=>$row['severity'],'assignment_id'=>$context['assignment']['id'],'escalation'=>'NOT_CONNECTED']);return$a->safe('incidents',$row)+['client_time'=>$time,'escalation_status'=>'NOT_CONNECTED'];
+    }
+    private function explain(array $p,string $time):array
+    {
+        $a=$this->guard();$row=$a->find('attendance',(string)($p['attendance_id']??''));$reason=trim((string)($p['reason']??''));if($row['status']!=='REQUIRES_REVIEW'||mb_strlen($reason)<10||mb_strlen($reason)>5000)throw new Problem(422,'EXPLANATION_INVALID','Опишите обстоятельства спорной отметки');$id=Support::uuid();$this->r->db()->run('INSERT INTO cp_attendance_explanations(id,tenant_id,attendance_id,user_id,employee_id,reason,client_time,created_at)VALUES(?,?,?,?,?,?,?,?)',[$id,$a->tenant(),$row['id'],$a->user['id'],$row['employee_id'],$reason,$time,Support::now()]);$a->audit('attendance.explained','attendance',$row['id'],['explanation_id'=>$id]);return['id'=>$id,'ok'=>true];
+    }
+    public function upload(array $input,array $file):array
+    {
+        $a=$this->guard();$a->need('incidents.attach');$key=(string)($input['event_key']??'');if(!preg_match('/^[a-f0-9-]{36}$/',$key))throw new Problem(422,'UPLOAD_INVALID','Некорректный ключ вложения');$event=$this->r->db()->one("SELECT response FROM cp_mobile_events WHERE tenant_id=? AND user_id=? AND event_key=? AND event_type='INCIDENT_CREATE'",[$a->tenant(),$a->user['id'],$input['incident_event_key']??'']);if(!$event)throw new Problem(409,'INCIDENT_NOT_SYNCED','Сначала отправьте происшествие');$incident=Support::decode($event['response']);$a->find('incidents',$incident['id']);
+        return(new MobileFiles($this->r))->upload($incident['id'],$key,$file);
+    }
+}

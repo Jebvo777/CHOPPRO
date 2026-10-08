@@ -62,6 +62,15 @@ final class Resources
         foreach(Schema::required($kind)as$f)if(!isset($combined[$f])||$combined[$f]==='')throw new Problem(422,'VALIDATION','Заполните обязательное поле',['field'=>$f]);
         foreach(Schema::references()as$f=>$resource)if(isset($data[$f])&&$data[$f])$this->access->reference($resource,$data[$f]);
         if(isset($data['status'])&&!in_array($data['status'],Schema::statuses($kind),true))throw new Problem(422,'VALIDATION','Недопустимый статус');
+        if($kind==='patrol_routes'){
+            if((int)$combined['window_minutes']<1||(int)$combined['window_minutes']>1440||(int)$combined['tolerance_minutes']<0||(int)$combined['tolerance_minutes']>120)throw new Problem(422,'ROUTE_TIME_INVALID','Время обхода: 1–1440 минут, допуск: 0–120 минут');
+            if(($combined['status']??'')==='ACTIVE'&&(!$old||!$this->db()->scalar('SELECT id FROM cp_patrol_route_points WHERE route_id=? AND tenant_id=? AND deleted_at IS NULL',[$old['id'],$this->access->tenant()])))throw new Problem(422,'ROUTE_EMPTY','Добавьте точки перед активацией маршрута');
+        }
+        if($kind==='patrol_route_points'){
+            if((int)$combined['position']<1||(int)$combined['position']>100||(int)$combined['radius']<10||(int)$combined['radius']>1000||abs((float)$combined['lat'])>90||abs((float)$combined['lng'])>180||(int)$combined['offset_minutes']<0)throw new Problem(422,'POINT_INVALID','Проверьте порядок, координаты и допуск точки');
+            $route=$this->access->reference('patrol_routes',$combined['route_id']);$qr=$this->access->reference('qr_points',$combined['qr_point_id']);if($route['facility_id']!==$qr['facility_id'])throw new Problem(422,'POINT_FACILITY_INVALID','QR-точка должна относиться к объекту маршрута');
+        }
+        if($kind==='mobile_policies'&&((int)$combined['revision']<1||mb_strlen($combined['text'])<20))throw new Problem(422,'POLICY_INVALID','Укажите версию и полный текст правил');
         if($kind==='facilities'){
             $polygon=Support::decode($combined['polygon']??'[]');if($polygon&&(count($polygon)<3||count($polygon)>100))throw new Problem(422,'POLYGON_INVALID','Полигон содержит от 3 до 100 точек');foreach($polygon as$point)if(!is_array($point)||count($point)!==2||!is_numeric($point[0])||!is_numeric($point[1])||abs((float)$point[0])>90||abs((float)$point[1])>180)throw new Problem(422,'POLYGON_INVALID','Некорректные точки полигона');
             if((float)$combined['lat']<-90||(float)$combined['lat']>90||(float)$combined['lng']<-180||(float)$combined['lng']>180||(int)$combined['radius']<10||(int)$combined['radius']>10000)throw new Problem(422,'GEOFENCE_INVALID','Проверьте координаты и радиус геозоны');
@@ -102,6 +111,7 @@ final class Resources
         return $this->db()->transaction(function()use($kind,$id,$input){
             $old=$this->access->find($kind,$id,false);$version=(int)($input['version']??0);if($version!==(int)$old['version'])throw new Problem(409,'VERSION_CONFLICT','Запись изменилась. Обновите страницу.');
             if(in_array($kind,['service_types','compliance_rules'],true)||($kind==='contract_templates'&&(int)$old['published']))throw new Problem(409,'IMMUTABLE_VERSION','Создайте новую версию справочника');
+            if($kind==='mobile_policies'&&$old['status']==='PUBLISHED')throw new Problem(409,'IMMUTABLE_VERSION','Создайте новую версию правил');
             $data=$this->normalize($kind,$input,$old);
             if($kind==='reports'&&(int)$old['published'])$this->db()->run('INSERT INTO cp_report_versions(id,tenant_id,report_id,revision,snapshot,created_at)VALUES(?,?,?,?,?,?)',[Support::uuid(),$old['tenant_id'],$id,$old['version'],Support::json($this->access->safe('reports',$old)),Support::now()]);
             if($kind==='documents'){foreach(['status','scan_status','file_path','sha256','mime']as$f)unset($data[$f]);}
@@ -112,6 +122,7 @@ final class Resources
             if($kind==='contract_templates'&&!empty($data['published']))$data['published_by']=$this->access->user['id'];
             if($kind==='qr_points'&&isset($data['token']))unset($data['token']);
             $this->write($kind,$id,$data,$version);
+            if($kind==='reports')$this->db()->run('UPDATE cp_report_jobs SET status=?,updated_at=UTC_TIMESTAMP() WHERE report_id=? AND tenant_id=?',[!empty($data['published'])?'PUBLISHED':'READY',$id,$this->access->tenant()]);
             if($kind==='contracts')$this->insert('contract_versions',['name'=>$old['name'].' / v'.$old['version'],'contract_id'=>$id,'snapshot'=>$this->auditSafe($old),'actor_id'=>$this->access->user['id']]);
             if($kind==='posts'&&isset($data['instruction'])&&$data['instruction']!==$old['instruction']){ $revision=(int)$old['instruction_version']+1;$this->write('posts',$id,['instruction_version'=>$revision]);$this->insert('instructions',['name'=>'Инструкция: '.$old['name'],'post_id'=>$id,'text'=>$data['instruction'],'revision'=>$revision,'author_id'=>$this->access->user['id']]); }
             if($kind==='personal_cards'&&($data['status']??'')!==$old['status'])(new Extensions($this))->card(array_replace($old,$data));

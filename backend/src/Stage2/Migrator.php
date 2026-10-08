@@ -28,6 +28,7 @@ final class Migrator
             }
             (new RuntimeUpgrade($this->db,$this->config))->apply();
             (new DemoData($this->db,$this->config))->upgrade();
+            (new MobileUpgrade($this->db,$this->config))->apply();
             $version=(int)$this->db->scalar('SELECT COALESCE(MAX(version),0) FROM cp_schema_migrations');
             Support::atomic($this->config['storage'].'/schema.json',Support::json(['version'=>$version,'updated_at'=>Support::now()]));
             return ['version'=>$version,'migrations'=>$changes,'seeded'=>$seeded,'tenants'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_tenants'),'employees'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_employees'),'shifts'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_shifts')];

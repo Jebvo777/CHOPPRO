@@ -7,10 +7,10 @@ final class Access
     public const ROLES = [
         'tenant_admin'=>['*'], 'platform_admin'=>['*'],
         'hr'=>['dashboard.read','employees.*','documents.*','document_types.*','document_reviews.read','users.read','facilities.read','posts.read','personal_cards.*','notifications.read','audit.read'],
-        'operations'=>['dashboard.read','employees.read','facilities.*','posts.*','instructions.*','qr_points.*','shift_templates.*','shifts.*','assignments.*','attendance.*','vacancies.*','applications.*','patrols.read','incidents.read','reports.read','notifications.read','audit.read'],
+        'operations'=>['dashboard.read','employees.read','facilities.*','posts.*','instructions.*','qr_points.*','shift_templates.*','shifts.*','assignments.*','attendance.*','vacancies.*','applications.*','patrols.*','patrol_routes.*','patrol_route_points.*','incidents.*','reports.*','reporting.read','reporting.export','files.review','notifications.read','audit.read'],
         'object_manager'=>['dashboard.read','employees.read','facilities.read','posts.read','instructions.read','qr_points.read','shifts.read','assignments.*','attendance.*','notifications.read'],
         'customer'=>['dashboard.read','facilities.read','posts.read','shifts.read','patrols.read','incidents.read','reports.read','reports.acknowledge','reports.download','notifications.read','audit.read'],
-        'guard'=>['dashboard.read','employees.read','documents.read','facilities.read','posts.read','instructions.read','instructions.acknowledge','shifts.read','assignments.read','assignments.confirm','attendance.read','attendance.create','notifications.read'],
+        'guard'=>['dashboard.read','employees.read','documents.read','facilities.read','posts.read','instructions.read','instructions.acknowledge','shifts.read','assignments.read','assignments.confirm','attendance.read','attendance.create','patrols.read','patrols.create','patrols.update','patrol_routes.read','patrol_route_points.read','incidents.read','incidents.create','incidents.attach','incidents.download','notifications.read'],
     ];
     public function __construct(public Db $db, public array $user, public ?string $selectedTenant=null) {}
     public function tenant(): ?string
@@ -51,7 +51,7 @@ final class Access
             if(!$facilities){$parts[]='1=0';}
             else {
                 $in=implode(',',array_fill(0,count($facilities),'?'));
-                $scope=match($kind) { 'facilities'=>'t.id', 'posts','qr_points','employees','vacancies','incidents','patrols','reports'=>'t.facility_id', 'instructions','shifts','shift_templates'=>"(SELECT p.facility_id FROM cp_posts p WHERE p.id=t.post_id)", 'assignments','attendance'=>"(SELECT p.facility_id FROM cp_posts p JOIN cp_shifts s ON s.post_id=p.id WHERE s.id=".($kind==='assignments'?'t.shift_id':'(SELECT a.shift_id FROM cp_assignments a WHERE a.id=t.assignment_id)').")", 'applications'=>"(SELECT v.facility_id FROM cp_vacancies v WHERE v.id=t.vacancy_id)", 'documents'=>"(SELECT e.facility_id FROM cp_employees e WHERE e.id=t.employee_id)", default=>null };
+                $scope=match($kind) { 'facilities'=>'t.id', 'posts','qr_points','employees','vacancies','incidents','patrols','reports','patrol_routes'=>'t.facility_id', 'patrol_route_points'=>"(SELECT x.facility_id FROM cp_patrol_routes x WHERE x.id=t.route_id)", 'instructions','shifts','shift_templates'=>"(SELECT p.facility_id FROM cp_posts p WHERE p.id=t.post_id)", 'assignments','attendance'=>"(SELECT p.facility_id FROM cp_posts p JOIN cp_shifts s ON s.post_id=p.id WHERE s.id=".($kind==='assignments'?'t.shift_id':'(SELECT a.shift_id FROM cp_assignments a WHERE a.id=t.assignment_id)').")", 'applications'=>"(SELECT v.facility_id FROM cp_vacancies v WHERE v.id=t.vacancy_id)", 'documents'=>"(SELECT e.facility_id FROM cp_employees e WHERE e.id=t.employee_id)", default=>null };
                 if($scope){$parts[]=$scope.' IN ('.$in.')';array_push($args,...$facilities);}
             }
         }
@@ -63,6 +63,12 @@ final class Access
         if($this->user['role']==='guard') {
             if(in_array($kind,['employees','documents','assignments','attendance'],true)){$parts[]=($kind==='employees'?'t.id':'t.employee_id').'=?';$args[]=$this->user['employee_id'];}
             if($kind==='shifts'){$parts[]="t.published=1 AND EXISTS (SELECT 1 FROM cp_assignments a WHERE a.shift_id=t.id AND a.employee_id=? AND a.status IN ('ASSIGNED','CONFIRMED'))";$args[]=$this->user['employee_id'];}
+        }
+        if($this->user['role']==='guard') {
+            if($kind==='incidents'){$parts[]='EXISTS(SELECT 1 FROM cp_mobile_incidents x WHERE x.incident_id=t.id AND x.employee_id=? AND x.tenant_id=t.tenant_id)';$args[]=$this->user['employee_id'];}
+            if($kind==='patrols'){$parts[]='EXISTS(SELECT 1 FROM cp_mobile_patrol_runs x WHERE x.patrol_id=t.id AND x.employee_id=? AND x.tenant_id=t.tenant_id)';$args[]=$this->user['employee_id'];}
+            $facilityColumn=match($kind){'facilities'=>'t.id','posts','patrol_routes'=>'t.facility_id','instructions'=>"(SELECT p.facility_id FROM cp_posts p WHERE p.id=t.post_id)",'patrol_route_points'=>"(SELECT p.facility_id FROM cp_patrol_routes p WHERE p.id=t.route_id)",default=>null};
+            if($facilityColumn){$parts[]=$facilityColumn." IN (SELECT p.facility_id FROM cp_assignments ax JOIN cp_shifts sx ON sx.id=ax.shift_id JOIN cp_posts p ON p.id=sx.post_id WHERE ax.tenant_id=? AND ax.employee_id=? AND ax.deleted_at IS NULL AND ax.status IN ('ASSIGNED','CONFIRMED') AND sx.published=1 AND sx.deleted_at IS NULL AND sx.status<>'CANCELLED')";$args[]=$this->tenant();$args[]=$this->user['employee_id'];}
         }
         return [implode(' AND ',$parts),$args];
     }

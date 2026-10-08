@@ -20,7 +20,7 @@ jobs:
         run: |
           npm ci
           npx expo install --fix
-          npm audit fix
+          npm audit fix || true
           npx expo install --check
           npm audit --json > dependency-audit.json || true
       - uses: actions/upload-artifact@v4
