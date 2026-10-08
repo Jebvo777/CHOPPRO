@@ -6,6 +6,8 @@ final class MobileUpgrade
     public function __construct(public Db $db,public array $config){}
     public function apply():void
     {
+        $oldCustomer=array_values(array_filter(Access::ROLES['customer'],fn($p)=>$p!=='incidents.download'));
+        foreach($this->db->all("SELECT id,permissions FROM cp_roles WHERE code='customer' AND deleted_at IS NULL")as$role)if(Support::decode($role['permissions'])===$oldCustomer)$this->db->run('UPDATE cp_roles SET permissions=?,version=version+1,updated_at=UTC_TIMESTAMP() WHERE id=?',[Support::json(Access::ROLES['customer']),$role['id']]);
         $old=['dashboard.read','employees.read','documents.read','facilities.read','posts.read','instructions.read','instructions.acknowledge','shifts.read','assignments.read','assignments.confirm','attendance.read','attendance.create','notifications.read'];
         foreach($this->db->all("SELECT id,permissions FROM cp_roles WHERE code='guard' AND deleted_at IS NULL")as$role)if(Support::decode($role['permissions'])===$old)$this->db->run('UPDATE cp_roles SET permissions=?,version=version+1,updated_at=UTC_TIMESTAMP() WHERE id=?',[Support::json(Access::ROLES['guard']),$role['id']]);
         $oldOps=['dashboard.read','employees.read','facilities.*','posts.*','instructions.*','qr_points.*','shift_templates.*','shifts.*','assignments.*','attendance.*','vacancies.*','applications.*','patrols.read','incidents.read','reports.read','notifications.read','audit.read'];

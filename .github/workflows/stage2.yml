@@ -71,6 +71,7 @@ jobs:
           trap 'kill "$test_server_pid" 2>/dev/null || true' EXIT
           curl --fail --retry 3 --retry-connrefused --retry-delay 1 --max-time 25 http://127.0.0.1:8092/ >/dev/null
           node tools/hosting_browser.cjs
+          node tools/mobile_browser.cjs
       - name: Include diagnostic logs
         if: always()
         run: cp "$RUNNER_TEMP/stage2-php.log" dist/stage2-php.log || true
