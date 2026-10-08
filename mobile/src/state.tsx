@@ -14,6 +14,8 @@ interface State {
   configure(value: string): Promise<Api>; login(session: Session): Promise<void>; logout(): Promise<void>;
   refresh(): Promise<void>; sync(): Promise<void>; retry(id: string): Promise<void>;
   enqueue(type: EventType,payload: Row): Promise<string>;
+  incident(payload:Row,files:Row[]):Promise<string>;
+  draft(key:string,value?:Row|null):Promise<Row|null>;
 }
 const Context = createContext<State | null>(null);
 export function useApp(): State { const value = useContext(Context); if (!value) throw new Error('Приложение не готово'); return value; }
@@ -78,6 +80,17 @@ export function Provider({children}: {children: React.ReactNode}) {
     await queue.current.add({id,type,client_time:new Date().toISOString(),device_id:device,payload:{...payload,offline:!onlineRef.current},state:'PENDING',attempts:0,nextAttempt:0});
     void sync(); return id;
   }
+  async function incident(payload:Row,files:Row[]):Promise<string> {
+    if(!queue.current || !current.current?.session)throw new Error('Сначала войдите в приложение');
+    const id=Crypto.randomUUID(),time=new Date().toISOString();
+    const items:QueuedEvent[]=[{id,type:'INCIDENT_CREATE',client_time:time,device_id:device,payload:{...payload,offline:!onlineRef.current},state:'PENDING',attempts:0,nextAttempt:0},...files.map(file=>({id:Crypto.randomUUID(),type:'UPLOAD' as EventType,client_time:time,device_id:device,payload:{incident_event_key:id,depends_on:id,file},state:'PENDING' as const,attempts:0,nextAttempt:0}))];
+    await queue.current.addBatch(items);void sync();return id;
+  }
+  async function draft(key:string,value?:Row|null):Promise<Row|null> {
+    if(!storage.current)return null;
+    if(value!==undefined){await storage.current.set('draft:'+key,JSON.stringify(value));return value;}
+    const saved=await storage.current.get('draft:'+key);return saved?JSON.parse(saved) as Row:null;
+  }
   async function retry(id: string) { await queue.current?.retry(id); await sync(); }
   useEffect(() => {
     let alive = true;
@@ -96,5 +109,5 @@ export function Provider({children}: {children: React.ReactNode}) {
     const subscription = AppState.addEventListener('change',state => { if (state === 'active') void sync(); });
     return () => { alive = false; clearInterval(timer); subscription.remove(); };
   },[]);
-  return <Context.Provider value={{ready,endpoint,api,snapshot,events,online,syncing,message,device,configure,login,logout,refresh,sync,retry,enqueue}}>{children}</Context.Provider>;
+  return <Context.Provider value={{ready,endpoint,api,snapshot,events,online,syncing,message,device,configure,login,logout,refresh,sync,retry,enqueue,incident,draft}}>{children}</Context.Provider>;
 }

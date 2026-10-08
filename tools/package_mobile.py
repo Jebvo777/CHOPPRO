@@ -6,7 +6,7 @@ with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
   parts=path.relative_to(root).parts
   if any(x in parts for x in ['node_modules','Pods','.gradle','build','.expo','dist','ios-build','.git']):continue
   if parts[0] in ['android','ios'] and parts[0]!=a.platform:continue
-  if path.suffix in ['.keystore','.jks','.p12','.mobileprovision','.log']:continue
+  if path.suffix in ['.keystore','.jks','.p12','.mobileprovision','.log'] and path.name!='debug.keystore':continue
   if path.name.startswith('.env') or path.name=='local.properties':continue
   archive.write(path,'CHOPPRO/'+path.relative_to(root).as_posix())
  archive.writestr('CHOPPRO/source-version.json',json.dumps({'commit':a.sha,'platform':a.platform,'version':'3.0.0','integrations':False},ensure_ascii=False,indent=2))
