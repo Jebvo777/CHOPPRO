@@ -1,0 +1,58 @@
+name: Проверка готового Android-приложения
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/mobile-device-check.yml']
+  workflow_run:
+    workflows: ['Мобильные приложения']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download compiled application
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MOBILE_BUILD_RUN: ${{ github.event.workflow_run.id }}
+        run: |
+          mobile_build_run="$MOBILE_BUILD_RUN"
+          if [ -z "$mobile_build_run" ]; then
+            mobile_build_run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/mobile.yml/runs?branch=main&per_page=1" --jq '.workflow_runs[0].id')
+          fi
+          gh run download "$mobile_build_run" --repo "$GITHUB_REPOSITORY" --name CHOPPRO-Android --dir compiled
+          python3 - <<'PY'
+          import json, zipfile
+          with zipfile.ZipFile('compiled/CHOPPRO_Android.zip') as project:
+              print(json.loads(project.read('CHOPPRO/source-version.json')))
+          PY
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Check live portal login and saved session
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          ram-size: '4096'
+          disable-animations: true
+          script: |
+            adb install compiled/CHOPPRO_Android_test.apk
+            adb shell am force-stop com.google.android.apps.nexuslauncher
+            adb shell am start -W -n ru.choppro.guard/.MainActivity
+            python3 tools/mobile_android_smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CHOPPRO-Android-device-check
+          path: dist/
