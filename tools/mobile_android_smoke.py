@@ -12,7 +12,7 @@ def wait(text=None,resource=None,timeout=90):
   try:
    current=nodes()
    for node in current:
-    if (text is None or node.get('text')==text or node.get('content-desc')==text) and (resource is None or node.get('resource-id','').endswith(resource)):return node
+    if (text is None or node.get('text','').casefold()==text.casefold() or node.get('content-desc','').casefold()==text.casefold()) and (resource is None or node.get('resource-id','').endswith(resource)):return node
   except (subprocess.SubprocessError,ET.ParseError):pass
   time.sleep(1)
  raise RuntimeError('Экран или элемент не появился: '+str(text or resource))

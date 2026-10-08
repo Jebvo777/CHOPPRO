@@ -20,9 +20,10 @@ interface State {
   openFile(file:Row):Promise<void>;
 }
 const Context = createContext<State | null>(null);
+const defaultPortal = Platform.OS === 'web' ? '' : String(Constants.expoConfig?.extra?.apiUrl ?? '').trim() || 'https://m20.system404-design.ru/';
 export function useApp(): State { const value = useContext(Context); if (!value) throw new Error('Приложение не готово'); return value; }
 export function Provider({children}: {children: React.ReactNode}) {
-  const [ready,setReady] = useState(false), [endpoint,setEndpoint] = useState(''), [api,setApi] = useState<Api | null>(null), [snapshot,setSnapshot] = useState<Snapshot | null>(null), [events,setEvents] = useState<QueuedEvent[]>([]), [online,setOnline] = useState(true), [syncing,setSyncing] = useState(false), [message,setMessage] = useState(''), [device,setDevice] = useState('');
+  const [ready,setReady] = useState(false), [endpoint,setEndpoint] = useState(defaultPortal), [api,setApi] = useState<Api | null>(null), [snapshot,setSnapshot] = useState<Snapshot | null>(null), [events,setEvents] = useState<QueuedEvent[]>([]), [online,setOnline] = useState(true), [syncing,setSyncing] = useState(false), [message,setMessage] = useState(''), [device,setDevice] = useState('');
   const current = useRef<Api | null>(null), storage = useRef<KeyValue | null>(null), queue = useRef<EventQueue | null>(null), flight = useRef<Promise<void> | null>(null), syncAgain = useRef(false), onlineRef = useRef(true);
   async function connect(session: Session,a: Api) {
     await a.use(session); const owner = a.endpoint + '|' + session.user.id;
@@ -109,7 +110,7 @@ export function Provider({children}: {children: React.ReactNode}) {
     void (async () => {
       try {const network=await Network.getNetworkStateAsync();onlineRef.current=network.isConnected!==false;setOnline(onlineRef.current);}catch {}
       let savedDevice = await secret.get('device'); if (!savedDevice) { savedDevice = Crypto.randomUUID(); await secret.set('device',savedDevice); } setDevice(savedDevice);
-      const url = await secret.get('endpoint') || (Platform.OS === 'web' ? location.origin + location.pathname.replace(/\/demo\.php.*$/,'').replace(/\/mobile.*$/,'') : String(Constants.expoConfig?.extra?.apiUrl ?? ''));
+      const url = await secret.get('endpoint') || (Platform.OS === 'web' ? location.origin + location.pathname.replace(/\/demo\.php.*$/,'').replace(/\/mobile.*$/,'') : defaultPortal);
       if (url) {
         await configure(url);
         const revoke = await secret.get('revocation');

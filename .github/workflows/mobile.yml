@@ -2,7 +2,7 @@ name: Мобильные приложения
 on:
   push:
     branches: [main]
-    paths: ['mobile/**', 'tools/package_mobile.py', 'tools/mobile_android_smoke.py', '.github/workflows/mobile.yml']
+    paths: ['mobile/**', 'tools/package_mobile.py', 'tools/mobile_android_smoke.py', 'tools/mobile_ios_tests.*', '.github/workflows/mobile.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -72,6 +72,7 @@ jobs:
         run: npm ci
       - uses: gradle/actions/setup-gradle@v4
       - name: Build standalone Android
+        id: android_build
         working-directory: mobile/android
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
       - name: Enable emulator acceleration
@@ -93,8 +94,10 @@ jobs:
             adb shell pidof ru.choppro.guard
             python3 tools/mobile_android_smoke.py
       - name: Package Android project
+        if: ${{ always() && steps.android_build.conclusion == 'success' }}
         run: python3 tools/package_mobile.py --platform android --sha "$GITHUB_SHA" --output dist/CHOPPRO_Android.zip
       - name: Include application
+        if: ${{ always() && steps.android_build.conclusion == 'success' }}
         run: cp mobile/android/app/build/outputs/apk/release/app-release.apk dist/CHOPPRO_Android_test.apk
       - uses: actions/upload-artifact@v4
         if: always()
@@ -120,11 +123,12 @@ jobs:
         working-directory: mobile
         run: npm ci && npx pod-install
       - name: Build iOS simulator application
+        id: ios_build
         working-directory: mobile
         run: |
           mobile_workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
           mobile_scheme=$(basename "$mobile_workspace" .xcworkspace)
-          xcodebuild -workspace "$mobile_workspace" -scheme "$mobile_scheme" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios-build CODE_SIGNING_ALLOWED=NO
+          xcodebuild -workspace "$mobile_workspace" -scheme "$mobile_scheme" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios-build CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=-
       - name: Launch standalone iOS application
         run: |
           mobile_simulator=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in reversed(list(d["devices"].values())) for x in group if "iPhone" in x["name"]))')
@@ -136,8 +140,13 @@ jobs:
           sleep 8
           xcrun simctl io "$mobile_simulator" screenshot dist/CHOPPRO_iOS_screen.png
           xcrun simctl spawn "$mobile_simulator" launchctl list | grep ru.choppro.guard
+          ruby tools/mobile_ios_tests.rb
+          mobile_workspace=$(find mobile/ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
+          xcodebuild test -workspace "$mobile_workspace" -scheme MobileChecks -configuration Release -destination "id=$mobile_simulator" -derivedDataPath mobile/ios-build -resultBundlePath dist/CHOPPRO_iOS_checks.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=-
+          xcrun simctl io "$mobile_simulator" screenshot dist/CHOPPRO_iOS_screen.png
           xcrun simctl shutdown "$mobile_simulator"
       - name: Package iOS project
+        if: ${{ always() && steps.ios_build.conclusion == 'success' }}
         run: |
           python3 tools/package_mobile.py --platform ios --sha "$GITHUB_SHA" --output dist/CHOPPRO_iOS.zip
           ditto -c -k --sequesterRsrc --keepParent mobile/ios-build/Build/Products/Release-iphonesimulator/*.app dist/CHOPPRO_iOS_simulator.zip
