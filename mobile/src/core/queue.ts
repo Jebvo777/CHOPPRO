@@ -27,13 +27,17 @@ export class EventQueue {
     return this.running;
   }
   private async perform(force: boolean): Promise<void> {
-    await this.writes;
-    for (const id of this.events.map(e=>e.id)) {
-      const event=this.events.find(e=>e.id===id)!;
-      if (event.state==='SYNCED'||event.state==='BLOCKED')continue;
-      if(!force&&event.nextAttempt>Date.now())continue;
-      const dependency=event.payload.depends_on as string|undefined;
-      if(dependency&&this.events.find(e=>e.id===dependency)?.state!=='SYNCED')continue;
+    const attempted=new Set<string>();
+    while (true) {
+      await this.writes;
+      const event=this.events.find(item=>{
+        if(attempted.has(item.id)||!['PENDING','ERROR'].includes(item.state))return false;
+        if(!force&&item.nextAttempt>Date.now())return false;
+        const dependency=item.payload.depends_on as string|undefined;
+        return !dependency||this.events.find(parent=>parent.id===dependency)?.state==='SYNCED';
+      });
+      if(!event)break;
+      const id=event.id;attempted.add(id);
       await this.changeEvent(id,event=>{event.state='SENDING';});
       let result:Row;
       try {result=await this.send(copy(event));}

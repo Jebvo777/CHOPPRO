@@ -23,7 +23,7 @@ const Context = createContext<State | null>(null);
 export function useApp(): State { const value = useContext(Context); if (!value) throw new Error('Приложение не готово'); return value; }
 export function Provider({children}: {children: React.ReactNode}) {
   const [ready,setReady] = useState(false), [endpoint,setEndpoint] = useState(''), [api,setApi] = useState<Api | null>(null), [snapshot,setSnapshot] = useState<Snapshot | null>(null), [events,setEvents] = useState<QueuedEvent[]>([]), [online,setOnline] = useState(true), [syncing,setSyncing] = useState(false), [message,setMessage] = useState(''), [device,setDevice] = useState('');
-  const current = useRef<Api | null>(null), storage = useRef<KeyValue | null>(null), queue = useRef<EventQueue | null>(null), flight = useRef<Promise<void> | null>(null), onlineRef = useRef(true);
+  const current = useRef<Api | null>(null), storage = useRef<KeyValue | null>(null), queue = useRef<EventQueue | null>(null), flight = useRef<Promise<void> | null>(null), syncAgain = useRef(false), onlineRef = useRef(true);
   async function connect(session: Session,a: Api) {
     await a.use(session); const owner = a.endpoint + '|' + session.user.id;
     const ownerStore = await openStorage(owner); storage.current = ownerStore;
@@ -53,11 +53,11 @@ export function Provider({children}: {children: React.ReactNode}) {
     setSnapshot(data); await storage.current?.set('snapshot',JSON.stringify(data)); setMessage(''); setOnline(true); onlineRef.current = true;
   }
   async function sync() {
-    if (flight.current) return flight.current;
+    if (flight.current) { syncAgain.current=true;return flight.current; }
     flight.current = (async () => {
       const a=current.current,q=queue.current;if (!a?.session || !q) return;
       setSyncing(true);
-      try { await q.flush();if(current.current===a)await refresh(); }
+      try { do { syncAgain.current=false;await q.flush();if(current.current===a)await refresh(); } while(syncAgain.current&&current.current===a&&queue.current===q&&onlineRef.current); }
       catch (error) { if(current.current===a){setMessage((error as Error).message); if (!((error as Row).status)) { setOnline(false); onlineRef.current = false; }} }
       finally { if(current.current===a)setSyncing(false); }
     })().finally(() => { flight.current = null; });
