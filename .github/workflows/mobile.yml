@@ -18,9 +18,7 @@ jobs:
       - name: Resolve platform dependencies
         working-directory: mobile
         run: |
-          npm install
-          npx expo install --fix
-          npm audit fix || true
+          npm ci
           npx expo install --check
           npm audit --json > dependency-audit.json || true
       - uses: actions/upload-artifact@v4
@@ -109,6 +107,18 @@ jobs:
           mobile_workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
           mobile_scheme=$(basename "$mobile_workspace" .xcworkspace)
           xcodebuild -workspace "$mobile_workspace" -scheme "$mobile_scheme" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios-build CODE_SIGNING_ALLOWED=NO
+      - name: Launch standalone iOS application
+        run: |
+          mobile_simulator=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in reversed(list(d["devices"].values())) for x in group if "iPhone" in x["name"]))')
+          xcrun simctl boot "$mobile_simulator"
+          xcrun simctl bootstatus "$mobile_simulator" -b
+          xcrun simctl install "$mobile_simulator" mobile/ios-build/Build/Products/Release-iphonesimulator/*.app
+          xcrun simctl launch "$mobile_simulator" ru.choppro.guard
+          mkdir -p dist
+          sleep 8
+          xcrun simctl io "$mobile_simulator" screenshot dist/CHOPPRO_iOS_screen.png
+          xcrun simctl spawn "$mobile_simulator" launchctl list | grep ru.choppro.guard
+          xcrun simctl shutdown "$mobile_simulator"
       - name: Package iOS project
         run: |
           python3 tools/package_mobile.py --platform ios --sha "$GITHUB_SHA" --output dist/CHOPPRO_iOS.zip

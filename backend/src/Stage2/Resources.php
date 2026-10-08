@@ -92,6 +92,7 @@ final class Resources
         if(in_array($kind,self::IMMUTABLE,true))throw new Problem(405,'ACTION_REQUIRED','Используйте действие над записью');
         if($kind==='assignments')return (new Operations($this))->assign($input);
         $data=$this->normalize($kind,$input);
+        if($kind==='incidents')$data['status']='OPEN';
         if($kind==='documents'){$data['status']='PENDING_REVIEW';$data['scan_status']='PENDING_SCAN';unset($data['file_path'],$data['sha256'],$data['mime']);}
         if($kind==='vacancies'){unset($data['pinned_rank'],$data['pinned_at']);}
         if($kind==='contracts'&&($data['status']??'')==='ACTIVE'){$data['status']='DRAFT';}
@@ -113,6 +114,7 @@ final class Resources
             if(in_array($kind,['service_types','compliance_rules'],true)||($kind==='contract_templates'&&(int)$old['published']))throw new Problem(409,'IMMUTABLE_VERSION','Создайте новую версию справочника');
             if($kind==='mobile_policies'&&$old['status']==='PUBLISHED')throw new Problem(409,'IMMUTABLE_VERSION','Создайте новую версию правил');
             $data=$this->normalize($kind,$input,$old);
+            if($kind==='incidents'&&isset($data['status'])&&$data['status']==='RESOLVED'&&$old['status']!=='RESOLVED')throw new Problem(405,'ACTION_REQUIRED','Используйте закрытие происшествия с итогом и ответственным');
             if($kind==='reports'&&(int)$old['published'])$this->db()->run('INSERT INTO cp_report_versions(id,tenant_id,report_id,revision,snapshot,created_at)VALUES(?,?,?,?,?,?)',[Support::uuid(),$old['tenant_id'],$id,$old['version'],Support::json($this->access->safe('reports',$old)),Support::now()]);
             if($kind==='documents'){foreach(['status','scan_status','file_path','sha256','mime']as$f)unset($data[$f]);}
             if($kind==='vacancies')unset($data['pinned_rank'],$data['pinned_at']);

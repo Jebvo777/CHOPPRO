@@ -34,15 +34,16 @@ export class EventQueue {
       if(!force&&event.nextAttempt>Date.now())continue;
       const dependency=event.payload.depends_on as string|undefined;
       if(dependency&&this.events.find(e=>e.id===dependency)?.state!=='SYNCED')continue;
-      await this.change(()=>{event.state='SENDING';});
+      await this.changeEvent(id,event=>{event.state='SENDING';});
       let result:Row;
       try {result=await this.send(copy(event));}
-      catch(caught){const error=caught as SendError;await this.change(()=>{event.attempts++;event.error=error.message||'Не удалось отправить событие';event.state=error.status&&error.status>=400&&error.status<500&&![401,408,429].includes(error.status)?'BLOCKED':'ERROR';event.nextAttempt=Date.now()+Math.min(60000,1000*2**Math.min(event.attempts,6));});if([401,403].includes(error.status??0)||!error.status||error.status>=500)break;continue;}
-      await this.change(()=>{event.result=result;event.state='SYNCED';delete event.error;event.nextAttempt=0;if(event.type==='UPLOAD')event.payload.file={name:event.payload.file.name,mime:event.payload.file.mime};});
+      catch(caught){const error=caught as SendError;await this.changeEvent(id,event=>{event.attempts++;event.error=error.message||'Не удалось отправить событие';event.state=error.status&&error.status>=400&&error.status<500&&![401,408,429].includes(error.status)?'BLOCKED':'ERROR';event.nextAttempt=Date.now()+Math.min(60000,1000*2**Math.min(event.attempts,6));});if([401,403].includes(error.status??0)||!error.status||error.status>=500)break;continue;}
+      await this.changeEvent(id,event=>{event.result=result;event.state='SYNCED';delete event.error;event.nextAttempt=0;if(event.type==='UPLOAD')event.payload.file={name:event.payload.file.name,mime:event.payload.file.mime};});
     }
     const cutoff=Date.now()-14*86400000;
     await this.change(()=>{this.events=this.events.filter(event=>event.state!=='SYNCED'||Date.parse(event.client_time)>=cutoff||this.events.some(child=>child.state!=='SYNCED'&&child.payload.depends_on===event.id));});
   }
+  private async changeEvent(id:string,fn:(event:QueuedEvent)=>void):Promise<void>{await this.change(()=>{const event=this.events.find(e=>e.id===id);if(event)fn(event);});}
   private async change(fn:()=>void):Promise<void> {
     const task=this.writes.then(async()=>{const previous=copy(this.events);try{fn();await this.store.set('events',JSON.stringify(this.events));}catch(error){this.events=previous;throw error;}this.changed();});
     this.writes=task.catch(()=>{});await task;

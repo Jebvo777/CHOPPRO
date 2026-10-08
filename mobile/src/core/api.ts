@@ -4,6 +4,7 @@ export function normalizeEndpoint(value: string, allowHttp = false): string {
   if (url.protocol !== 'https:' && !(allowHttp && url.protocol === 'http:')) throw new Error('Укажите адрес с HTTPS');
   if (url.username || url.password || url.hash) throw new Error('Укажите адрес портала без пароля и фрагмента');
   url.search = '';
+  if (/\/(?:index|demo|control)\.php$/.test(url.pathname))url.pathname=url.pathname.replace(/\/[^/]+\.php$/,'/demo-api.php');
   if (!url.pathname.endsWith('.php')) url.pathname = url.pathname.replace(/\/$/, '') + '/demo-api.php';
   return url.toString();
 }

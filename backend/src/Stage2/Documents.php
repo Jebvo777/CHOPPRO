@@ -6,12 +6,11 @@ final class Documents
     public function __construct(public Resources $r) {}
     public function scan(string $path): string
     {
-        $bytes=file_get_contents($path);
-        if(str_contains($bytes,'EICAR-STANDARD-ANTIVIRUS-TEST-FILE'))return 'INFECTED';
+        $input=fopen($path,'rb');$tail='';try{while(!feof($input)){$chunk=fread($input,65536);if($chunk===false)return'PENDING_SCAN';if(str_contains($tail.$chunk,'EICAR-STANDARD-ANTIVIRUS-TEST-FILE'))return 'INFECTED';$tail=substr($chunk,-64);}}finally{fclose($input);}
         $scanner=$this->r->config['scanner'];if(!$scanner['host'])return 'PENDING_SCAN';
         $s=@fsockopen($scanner['host'],(int)$scanner['port'],$errno,$errstr,5);
         if(!$s)return 'PENDING_SCAN';stream_set_timeout($s,15);fwrite($s,"zINSTREAM\0");
-        foreach(str_split($bytes,65536)as$chunk){$packet=pack('N',strlen($chunk)).$chunk;$offset=0;while($offset<strlen($packet)){$n=fwrite($s,substr($packet,$offset));if(!$n){fclose($s);return 'PENDING_SCAN';}$offset+=$n;}}
+        $input=fopen($path,'rb');try{while(!feof($input)){$chunk=fread($input,65536);if($chunk===false){fclose($s);return'PENDING_SCAN';}if($chunk==='')break;$packet=pack('N',strlen($chunk)).$chunk;$offset=0;while($offset<strlen($packet)){$n=fwrite($s,substr($packet,$offset));if(!$n){fclose($s);return 'PENDING_SCAN';}$offset+=$n;}}}finally{fclose($input);}
         fwrite($s,pack('N',0));$answer='';while(!feof($s)&&strlen($answer)<4096){$v=fread($s,1024);if($v===false||$v==='')break;$answer.=$v;if(str_contains($answer,"\0"))break;}fclose($s);
         return str_contains($answer,'FOUND')?'INFECTED':(str_contains($answer,'OK')?'CLEAN':'PENDING_SCAN');
     }

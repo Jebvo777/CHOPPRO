@@ -15,6 +15,7 @@ final class Migrator
             foreach($files as$file){$number=(int)basename($file);$sql=file_get_contents($file);$checksum=hash('sha256',$sql);$old=$this->db->one('SELECT checksum FROM cp_schema_migrations WHERE version=?',[$number]);
                 if($old){if(!hash_equals($old['checksum'],$checksum))throw new Problem(409,'MIGRATION_CHANGED','Применённая миграция '.$number.' изменилась. Требуется отдельная новая миграция.');continue;}
                 foreach(self::statements($sql)as$statement){
+                    if(preg_match('/^ALTER TABLE ([a-zA-Z0-9_]+) ADD COLUMN ([a-zA-Z0-9_]+)/i',$statement,$column)&&$this->db->scalar('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND COLUMN_NAME=?',[$this->config['database']['name'],$column[1],$column[2]]))continue;
                     if(preg_match('/^CREATE INDEX ([a-zA-Z0-9_]+) ON ([a-zA-Z0-9_]+)/i',$statement,$index)&&$this->db->scalar('SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND INDEX_NAME=?',[$this->config['database']['name'],$index[2],$index[1]]))continue;
                     $this->db->pdo->exec($statement);
                 }
