@@ -1,0 +1,105 @@
+name: Мобильные приложения
+on:
+  push:
+    branches: [main]
+    paths: ['mobile/**', 'tools/package_mobile.py', '.github/workflows/mobile.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve platform dependencies
+        working-directory: mobile
+        run: |
+          npm install
+          npx expo install expo-camera expo-location expo-secure-store expo-sqlite expo-file-system expo-document-picker expo-image-picker expo-audio expo-sharing expo-network expo-crypto expo-status-bar react-native-safe-area-context react-native-svg react-native-web react-dom
+          npx expo install --fix
+      - name: TypeScript and queue scenarios
+        working-directory: mobile
+        run: npm run typecheck && npm test
+      - name: Universal browser build
+        working-directory: mobile
+        run: npm run export:web
+      - name: Prepare native projects
+        working-directory: mobile
+        run: npx expo prebuild --no-install
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CHOPPRO-mobile-prepared
+          path: |
+            mobile/package.json
+            mobile/package-lock.json
+            mobile/android/
+            mobile/ios/
+            mobile/dist/
+  android:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: CHOPPRO-mobile-prepared
+          path: mobile
+      - name: Install locked dependencies
+        working-directory: mobile
+        run: npm ci
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build standalone Android
+        working-directory: mobile/android
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+      - name: Package Android project
+        run: python3 tools/package_mobile.py --platform android --sha "$GITHUB_SHA" --output dist/CHOPPRO_Android.zip
+      - name: Include application
+        run: cp mobile/android/app/build/outputs/apk/release/app-release.apk dist/CHOPPRO_Android_test.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CHOPPRO-Android
+          path: dist/
+  ios:
+    needs: validate
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: CHOPPRO-mobile-prepared
+          path: mobile
+      - name: Install locked dependencies and pods
+        working-directory: mobile
+        run: npm ci && npx pod-install
+      - name: Build iOS simulator application
+        working-directory: mobile
+        run: |
+          mobile_workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
+          mobile_scheme=$(basename "$mobile_workspace" .xcworkspace)
+          xcodebuild -workspace "$mobile_workspace" -scheme "$mobile_scheme" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios-build CODE_SIGNING_ALLOWED=NO
+      - name: Package iOS project
+        run: |
+          python3 tools/package_mobile.py --platform ios --sha "$GITHUB_SHA" --output dist/CHOPPRO_iOS.zip
+          ditto -c -k --sequesterRsrc --keepParent mobile/ios-build/Build/Products/Release-iphonesimulator/*.app dist/CHOPPRO_iOS_simulator.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CHOPPRO-iOS
+          path: dist/

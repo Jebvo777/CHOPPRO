@@ -1,18 +1,19 @@
 {
   "name": "choppro-mobile",
-  "version": "0.1.0-stage1",
+  "version": "3.0.0",
   "private": true,
+  "main": "index.ts",
   "scripts": {
-    "start": "react-native start",
-    "android": "react-native run-android",
-    "ios": "react-native run-ios"
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "export:web": "expo export --platform web",
+    "prebuild:android": "expo prebuild --platform android",
+    "prebuild:ios": "expo prebuild --platform ios"
   },
-  "dependencies": {
-    "react": "19.1.0",
-    "react-native": "0.81.0"
-  },
-  "devDependencies": {
-    "@react-native-community/cli": "latest",
-    "typescript": "^5.8.0"
-  }
+  "dependencies": {"expo": "~55.0.0", "react": "19.2.0", "react-native": "0.83.2"},
+  "devDependencies": {"@types/react": "~19.2.0", "typescript": "~5.9.2", "tsx": "^4.20.0"}
 }
