@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+test('Build glob expansion rejects excessive nesting and keeps normal patterns',()=>{const braces=require('braces');assert.throws(()=>braces('{'.repeat(10000)+'a'+'}'.repeat(10000)),RangeError);assert.deepEqual(braces('{a,b}'),['(a|b)']);});
+test('Build RSA verifier rejects extra DigestAlgorithm elements',()=>{const forge=require('node-forge');const pair=forge.pki.rsa.generateKeyPair({bits:1024,e:3});const md=forge.md.sha256.create().update('Контроль подписи');const good=pair.privateKey.sign(md);assert.equal(pair.publicKey.verify(md.digest().bytes(),good),true);const a=forge.asn1;const algorithm=a.create(a.Class.UNIVERSAL,a.Type.SEQUENCE,true,[a.create(a.Class.UNIVERSAL,a.Type.OID,false,a.oidToDer(forge.pki.oids.sha256).getBytes()),a.create(a.Class.UNIVERSAL,a.Type.NULL,false,''),a.create(a.Class.UNIVERSAL,a.Type.OCTETSTRING,false,'garbage')]);const info=a.create(a.Class.UNIVERSAL,a.Type.SEQUENCE,true,[algorithm,a.create(a.Class.UNIVERSAL,a.Type.OCTETSTRING,false,md.digest().bytes())]);const bytes=a.toDer(info).getBytes();const bad=pair.privateKey.sign(md,{encode:()=>bytes});assert.throws(()=>pair.publicKey.verify(md.digest().bytes(),bad));});

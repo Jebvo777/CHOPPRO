@@ -16,6 +16,7 @@ interface State {
   enqueue(type: EventType,payload: Row): Promise<string>;
   incident(payload:Row,files:Row[]):Promise<string>;
   draft(key:string,value?:Row|null):Promise<Row|null>;
+  stash(file:Row):Promise<Row>; discard(file:Row):Promise<void>;
 }
 const Context = createContext<State | null>(null);
 export function useApp(): State { const value = useContext(Context); if (!value) throw new Error('Приложение не готово'); return value; }
@@ -30,9 +31,12 @@ export function Provider({children}: {children: React.ReactNode}) {
     queue.current = new EventQueue(storage.current, async event => {
       if (current.current !== a || !a.session) throw new Error('Войдите в тот же аккаунт для отправки событий');
       if (event.type === 'UPLOAD') {
+        const raw=event.payload.file.fileKey?await storage.current?.get(event.payload.file.fileKey):null;
+        const file=raw?JSON.parse(raw) as Row:event.payload.file;
+        if(!file.bytes)throw Object.assign(new Error('Вложение не найдено на устройстве'),{status:422});
         const form = new FormData(); form.append('event_key',event.id); form.append('incident_event_key',event.payload.incident_event_key);
-        const cleanup = await appendFile(form,event.payload.file);
-        try { const result = await a.request('/v1/mobile/upload','POST',form); await removeFile(event.payload.file.uri ?? ''); return result; }
+        const cleanup = await appendFile(form,file);
+        try { const result = await a.request('/v1/mobile/upload','POST',form); await removeFile(file.uri ?? '');if(event.payload.file.fileKey)await storage.current?.remove(event.payload.file.fileKey);return result; }
         finally { if (typeof cleanup === 'function') await cleanup(); }
       }
       const payload = { ...event.payload }; delete payload.depends_on;
@@ -86,6 +90,8 @@ export function Provider({children}: {children: React.ReactNode}) {
     const items:QueuedEvent[]=[{id,type:'INCIDENT_CREATE',client_time:time,device_id:device,payload:{...payload,offline:!onlineRef.current},state:'PENDING',attempts:0,nextAttempt:0},...files.map(file=>({id:Crypto.randomUUID(),type:'UPLOAD' as EventType,client_time:time,device_id:device,payload:{incident_event_key:id,depends_on:id,file},state:'PENDING' as const,attempts:0,nextAttempt:0}))];
     await queue.current.addBatch(items);void sync();return id;
   }
+  async function stash(file:Row):Promise<Row> {if(!storage.current)throw new Error('Приложение не подключено');const fileKey='file:'+Crypto.randomUUID();await storage.current.set(fileKey,JSON.stringify(file));return {fileKey,name:file.name,mime:file.mime};}
+  async function discard(file:Row):Promise<void> {if(file.fileKey)await storage.current?.remove(file.fileKey);}
   async function draft(key:string,value?:Row|null):Promise<Row|null> {
     if(!storage.current)return null;
     if(value!==undefined){await storage.current.set('draft:'+key,JSON.stringify(value));return value;}
@@ -109,5 +115,5 @@ export function Provider({children}: {children: React.ReactNode}) {
     const subscription = AppState.addEventListener('change',state => { if (state === 'active') void sync(); });
     return () => { alive = false; clearInterval(timer); subscription.remove(); };
   },[]);
-  return <Context.Provider value={{ready,endpoint,api,snapshot,events,online,syncing,message,device,configure,login,logout,refresh,sync,retry,enqueue,incident,draft}}>{children}</Context.Provider>;
+  return <Context.Provider value={{ready,endpoint,api,snapshot,events,online,syncing,message,device,configure,login,logout,refresh,sync,retry,enqueue,incident,draft,stash,discard}}>{children}</Context.Provider>;
 }
