@@ -9,5 +9,5 @@ with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
   if path.suffix in ['.keystore','.jks','.p12','.mobileprovision','.log'] and path.name!='debug.keystore':continue
   if path.name.startswith('.env') or path.name in ['local.properties','.xcode.env.local']:continue
   archive.write(path,'CHOPPRO/'+path.relative_to(root).as_posix())
- archive.writestr('CHOPPRO/source-version.json',json.dumps({'commit':a.sha,'platform':a.platform,'version':'3.0.0','integrations':False},ensure_ascii=False,indent=2))
+ archive.writestr('CHOPPRO/source-version.json',json.dumps({'commit':a.sha,'platform':a.platform,'version':json.loads((root/'package.json').read_text())['version'],'integrations':False},ensure_ascii=False,indent=2))
 print(json.dumps({'platform':a.platform,'archive':str(out),'bytes':out.stat().st_size}))

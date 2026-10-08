@@ -18,21 +18,27 @@ export class Api {
     if (!this.native && !this.csrf && method !== 'GET') this.csrf = String((await this.request('/v1/csrf')).csrf ?? '');
     const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), body instanceof FormData ? 45000 : 20000);
     const headers: Record<string,string> = { Accept: 'application/json', 'X-Choppro-Client': this.native ? 'native' : 'web' };
-    if (this.session) headers.Authorization = 'Bearer ' + this.session.access_token;
+    if (this.session) {
+      headers.Authorization = 'Bearer ' + this.session.access_token;
+      if (this.native) headers['X-Choppro-Authorization'] = headers.Authorization;
+    }
     if (this.csrf) headers['X-CSRF-Token'] = this.csrf;
     if (body && !(body instanceof FormData)) headers['Content-Type'] = 'application/json';
     let response: Response;
     try { response = await fetch(this.endpoint + (this.endpoint.includes('?') ? '&' : '?') + 'space=mobile&path=' + encodeURIComponent(path), { method, headers, credentials: this.native ? 'omit' : 'include', body: body ? body instanceof FormData ? body : JSON.stringify(body) : undefined, signal: controller.signal }); }
-    catch { throw new ApiError(0,'NETWORK','Нет связи с сервером. Запись сохранена на устройстве.'); }
+    catch { throw new ApiError(0,'NETWORK',controller.signal.aborted?'Портал долго не отвечает. Попробуйте ещё раз.':'Не удалось связаться с порталом. Проверьте интернет и адрес сервера.'); }
     finally { clearTimeout(timeout); }
-    const data = await response.json().catch(() => ({ message: 'Сервер вернул некорректный ответ' })) as Row;
+    const data = await response.json().catch(() => { throw new ApiError(response.status,'INVALID_RESPONSE','Портал вернул некорректный ответ. Проверьте адрес сервера.'); }) as Row;
     if (response.status === 401 && this.session && replay && path !== '/v1/auth/refresh') {
       await this.refresh(); return this.request(path, method, body, false);
     }
     if (!response.ok) throw new ApiError(response.status, String(data.code ?? 'ERROR'), String(data.message ?? 'Не удалось выполнить действие'));
     return data;
   }
-  async use(session: Session): Promise<void> { this.session = session; this.csrf = session.csrf ?? ''; await this.save(session); }
+  async use(session: Session): Promise<void> {
+    if (!session?.access_token || !session.refresh_token || !session.user?.id) throw new ApiError(502,'INVALID_SESSION','Не удалось подтвердить вход. Запросите новый код.');
+    this.session = session; this.csrf = session.csrf ?? ''; await this.save(session);
+  }
   async refresh(): Promise<void> {
     if (this.refreshing) return this.refreshing;
     this.refreshing = (async () => {

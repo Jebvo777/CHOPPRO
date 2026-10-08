@@ -2,7 +2,7 @@ name: Мобильные приложения
 on:
   push:
     branches: [main]
-    paths: ['mobile/**', 'tools/package_mobile.py', '.github/workflows/mobile.yml']
+    paths: ['mobile/**', 'tools/package_mobile.py', 'tools/mobile_android_smoke.py', '.github/workflows/mobile.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -90,10 +90,8 @@ jobs:
           script: |
             adb install mobile/android/app/build/outputs/apk/release/app-release.apk
             adb shell am start -W -n ru.choppro.guard/.MainActivity
-            sleep 8
             adb shell pidof ru.choppro.guard
-            mkdir -p dist
-            adb exec-out screencap -p > dist/CHOPPRO_Android_screen.png
+            python3 tools/mobile_android_smoke.py
       - name: Package Android project
         run: python3 tools/package_mobile.py --platform android --sha "$GITHUB_SHA" --output dist/CHOPPRO_Android.zip
       - name: Include application

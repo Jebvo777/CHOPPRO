@@ -18,5 +18,5 @@ export async function appendFile(form: FormData,file: Row): Promise<()=>Promise<
 export async function removeFile(_uri: string): Promise<void> {}
 export async function downloadFile(url:string,token:string,name:string,mime:string):Promise<void>{
   const path=FS.cacheDirectory+'view-'+Crypto.randomUUID()+'.'+(name.split('.').pop()??'bin').replace(/[^a-z0-9]/gi,'');
-  try{const result=await FS.downloadAsync(url,path,{headers:{Authorization:'Bearer '+token,'X-Choppro-Client':'native'}});if(result.status!==200)throw new Error('Файл недоступен. Обновите данные и повторите.');if(!await Sharing.isAvailableAsync())throw new Error('На устройстве недоступен просмотр файла');await Sharing.shareAsync(path,{mimeType:mime,dialogTitle:name});}finally{await FS.deleteAsync(path,{idempotent:true});}
+  try{const result=await FS.downloadAsync(url,path,{headers:{Authorization:'Bearer '+token,'X-Choppro-Authorization':'Bearer '+token,'X-Choppro-Client':'native'}});if(result.status!==200)throw new Error('Файл недоступен. Обновите данные и повторите.');if(!await Sharing.isAvailableAsync())throw new Error('На устройстве недоступен просмотр файла');await Sharing.shareAsync(path,{mimeType:mime,dialogTitle:name});}finally{await FS.deleteAsync(path,{idempotent:true});}
 }

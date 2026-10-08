@@ -20,16 +20,22 @@ final class Auth
         $this->db->run('INSERT INTO cp_rate_limits(rate_key,attempts,resets_at) VALUES(?,1,?) ON DUPLICATE KEY UPDATE attempts=IF(resets_at<UTC_TIMESTAMP(),1,attempts+1),resets_at=IF(resets_at<UTC_TIMESTAMP(),VALUES(resets_at),resets_at)',[$key,gmdate('Y-m-d H:i:s',time()+$seconds)]);
         if((int)$this->db->scalar('SELECT attempts FROM cp_rate_limits WHERE rate_key=?',[$key])>$maximum)throw new Problem(429,'RATE_LIMIT','Слишком много попыток. Повторите позже.');
     }
+    public static function bearerToken(): ?string
+    {
+        $header=trim((string)($_SERVER['HTTP_AUTHORIZATION']??''));if($header==='')$header=trim((string)($_SERVER['REDIRECT_HTTP_AUTHORIZATION']??''));
+        if($header===''&&($_SERVER['HTTP_X_CHOPPRO_CLIENT']??'')==='native'&&empty($_SERVER['HTTP_ORIGIN']))$header=trim((string)($_SERVER['HTTP_X_CHOPPRO_AUTHORIZATION']??''));
+        return preg_match('~^Bearer[ \t]+([^\s]+)$~iD',$header,$match)?$match[1]:null;
+    }
     public function user(): array
     {
-        $header=$_SERVER['HTTP_AUTHORIZATION']??''; $token=str_starts_with($header,'Bearer ')?substr($header,7):($_SESSION['access_token']??'');
+        $token=self::bearerToken()??($_SESSION['access_token']??'');
         if(!$token)throw new Problem(401,'AUTH_REQUIRED','Войдите в систему');
         $row=$this->db->one("SELECT u.*,s.id session_id FROM cp_sessions s JOIN cp_users u ON u.id=s.user_id LEFT JOIN cp_tenants t ON t.id=u.tenant_id WHERE s.access_hash=? AND s.revoked_at IS NULL AND s.expires_at>UTC_TIMESTAMP() AND u.status='ACTIVE' AND u.deleted_at IS NULL AND (u.tenant_id IS NULL OR (t.status='ACTIVE' AND t.deleted_at IS NULL))",[hash('sha256',$token)]);
         if(!$row)throw new Problem(401,'SESSION_EXPIRED','Сессия истекла или доступ отозван'); return $row;
     }
     public function csrf(): void
     {
-        if(str_starts_with($_SERVER['HTTP_AUTHORIZATION']??'','Bearer '))return;
+        if(self::bearerToken()!==null)return;
         $path=$_GET['path']??'';
         if(($_SERVER['HTTP_X_CHOPPRO_CLIENT']??'')==='native'&&empty($_SERVER['HTTP_COOKIE'])&&empty($_SERVER['HTTP_ORIGIN'])&&str_contains($_SERVER['CONTENT_TYPE']??'','application/json')&&in_array($path,['/v1/auth/otp/request','/v1/auth/otp/verify','/v1/auth/refresh'],true))return;
         if(!hash_equals($_SESSION['csrf']??'',$_SERVER['HTTP_X_CSRF_TOKEN']??($_POST['csrf']??'')))throw new Problem(403,'CSRF','Обновите страницу и повторите действие');
