@@ -4,7 +4,7 @@ final class HostUpdate
 {
     public static function ensure(bool $force=false):array
     {
-        if(!defined('CHOPPRO_HOST_ROOT'))return[];global $loader;$state=$loader->state();$sha=$state['portal']??'';$statusPath=CHOPPRO_STORAGE_ROOT.'/update.json';$old=$loader->json($statusPath);
+        if(!defined('CHOPPRO_HOST_ROOT'))return[];global $loader;if(!$force)$loader->sync();$state=$loader->state();$sha=$state['portal']??'';$statusPath=CHOPPRO_STORAGE_ROOT.'/update.json';$old=$loader->json($statusPath);
         if(!$force&&($old['release']??'')===$sha&&($old['status']??'')==='ready')return$old;
         if(!$force&&($old['retry_after']??0)>time())return$old;
         $lock=fopen($loader->private.'/database-update.lock','c');if(!flock($lock,LOCK_EX|LOCK_NB)){fclose($lock);return['status'=>'updating'];}
