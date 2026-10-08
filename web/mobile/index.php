@@ -1,0 +1,7 @@
+<?php
+declare(strict_types=1);
+$base=defined('CHOPPRO_HOST_BASE')?CHOPPRO_HOST_BASE:'';$release=defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_RELEASE_SHA:'';
+$asset=static fn(string $name)=>$base.'/demo-api.php?'.http_build_query(['path'=>'/v1/mobile-assets','name'=>$name,'release'=>$release]);
+header('Content-Type: text/html; charset=utf-8');header('X-Content-Type-Options: nosniff');header('X-Frame-Options: DENY');header('Cache-Control: no-store');header('Referrer-Policy: no-referrer');header("Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+$template=__DIR__.'/build/index.html';if(!is_file($template)){http_response_code(503);echo 'Мобильная версия проходит сборку. Повторите позже.';exit;}
+$html=file_get_contents($template);$html=preg_replace('/<!--.*?-->/s','',$html);$html=str_replace('lang="en"','lang="ru"',$html);$html=str_replace('You need to enable JavaScript to run this app.','Разрешите JavaScript для работы приложения.',$html);$html=preg_replace_callback('~(?:src|href)="(/[^\"]+)"~',static function(array $m)use($asset){$name=$m[1]==='/favicon.ico'?'favicon.ico':basename($m[1]);return(substr($m[0],0,3)==='src'?'src':'href').'="'.htmlspecialchars($asset($name),ENT_QUOTES,'UTF-8').'"';},$html);echo$html;

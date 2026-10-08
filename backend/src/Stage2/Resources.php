@@ -114,6 +114,12 @@ final class Resources
             if(in_array($kind,['service_types','compliance_rules'],true)||($kind==='contract_templates'&&(int)$old['published']))throw new Problem(409,'IMMUTABLE_VERSION','Создайте новую версию справочника');
             if($kind==='mobile_policies'&&$old['status']==='PUBLISHED')throw new Problem(409,'IMMUTABLE_VERSION','Создайте новую версию правил');
             $data=$this->normalize($kind,$input,$old);
+            if($kind==='reports'){
+                $hasPublication=(int)$old['published']||(bool)$this->db()->scalar('SELECT id FROM cp_report_versions WHERE report_id=? AND tenant_id=? LIMIT 1',[$id,$old['tenant_id']]);
+                if($hasPublication)foreach(['facility_id','customer_id']as$key)if(array_key_exists($key,$data)&&$data[$key]!==$old[$key])throw new Problem(409,'REPORT_SCOPE_IMMUTABLE','Для другого объекта или заказчика создайте отдельный отчёт');
+                if((int)$old['published'])foreach(['name','content','period']as$key)if(array_key_exists($key,$data)&&$data[$key]!==$old[$key]){$data['published']=0;break;}
+                $data['status']=!empty($data['published']??$old['published'])?'PUBLISHED':'DRAFT';
+            }
             if($kind==='incidents'&&isset($data['status'])&&$data['status']==='RESOLVED'&&$old['status']!=='RESOLVED')throw new Problem(405,'ACTION_REQUIRED','Используйте закрытие происшествия с итогом и ответственным');
             if($kind==='reports'&&(int)$old['published'])$this->db()->run('INSERT INTO cp_report_versions(id,tenant_id,report_id,revision,snapshot,created_at)VALUES(?,?,?,?,?,?)',[Support::uuid(),$old['tenant_id'],$id,$old['version'],Support::json($this->access->safe('reports',$old)),Support::now()]);
             if($kind==='documents'){foreach(['status','scan_status','file_path','sha256','mime']as$f)unset($data[$f]);}
@@ -124,7 +130,7 @@ final class Resources
             if($kind==='contract_templates'&&!empty($data['published']))$data['published_by']=$this->access->user['id'];
             if($kind==='qr_points'&&isset($data['token']))unset($data['token']);
             $this->write($kind,$id,$data,$version);
-            if($kind==='reports')$this->db()->run('UPDATE cp_report_jobs SET status=?,updated_at=UTC_TIMESTAMP() WHERE report_id=? AND tenant_id=?',[!empty($data['published'])?'PUBLISHED':'READY',$id,$this->access->tenant()]);
+            if($kind==='reports')$this->db()->run('UPDATE cp_report_jobs SET status=?,updated_at=UTC_TIMESTAMP() WHERE report_id=? AND tenant_id=?',[!empty($data['published']??$old['published'])?'PUBLISHED':'READY',$id,$this->access->tenant()]);
             if($kind==='contracts')$this->insert('contract_versions',['name'=>$old['name'].' / v'.$old['version'],'contract_id'=>$id,'snapshot'=>$this->auditSafe($old),'actor_id'=>$this->access->user['id']]);
             if($kind==='posts'&&isset($data['instruction'])&&$data['instruction']!==$old['instruction']){ $revision=(int)$old['instruction_version']+1;$this->write('posts',$id,['instruction_version'=>$revision]);$this->insert('instructions',['name'=>'Инструкция: '.$old['name'],'post_id'=>$id,'text'=>$data['instruction'],'revision'=>$revision,'author_id'=>$this->access->user['id']]); }
             if($kind==='personal_cards'&&($data['status']??'')!==$old['status'])(new Extensions($this))->card(array_replace($old,$data));

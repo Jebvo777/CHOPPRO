@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: ЧОППРО API
-  version: 2.2.0
-  description: Реализованный API этапа 2. Базовый путь /v1. На shared hosting запрос передаётся через demo-api.php?space=admin|client|platform|jobs&path=/v1/…;
-    HTTP-метод, тело, Bearer/сессия и CSRF сохраняются. Уведомления через платные внешние сервисы — этап 4. Хранение
-    — 3 года по политике данных. Нативный интерфейс — этап 3. Глобальный поиск соблюдает права и область объектов.
-    Документы имеют inline PDF-просмотр; недельный планировщик переносит только черновики с проверкой версии, пересечений
-    и времени.
+  version: 3.0.1
+  description: 'Реализованные серверные методы и мобильные операции. Базовый путь /v1. На shared hosting: demo-api.php?space=admin|client|platform|jobs|mobile&path=/v1/…
+    . Браузер использует CSRF и отдельную сессию приложения. Нативные запросы используют Bearer, X-Choppro-Client: native
+    и не передают Cookie/Origin. Внешние уведомления, SMS, распознавание речи и платные интеграции отключены. Срок хранения
+    данных и аудита — 3 года. Редактирование опубликованного отчёта создаёт черновик; заказчик видит последнюю опубликованную
+    версию до явной публикации новой.'
 servers:
 - url: /v1
 security:
@@ -41,6 +41,10 @@ tags:
 - name: Шаблоны договоров
 - name: Импорт
 - name: Лицензии
+- name: Мобильная работа
+- name: Отчётность
+- name: Резервные копии
+- name: Рассмотрение происшествий
 paths:
   /health:
     get:
@@ -1431,7 +1435,7 @@ paths:
                   type: array
                   description: Разрешения
                   items: *id001
-              required: &id195
+              required: &id226
               - name
   /roles/{id}:
     get:
@@ -1808,7 +1812,7 @@ paths:
                   description: Объект
                   type: string
                   format: uuid
-              required: &id196
+              required: &id227
               - name
               - qualification
   /employees/{id}:
@@ -2158,7 +2162,7 @@ paths:
                 expiring_days: &id029
                   description: Порог истечения, дней
                   type: integer
-              required: &id197
+              required: &id228
               - name
   /document_types/{id}:
     get:
@@ -2852,7 +2856,7 @@ paths:
                   type: array
                   description: Коды услуг
                   items: *id001
-              required: &id214
+              required: &id245
               - name
   /licenses/{id}:
     get:
@@ -3201,7 +3205,7 @@ paths:
                 source: &id040
                   description: Источник
                   type: string
-              required: &id215
+              required: &id246
               - name
   /service_types/{id}:
     get:
@@ -3555,7 +3559,7 @@ paths:
                   description: Статус
                   type: string
                   maxLength: 32
-              required: &id216
+              required: &id247
               - name
   /customers/{id}:
     get:
@@ -3958,7 +3962,7 @@ paths:
                   description: Чек-лист уведомительной таблички
                   type: object
                   additionalProperties: true
-              required: &id217
+              required: &id248
               - name
               - number
               - customer_id
@@ -4478,7 +4482,7 @@ paths:
                 template: &id073
                   description: Шаблон
                   type: string
-              required: &id223
+              required: &id254
               - name
   /compliance_rules/{id}:
     get:
@@ -4870,7 +4874,7 @@ paths:
                   description: Вложение или исходящий номер
                   type: string
                   maxLength: 300
-              required: &id224
+              required: &id255
               - name
   /compliance_tasks/{id}:
     get:
@@ -5263,15 +5267,15 @@ paths:
                   maxLength: 32
                 polygon: &id096
                   type: array
-                  description: 'Вершины геозоны в порядке обхода: [широта, долгота]. Не менее трёх вершин; пустой
-                    массив задаёт круг.'
+                  description: 'Вершины геозоны в порядке обхода: [широта, долгота]. Не менее трёх вершин; пустой массив
+                    задаёт круг.'
                   items:
                     type: array
                     minItems: 2
                     maxItems: 2
                     items:
                       type: number
-              required: &id226
+              required: &id257
               - name
               - customer_id
               - address
@@ -5648,7 +5652,7 @@ paths:
                 instruction_version: &id104
                   description: Версия инструкции
                   type: integer
-              required: &id227
+              required: &id258
               - name
               - facility_id
               - qualification
@@ -6009,7 +6013,7 @@ paths:
                 revision: &id108
                   description: Версия
                   type: integer
-              required: &id228
+              required: &id259
               - name
   /instructions/{id}:
     get:
@@ -6506,7 +6510,7 @@ paths:
                   description: Статус
                   type: string
                   maxLength: 32
-              required: &id234
+              required: &id265
               - name
   /qr_points/{id}:
     get:
@@ -6862,7 +6866,7 @@ paths:
                   type: array
                   description: Дни недели (1–7)
                   items: *id002
-              required: &id235
+              required: &id266
               - name
   /shift_templates/{id}:
     get:
@@ -7241,7 +7245,7 @@ paths:
                 published: &id124
                   description: Опубликовано
                   type: integer
-              required: &id236
+              required: &id267
               - name
               - post_id
               - starts_at
@@ -7608,7 +7612,7 @@ paths:
                 override_reason: &id130
                   description: Основание исключения
                   type: string
-              required: &id237
+              required: &id268
               - name
               - shift_id
               - employee_id
@@ -8116,8 +8120,8 @@ paths:
           $ref: '#/components/responses/Error429'
         '503':
           $ref: '#/components/responses/Error503'
-      description: event_type CHECK_IN/CHECK_OUT. Сервер проверяет назначение, круг/полигон, точность, активный
-        QR и временное окно. Нарушение — REQUIRES_REVIEW, без учёта в фактическом покрытии до ручного решения. Завершение
+      description: event_type CHECK_IN/CHECK_OUT. Сервер проверяет назначение, круг/полигон, точность, активный QR и
+        временное окно. Нарушение — REQUIRES_REVIEW, без учёта в фактическом покрытии до ручного решения. Завершение
         закрывает присутствие и фиксирует длительность.
       requestBody:
         required: true
@@ -8422,7 +8426,7 @@ paths:
                 internal_note: &id138
                   description: Внутренний комментарий
                   type: string
-              required: &id262
+              required: &id293
               - name
   /incidents/{id}:
     get:
@@ -8791,7 +8795,7 @@ paths:
                   description: Завершено
                   type: string
                   format: date-time
-              required: &id263
+              required: &id294
               - name
   /patrols/{id}:
     get:
@@ -9162,7 +9166,7 @@ paths:
                 internal_note: &id153
                   description: Внутренний комментарий
                   type: string
-              required: &id264
+              required: &id295
               - name
   /reports/{id}:
     get:
@@ -9671,7 +9675,7 @@ paths:
                   description: Статус
                   type: string
                   maxLength: 32
-              required: &id271
+              required: &id302
               - name
               - city
               - salary_from
@@ -10047,7 +10051,7 @@ paths:
                   - REJECTED
                   - ACTIVE
                   - INACTIVE
-              required: &id274
+              required: &id305
               - name
   /applications/{id}:
     get:
@@ -10655,7 +10659,7 @@ paths:
                 is_working: &id171
                   description: Рабочий день
                   type: integer
-              required: &id290
+              required: &id321
               - name
   /holidays/{id}:
     get:
@@ -10999,7 +11003,7 @@ paths:
                 published: &id176
                   description: Опубликовано
                   type: integer
-              required: &id291
+              required: &id322
               - name
   /contract_templates/{id}:
     get:
@@ -11632,7 +11636,7 @@ paths:
                   description: Статус
                   type: string
                   maxLength: 32
-              required: &id300
+              required: &id331
               - name
               - employee_id
               - number
@@ -13243,6 +13247,8 @@ paths:
           $ref: '#/components/responses/Error429'
         '503':
           $ref: '#/components/responses/Error503'
+      description: Текущая доступная версия и неизменяемые сохранённые публикации. Заказчику только опубликованные версии
+        без внутреннего комментария. Черновики недоступны.
   /reports/{id}/pdf:
     get:
       tags:
@@ -13286,6 +13292,8 @@ paths:
           $ref: '#/components/responses/Error429'
         '503':
           $ref: '#/components/responses/Error503'
+      description: 'PDF доступной версии: UUID, версия и SHA-256 публичного содержимого. Пока новая редакция не опубликована,
+        заказчик получает последнюю опубликованную версию.'
   /users/{id}/invite:
     post:
       tags:
@@ -14921,9 +14929,9 @@ paths:
           $ref: '#/components/responses/Error429'
         '503':
           $ref: '#/components/responses/Error503'
-      description: Поиск сотрудников, документов, объектов, договоров, постов, смен, вакансий, кандидатов, отчётов
-        и инструкций. До 5 результатов в группе, total — число совпадений. Учитываются модули, роль, организация
-        и область объектов. На уровне платформы поиск ограничен организациями.
+      description: Поиск сотрудников, документов, объектов, договоров, постов, смен, вакансий, кандидатов, отчётов и
+        инструкций. До 5 результатов в группе, total — число совпадений. Учитываются модули, роль, организация и область
+        объектов. На уровне платформы поиск ограничен организациями.
   /planner:
     get:
       tags:
@@ -15157,6 +15165,1315 @@ paths:
       description: Декодирует текст и границы страниц из физически сохранённого PDF, созданного системой. Использует
         отдельное право скачивания, антивирусное состояние и SHA-256; просмотр фиксируется в аудите. Для пользовательских
         файлов возвращает пустые pages, интерфейс использует штатный PDF-просмотр браузера.
+  /mobile/snapshot:
+    get:
+      summary: Собственные смены, инструкции, маршруты, происшествия и правила
+      tags:
+      - Мобильная работа
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Только для охранника. Назначения только свои и опубликованные. Настройки размера вложений учитывают
+        реальный предел PHP на хостинге.
+  /mobile/events:
+    post:
+      summary: Сохранить мобильное событие с защитой от повторов
+      tags:
+      - Мобильная работа
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Повтор того же UUID и тела возвращает исходный результат. Другое тело с тем же UUID — 409. Допускаются
+        накопленные офлайн события не старше 90 дней; время устройства и сервера сохраняются отдельно. До рабочих действий
+        требуется ознакомление с правилами. QR/GPS, порядок маршрута и временные окна проверяет сервер. Без GPS требуется
+        объяснение, отметка остаётся на проверке.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileEvent'
+  /mobile/upload:
+    post:
+      summary: Приложить файл к собственному происшествию
+      tags:
+      - Мобильная работа
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: До десяти изображений/PDF и одной аудиозаписи; точные лимиты из снимка настроек. UUID event_key обеспечивает
+        повторяемость. Оригинал и SHA-256 сохраняются приватно. Без антивирусной службы — карантин PENDING_SCAN, автоматический
+        статус CLEAN не устанавливается.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                event_key:
+                  type: string
+                  format: uuid
+                incident_event_key:
+                  type: string
+                  format: uuid
+                file:
+                  type: string
+                  format: binary
+              required:
+              - event_key
+              - incident_event_key
+              - file
+  /reporting/timesheet:
+    get:
+      summary: Табель план/факт
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.read. Область объектов, период до 366 дней. Фильтры from, to, facility_id; сотрудник
+        employee_id для табеля, severity для происшествий.
+      parameters:
+      - &id195
+        name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id196
+        name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id197
+        name: facility_id
+        in: query
+        schema:
+          type: string
+      - &id198
+        name: employee_id
+        in: query
+        schema:
+          type: string
+      - &id199
+        name: severity
+        in: query
+        schema:
+          type: string
+  /reporting/timesheet/export:
+    get:
+      summary: 'Выгрузка: Табель план/факт'
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.export. Те же фильтры и format=pdf|xlsx|csv. XLSX — OOXML, CSV — UTF-8 с BOM и разделителем
+        ;. Формулы в текстовых ячейках экранируются. Колонки accounting задаются настройками организации.
+      parameters:
+      - *id195
+      - *id196
+      - *id197
+      - *id198
+      - *id199
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+          - csv
+  /reporting/coverage:
+    get:
+      summary: Покрытие постов и неявки
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.read. Область объектов, период до 366 дней. Фильтры from, to, facility_id; сотрудник
+        employee_id для табеля, severity для происшествий.
+      parameters:
+      - &id200
+        name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id201
+        name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id202
+        name: facility_id
+        in: query
+        schema:
+          type: string
+      - &id203
+        name: employee_id
+        in: query
+        schema:
+          type: string
+      - &id204
+        name: severity
+        in: query
+        schema:
+          type: string
+  /reporting/coverage/export:
+    get:
+      summary: 'Выгрузка: Покрытие постов и неявки'
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.export. Те же фильтры и format=pdf|xlsx|csv. XLSX — OOXML, CSV — UTF-8 с BOM и разделителем
+        ;. Формулы в текстовых ячейках экранируются. Колонки accounting задаются настройками организации.
+      parameters:
+      - *id200
+      - *id201
+      - *id202
+      - *id203
+      - *id204
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+          - csv
+  /reporting/patrols:
+    get:
+      summary: Обходы и точки
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.read. Область объектов, период до 366 дней. Фильтры from, to, facility_id; сотрудник
+        employee_id для табеля, severity для происшествий.
+      parameters:
+      - &id205
+        name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id206
+        name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id207
+        name: facility_id
+        in: query
+        schema:
+          type: string
+      - &id208
+        name: employee_id
+        in: query
+        schema:
+          type: string
+      - &id209
+        name: severity
+        in: query
+        schema:
+          type: string
+  /reporting/patrols/export:
+    get:
+      summary: 'Выгрузка: Обходы и точки'
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.export. Те же фильтры и format=pdf|xlsx|csv. XLSX — OOXML, CSV — UTF-8 с BOM и разделителем
+        ;. Формулы в текстовых ячейках экранируются. Колонки accounting задаются настройками организации.
+      parameters:
+      - *id205
+      - *id206
+      - *id207
+      - *id208
+      - *id209
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+          - csv
+  /reporting/deadlines:
+    get:
+      summary: Сроки документов и обязательств
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.read. Область объектов, период до 366 дней. Фильтры from, to, facility_id; сотрудник
+        employee_id для табеля, severity для происшествий.
+      parameters:
+      - &id210
+        name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id211
+        name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id212
+        name: facility_id
+        in: query
+        schema:
+          type: string
+      - &id213
+        name: employee_id
+        in: query
+        schema:
+          type: string
+      - &id214
+        name: severity
+        in: query
+        schema:
+          type: string
+  /reporting/deadlines/export:
+    get:
+      summary: 'Выгрузка: Сроки документов и обязательств'
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.export. Те же фильтры и format=pdf|xlsx|csv. XLSX — OOXML, CSV — UTF-8 с BOM и разделителем
+        ;. Формулы в текстовых ячейках экранируются. Колонки accounting задаются настройками организации.
+      parameters:
+      - *id210
+      - *id211
+      - *id212
+      - *id213
+      - *id214
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+          - csv
+  /reporting/incidents:
+    get:
+      summary: Происшествия
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.read. Область объектов, период до 366 дней. Фильтры from, to, facility_id; сотрудник
+        employee_id для табеля, severity для происшествий.
+      parameters:
+      - &id215
+        name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id216
+        name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id217
+        name: facility_id
+        in: query
+        schema:
+          type: string
+      - &id218
+        name: employee_id
+        in: query
+        schema:
+          type: string
+      - &id219
+        name: severity
+        in: query
+        schema:
+          type: string
+  /reporting/incidents/export:
+    get:
+      summary: 'Выгрузка: Происшествия'
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.export. Те же фильтры и format=pdf|xlsx|csv. XLSX — OOXML, CSV — UTF-8 с BOM и разделителем
+        ;. Формулы в текстовых ячейках экранируются. Колонки accounting задаются настройками организации.
+      parameters:
+      - *id215
+      - *id216
+      - *id217
+      - *id218
+      - *id219
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+          - csv
+  /reporting/accounting:
+    get:
+      summary: Табельный файловый обмен
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.read. Область объектов, период до 366 дней. Фильтры from, to, facility_id; сотрудник
+        employee_id для табеля, severity для происшествий.
+      parameters:
+      - &id220
+        name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id221
+        name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - &id222
+        name: facility_id
+        in: query
+        schema:
+          type: string
+      - &id223
+        name: employee_id
+        in: query
+        schema:
+          type: string
+      - &id224
+        name: severity
+        in: query
+        schema:
+          type: string
+  /reporting/accounting/export:
+    get:
+      summary: 'Выгрузка: Табельный файловый обмен'
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права reporting.export. Те же фильтры и format=pdf|xlsx|csv. XLSX — OOXML, CSV — UTF-8 с BOM и разделителем
+        ;. Формулы в текстовых ячейках экранируются. Колонки accounting задаются настройками организации.
+      parameters:
+      - *id220
+      - *id221
+      - *id222
+      - *id223
+      - *id224
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - pdf
+          - xlsx
+          - csv
+  /reports/generate:
+    post:
+      summary: Поставить ежемесячный отчёт в очередь
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Повторное задание для объекта и месяца дедуплицируется. Обработчик формирует черновик, публикация
+        отдельным действием. Автоформирование завершённого месяца также создаёт только черновик.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                facility_id:
+                  type: string
+                  format: uuid
+                period:
+                  type: string
+                  pattern: ^\d{4}-\d{2}$
+              required:
+              - facility_id
+              - period
+  /report-jobs:
+    get:
+      summary: Состояние заданий ежемесячных отчётов
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Область объектов организации. Для сотрудников, заказчику задания и черновики недоступны.
+  /reports/{id}/versions/{revision}/pdf:
+    parameters:
+    - &id225
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: revision
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    get:
+      summary: PDF конкретной версии отчёта
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Неизменяемая опубликованная версия; заказчику только опубликованные версии своих объектов. В PDF указаны
+        UUID, версия и SHA-256 публичного содержимого. Внутренние комментарии исключены.
+  /operational-settings:
+    get:
+      summary: Настройки мобильных сценариев и выгрузок
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+    post:
+      summary: Сохранить категории, лимиты файлов и колонки выгрузки
+      tags:
+      - Отчётность
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: integer
+                incident_categories:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      name:
+                        type: string
+                      required_fields:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                          - description
+                          - measures
+                    required:
+                    - code
+                    - name
+                    - required_fields
+                incident_images:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                incident_image_mb:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                incident_audio_mb:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                monthly_auto:
+                  type: boolean
+                accounting_columns:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                        enum:
+                        - badge
+                        - employee
+                        - date
+                        - facility
+                        - post
+                        - planned
+                        - actual
+                        - status
+                        - overrides
+                      name:
+                        type: string
+                    required:
+                    - key
+                    - name
+              required:
+              - version
+  /patrol_routes/save:
+    post:
+      summary: Сохранить маршрут с контрольными точками
+      tags:
+      - Мобильная работа
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Изменения атомарны, применяются к новым обходам. Начатый обход использует неизменяемый снимок точек
+        и геозон.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                version:
+                  type: integer
+                name:
+                  type: string
+                facility_id:
+                  type: string
+                ordered:
+                  type: integer
+                  enum:
+                  - 0
+                  - 1
+                window_minutes:
+                  type: integer
+                tolerance_minutes:
+                  type: integer
+                status:
+                  type: string
+                  enum:
+                  - DRAFT
+                  - ACTIVE
+                  - INACTIVE
+                points:
+                  type: array
+                  items:
+                    type: object
+              required:
+              - name
+              - facility_id
+              - points
+  /incidents/{id}/actions:
+    parameters:
+    - *id225
+    get:
+      summary: Действия и результаты рассмотрения
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Действия и ответственные требуют incidents.update. Первичные меры и дополнения не раскрываются заказчику.
+    post:
+      summary: Сохранить действие по происшествию
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: При изменении требуются id и version. Выполнение требует результат от 10 символов и действующего ответственного
+        с доступом к объекту. Обязательное действие нельзя отменить или сделать необязательным.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                version:
+                  type: integer
+                name:
+                  type: string
+                responsible_id:
+                  type: string
+                  nullable: true
+                required:
+                  type: integer
+                  enum:
+                  - 0
+                  - 1
+                status:
+                  type: string
+                  enum:
+                  - OPEN
+                  - DONE
+                  - CANCELLED
+                result:
+                  type: string
+                deadline:
+                  type: string
+                  format: date-time
+                  nullable: true
+              required:
+              - name
+  /incidents/{id}/responsibles:
+    parameters:
+    - *id225
+    get:
+      summary: Сотрудники с правом рассмотрения этого объекта
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Действия и ответственные требуют incidents.update. Первичные меры и дополнения не раскрываются заказчику.
+  /incidents/{id}/summary:
+    parameters:
+    - *id225
+    get:
+      summary: Первичные меры и неизменяемые дополнения
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Действия и ответственные требуют incidents.update. Первичные меры и дополнения не раскрываются заказчику.
+  /incidents/{id}/resolve:
+    parameters:
+    - *id225
+    post:
+      summary: Закрыть происшествие с результатом и ответственным
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Требует выполнения всех обязательных действий. Итог сохраняется неизменяемо. Для критического события
+        обязательное действие создаётся автоматически.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: integer
+                responsible_id:
+                  type: string
+                result:
+                  type: string
+                  minLength: 10
+                measures:
+                  type: string
+                  minLength: 10
+              required:
+              - version
+              - responsible_id
+              - result
+              - measures
+  /incidents/{id}/pdf:
+    parameters:
+    - *id225
+    get:
+      summary: PDF происшествия и проверенных материалов
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: UUID, версия, контрольная сумма содержимого и SHA-256 файлов. Заказчику только опубликованное описание
+        и явно опубликованные проверенные материалы.
+  /files/{id}/preview:
+    parameters:
+    - *id225
+    get:
+      summary: Санитизированный предпросмотр изображения
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Доступ проверяется по родительской записи. Заказчику только явно опубликованный чистый материал. Оригинал
+        неизменен; предпросмотр отдельным файлом.
+  /files/{id}/link:
+    parameters:
+    - *id225
+    get:
+      summary: Подписанная ссылка на оригинал файла
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: 5 минут, привязана к пользователю и сессии. Получение и скачивание требуют актуальную авторизацию,
+        права на запись и CLEAN. SHA-256 оригинала проверяется.
+  /files/{id}/review:
+    parameters:
+    - *id225
+    post:
+      summary: Ручное решение по карантинному вложению
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права files.review и область родительской записи. Заражённый материал не разблокируется.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                decision:
+                  type: string
+                  enum:
+                  - CLEAN
+                  - INFECTED
+                reason:
+                  type: string
+                  minLength: 10
+              required:
+              - decision
+              - reason
+  /files/{id}/publish:
+    parameters:
+    - *id225
+    post:
+      summary: Явно разрешить или скрыть материал для заказчика
+      tags:
+      - Рассмотрение происшествий
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Права изменения родительской записи. Публикация только CLEAN; она не публикует само происшествие.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                published:
+                  type: integer
+                  enum:
+                  - 0
+                  - 1
+              required:
+              - published
+  /attendance/{id}/explanations:
+    parameters:
+    - *id225
+    get:
+      summary: Объяснения сотрудника к отметке присутствия
+      tags:
+      - Присутствие
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+  /patrols/{id}/scans:
+    parameters:
+    - *id225
+    get:
+      summary: Отметки точек обхода
+      tags:
+      - Мобильная работа
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+  /backups:
+    get:
+      summary: Зашифрованные резервные копии
+      tags:
+      - Резервные копии
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Только администратор платформы. Целевой интервал 15 минут, для работы без посещений необходим планировщик
+        хостинга. Сохраняются база и приватные файлы; проверяются GCM, SHA-256 и число записей.
+    post:
+      summary: Создать зашифрованную резервную копию
+      tags:
+      - Резервные копии
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+              required:
+              - reason
+  /backups/{id}/verify:
+    parameters:
+    - *id225
+    post:
+      summary: Проверить копию без изменения базы
+      tags:
+      - Резервные копии
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+  /backups/{id}/restore:
+    parameters:
+    - *id225
+    post:
+      summary: Восстановить проверенную копию
+      tags:
+      - Резервные копии
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Сначала проверка и загрузка во временные таблицы/каталоги, затем атомарная подмена с журналом восстановления.
+        Все сессии отзываются. Целевой RTO до 4 часов, фактическое время отражается в результате.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                confirmation:
+                  type: string
+                  enum:
+                  - ВОССТАНОВИТЬ
+              required:
+              - reason
+              - confirmation
+  /backups/{id}/download:
+    parameters:
+    - *id225
+    get:
+      summary: Скачать зашифрованную копию
+      tags:
+      - Резервные копии
+      responses:
+        '200':
+          description: Успешный результат
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Error403'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+      description: Бинарный зашифрованный контейнер; секрет ключа в файл не включается.
 components:
   securitySchemes:
     BearerAuth:
@@ -15189,7 +16506,7 @@ components:
         name: *id013
         code: *id014
         permissions: *id015
-      required: *id195
+      required: *id226
     rolesRecord:
       type: object
       properties:
@@ -15218,7 +16535,7 @@ components:
         hired_at: *id023
         personal_card: *id024
         facility_id: *id025
-      required: *id196
+      required: *id227
     employeesRecord:
       type: object
       properties:
@@ -15248,7 +16565,7 @@ components:
         required_fields: *id027
         duration_days: *id028
         expiring_days: *id029
-      required: *id197
+      required: *id228
     document_typesRecord:
       type: object
       properties:
@@ -15268,47 +16585,47 @@ components:
     documents:
       type: object
       properties:
-        name: &id198
+        name: &id229
           description: Название
           type: string
           maxLength: 200
-        employee_id: &id199
+        employee_id: &id230
           description: Сотрудник
           type: string
           format: uuid
-        type_id: &id200
+        type_id: &id231
           description: Тип документа
           type: string
           format: uuid
-        number: &id201
+        number: &id232
           description: Номер
           type: string
           maxLength: 200
-        issued_at: &id202
+        issued_at: &id233
           description: Дата выдачи
           type: string
           format: date
-        expires_at: &id203
+        expires_at: &id234
           description: Действителен до
           type: string
           format: date
-        status: &id204
+        status: &id235
           description: Статус
           type: string
           maxLength: 32
-        scan_status: &id205
+        scan_status: &id236
           description: Проверка файла
           type: string
           maxLength: 32
-        file_path: &id206
+        file_path: &id237
           description: Файл
           type: string
           maxLength: 300
-        mime: &id207
+        mime: &id238
           description: Формат файла
           type: string
           maxLength: 100
-        sha256: &id208
+        sha256: &id239
           description: Контрольная сумма
           type: string
       required:
@@ -15327,36 +16644,36 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id198
-        employee_id: *id199
-        type_id: *id200
-        number: *id201
-        issued_at: *id202
-        expires_at: *id203
-        status: *id204
-        scan_status: *id205
-        file_path: *id206
-        mime: *id207
-        sha256: *id208
+        name: *id229
+        employee_id: *id230
+        type_id: *id231
+        number: *id232
+        issued_at: *id233
+        expires_at: *id234
+        status: *id235
+        scan_status: *id236
+        file_path: *id237
+        mime: *id238
+        sha256: *id239
     document_reviews:
       type: object
       properties:
-        name: &id209
+        name: &id240
           description: Название
           type: string
           maxLength: 200
-        document_id: &id210
+        document_id: &id241
           description: Документ
           type: string
           format: uuid
-        decision: &id211
+        decision: &id242
           description: Решение
           type: string
           maxLength: 32
-        reason: &id212
+        reason: &id243
           description: Причина
           type: string
-        actor_id: &id213
+        actor_id: &id244
           description: Кто выполнил
           type: string
           format: uuid
@@ -15374,11 +16691,11 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id209
-        document_id: *id210
-        decision: *id211
-        reason: *id212
-        actor_id: *id213
+        name: *id240
+        document_id: *id241
+        decision: *id242
+        reason: *id243
+        actor_id: *id244
     licenses:
       type: object
       properties:
@@ -15388,7 +16705,7 @@ components:
         expires_at: *id033
         status: *id034
         services: *id035
-      required: *id214
+      required: *id245
     licensesRecord:
       type: object
       properties:
@@ -15415,7 +16732,7 @@ components:
         rule_version: *id038
         valid_from: *id039
         source: *id040
-      required: *id215
+      required: *id246
     service_typesRecord:
       type: object
       properties:
@@ -15442,7 +16759,7 @@ components:
         phone: *id044
         email: *id045
         status: *id046
-      required: *id216
+      required: *id247
     customersRecord:
       type: object
       properties:
@@ -15479,13 +16796,13 @@ components:
         compensation: *id059
         legacy: *id060
         source_version: *id061
-        legal_hold_until: &id218
+        legal_hold_until: &id249
           description: Хранить до
           type: string
           format: date
         override_reason: *id062
         signage: *id063
-      required: *id217
+      required: *id248
     contractsRecord:
       type: object
       properties:
@@ -15513,25 +16830,25 @@ components:
         compensation: *id059
         legacy: *id060
         source_version: *id061
-        legal_hold_until: *id218
+        legal_hold_until: *id249
         override_reason: *id062
         signage: *id063
     contract_versions:
       type: object
       properties:
-        name: &id219
+        name: &id250
           description: Название
           type: string
           maxLength: 200
-        contract_id: &id220
+        contract_id: &id251
           description: Договор
           type: string
           format: uuid
-        snapshot: &id221
+        snapshot: &id252
           description: Сохранённая версия
           type: object
           additionalProperties: true
-        actor_id: &id222
+        actor_id: &id253
           description: Кто выполнил
           type: string
           format: uuid
@@ -15549,10 +16866,10 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id219
-        contract_id: *id220
-        snapshot: *id221
-        actor_id: *id222
+        name: *id250
+        contract_id: *id251
+        snapshot: *id252
+        actor_id: *id253
     compliance_rules:
       type: object
       properties:
@@ -15566,7 +16883,7 @@ components:
         valid_from: *id071
         source: *id072
         template: *id073
-      required: *id223
+      required: *id254
     compliance_rulesRecord:
       type: object
       properties:
@@ -15602,11 +16919,11 @@ components:
         sent_at: *id081
         receipt: *id082
         attachment: *id083
-        author_id: &id225
+        author_id: &id256
           description: Автор
           type: string
           format: uuid
-      required: *id224
+      required: *id255
     compliance_tasksRecord:
       type: object
       properties:
@@ -15629,7 +16946,7 @@ components:
         sent_at: *id081
         receipt: *id082
         attachment: *id083
-        author_id: *id225
+        author_id: *id256
     facilities:
       type: object
       properties:
@@ -15646,7 +16963,7 @@ components:
         contact_name: *id094
         phone: *id095
         polygon: *id096
-      required: *id226
+      required: *id257
     facilitiesRecord:
       type: object
       properties:
@@ -15683,7 +17000,7 @@ components:
         status: *id102
         instruction: *id103
         instruction_version: *id104
-      required: *id227
+      required: *id258
     postsRecord:
       type: object
       properties:
@@ -15711,11 +17028,11 @@ components:
         post_id: *id106
         text: *id107
         revision: *id108
-        author_id: &id229
+        author_id: &id260
           description: Автор
           type: string
           format: uuid
-      required: *id228
+      required: *id259
     instructionsRecord:
       type: object
       properties:
@@ -15732,23 +17049,23 @@ components:
         post_id: *id106
         text: *id107
         revision: *id108
-        author_id: *id229
+        author_id: *id260
     instruction_receipts:
       type: object
       properties:
-        name: &id230
+        name: &id261
           description: Название
           type: string
           maxLength: 200
-        instruction_id: &id231
+        instruction_id: &id262
           description: Инструкция
           type: string
           format: uuid
-        employee_id: &id232
+        employee_id: &id263
           description: Сотрудник
           type: string
           format: uuid
-        acknowledged_at: &id233
+        acknowledged_at: &id264
           description: Дата ознакомления
           type: string
           format: date-time
@@ -15766,10 +17083,10 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id230
-        instruction_id: *id231
-        employee_id: *id232
-        acknowledged_at: *id233
+        name: *id261
+        instruction_id: *id262
+        employee_id: *id263
+        acknowledged_at: *id264
     qr_points:
       type: object
       properties:
@@ -15778,7 +17095,7 @@ components:
         post_id: *id111
         token: *id112
         status: *id113
-      required: *id234
+      required: *id265
     qr_pointsRecord:
       type: object
       properties:
@@ -15804,7 +17121,7 @@ components:
         start_time: *id116
         duration_hours: *id117
         weekdays: *id118
-      required: *id235
+      required: *id266
     shift_templatesRecord:
       type: object
       properties:
@@ -15831,7 +17148,7 @@ components:
         ends_at: *id122
         status: *id123
         published: *id124
-      required: *id236
+      required: *id267
     shiftsRecord:
       type: object
       properties:
@@ -15859,7 +17176,7 @@ components:
         status: *id128
         confirmed_at: *id129
         override_reason: *id130
-      required: *id237
+      required: *id268
     assignmentsRecord:
       type: object
       properties:
@@ -15881,26 +17198,26 @@ components:
     assignment_history:
       type: object
       properties:
-        name: &id238
+        name: &id269
           description: Название
           type: string
           maxLength: 200
-        assignment_id: &id239
+        assignment_id: &id270
           description: Назначение
           type: string
           format: uuid
-        old_employee_id: &id240
+        old_employee_id: &id271
           description: Прежний сотрудник
           type: string
           format: uuid
-        new_employee_id: &id241
+        new_employee_id: &id272
           description: Новый сотрудник
           type: string
           format: uuid
-        reason: &id242
+        reason: &id273
           description: Причина
           type: string
-        actor_id: &id243
+        actor_id: &id274
           description: Кто выполнил
           type: string
           format: uuid
@@ -15918,80 +17235,80 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id238
-        assignment_id: *id239
-        old_employee_id: *id240
-        new_employee_id: *id241
-        reason: *id242
-        actor_id: *id243
+        name: *id269
+        assignment_id: *id270
+        old_employee_id: *id271
+        new_employee_id: *id272
+        reason: *id273
+        actor_id: *id274
     attendance:
       type: object
       properties:
-        name: &id244
+        name: &id275
           description: Название
           type: string
           maxLength: 200
-        assignment_id: &id245
+        assignment_id: &id276
           description: Назначение
           type: string
           format: uuid
-        employee_id: &id246
+        employee_id: &id277
           description: Сотрудник
           type: string
           format: uuid
-        event_type: &id247
+        event_type: &id278
           description: Тип отметки
           type: string
           maxLength: 32
-        client_time: &id248
+        client_time: &id279
           description: Время устройства
           type: string
           format: date-time
-        server_time: &id249
+        server_time: &id280
           description: Время сервера
           type: string
           format: date-time
-        lat: &id250
+        lat: &id281
           description: Широта
           type: number
-        lng: &id251
+        lng: &id282
           description: Долгота
           type: number
-        accuracy: &id252
+        accuracy: &id283
           description: Точность GPS, м
           type: number
-        device_id: &id253
+        device_id: &id284
           description: Устройство
           type: string
           maxLength: 100
-        qr_token: &id254
+        qr_token: &id285
           description: Код контрольной точки
           type: string
           maxLength: 100
-        offline: &id255
+        offline: &id286
           description: Записано без связи
           type: integer
-        status: &id256
+        status: &id287
           description: Статус
           type: string
           maxLength: 32
-        reasons: &id257
+        reasons: &id288
           type: array
           description: Причины проверки
           items: *id001
-        idempotency_key: &id258
+        idempotency_key: &id289
           description: Ключ повторного запроса
           type: string
           maxLength: 128
           minLength: 8
-        source_id: &id259
+        source_id: &id290
           description: Исходное событие
           type: string
           format: uuid
-        reason: &id260
+        reason: &id291
           description: Причина
           type: string
-        duration_minutes: &id261
+        duration_minutes: &id292
           description: Отработано, мин
           type: integer
       required:
@@ -16008,24 +17325,24 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id244
-        assignment_id: *id245
-        employee_id: *id246
-        event_type: *id247
-        client_time: *id248
-        server_time: *id249
-        lat: *id250
-        lng: *id251
-        accuracy: *id252
-        device_id: *id253
-        qr_token: *id254
-        offline: *id255
-        status: *id256
-        reasons: *id257
-        idempotency_key: *id258
-        source_id: *id259
-        reason: *id260
-        duration_minutes: *id261
+        name: *id275
+        assignment_id: *id276
+        employee_id: *id277
+        event_type: *id278
+        client_time: *id279
+        server_time: *id280
+        lat: *id281
+        lng: *id282
+        accuracy: *id283
+        device_id: *id284
+        qr_token: *id285
+        offline: *id286
+        status: *id287
+        reasons: *id288
+        idempotency_key: *id289
+        source_id: *id290
+        reason: *id291
+        duration_minutes: *id292
     incidents:
       type: object
       properties:
@@ -16037,7 +17354,7 @@ components:
         published: *id136
         description: *id137
         internal_note: *id138
-      required: *id262
+      required: *id293
     incidentsRecord:
       type: object
       properties:
@@ -16068,7 +17385,7 @@ components:
         completed_points: *id143
         total_points: *id144
         finished_at: *id145
-      required: *id263
+      required: *id294
     patrolsRecord:
       type: object
       properties:
@@ -16099,11 +17416,11 @@ components:
         published: *id151
         content: *id152
         internal_note: *id153
-        file_path: &id265
+        file_path: &id296
           description: Файл
           type: string
           maxLength: 300
-      required: *id264
+      required: *id295
     reportsRecord:
       type: object
       properties:
@@ -16124,26 +17441,26 @@ components:
         published: *id151
         content: *id152
         internal_note: *id153
-        file_path: *id265
+        file_path: *id296
     report_receipts:
       type: object
       properties:
-        name: &id266
+        name: &id297
           description: Название
           type: string
           maxLength: 200
-        report_id: &id267
+        report_id: &id298
           description: Отчёт
           type: string
           format: uuid
-        user_id: &id268
+        user_id: &id299
           description: Пользователь
           type: string
           format: uuid
-        report_version: &id269
+        report_version: &id300
           description: Версия отчёта
           type: integer
-        ip: &id270
+        ip: &id301
           description: IP-адрес
           type: string
           maxLength: 64
@@ -16161,11 +17478,11 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id266
-        report_id: *id267
-        user_id: *id268
-        report_version: *id269
-        ip: *id270
+        name: *id297
+        report_id: *id298
+        user_id: *id299
+        report_version: *id300
+        ip: *id301
     vacancies:
       type: object
       properties:
@@ -16178,14 +17495,14 @@ components:
         qualification: *id160
         description: *id161
         status: *id162
-        pinned_rank: &id272
+        pinned_rank: &id303
           description: Место в закрепе
           type: integer
-        pinned_at: &id273
+        pinned_at: &id304
           description: Дата закрепа
           type: string
           format: date-time
-      required: *id271
+      required: *id302
     vacanciesRecord:
       type: object
       properties:
@@ -16207,8 +17524,8 @@ components:
         qualification: *id160
         description: *id161
         status: *id162
-        pinned_rank: *id272
-        pinned_at: *id273
+        pinned_rank: *id303
+        pinned_at: *id304
     applications:
       type: object
       properties:
@@ -16218,7 +17535,7 @@ components:
         email: *id166
         message: *id167
         status: *id168
-      required: *id274
+      required: *id305
     applicationsRecord:
       type: object
       properties:
@@ -16240,31 +17557,31 @@ components:
     notifications:
       type: object
       properties:
-        name: &id275
+        name: &id306
           description: Название
           type: string
           maxLength: 200
-        user_id: &id276
+        user_id: &id307
           description: Пользователь
           type: string
           format: uuid
-        entity_type: &id277
+        entity_type: &id308
           description: Раздел
           type: string
           maxLength: 64
-        entity_id: &id278
+        entity_id: &id309
           description: Запись
           type: string
           format: uuid
-        dedupe_key: &id279
+        dedupe_key: &id310
           description: Ключ события
           type: string
           maxLength: 200
-        status: &id280
+        status: &id311
           description: Статус
           type: string
           maxLength: 32
-        payload: &id281
+        payload: &id312
           description: Сведения
           type: object
           additionalProperties: true
@@ -16282,44 +17599,44 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id275
-        user_id: *id276
-        entity_type: *id277
-        entity_id: *id278
-        dedupe_key: *id279
-        status: *id280
-        payload: *id281
+        name: *id306
+        user_id: *id307
+        entity_type: *id308
+        entity_id: *id309
+        dedupe_key: *id310
+        status: *id311
+        payload: *id312
     outbox:
       type: object
       properties:
-        name: &id282
+        name: &id313
           description: Название
           type: string
           maxLength: 200
-        topic: &id283
+        topic: &id314
           description: Тип события
           type: string
           maxLength: 100
-        dedupe_key: &id284
+        dedupe_key: &id315
           description: Ключ события
           type: string
           maxLength: 200
-        payload: &id285
+        payload: &id316
           description: Сведения
           type: object
           additionalProperties: true
-        status: &id286
+        status: &id317
           description: Статус
           type: string
           maxLength: 32
-        attempts: &id287
+        attempts: &id318
           description: Количество попыток
           type: integer
-        available_at: &id288
+        available_at: &id319
           description: Следующая попытка
           type: string
           format: date-time
-        last_error: &id289
+        last_error: &id320
           description: Последняя ошибка
           type: string
       required:
@@ -16336,21 +17653,21 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id282
-        topic: *id283
-        dedupe_key: *id284
-        payload: *id285
-        status: *id286
-        attempts: *id287
-        available_at: *id288
-        last_error: *id289
+        name: *id313
+        topic: *id314
+        dedupe_key: *id315
+        payload: *id316
+        status: *id317
+        attempts: *id318
+        available_at: *id319
+        last_error: *id320
     holidays:
       type: object
       properties:
         name: *id169
         date: *id170
         is_working: *id171
-      required: *id290
+      required: *id321
     holidaysRecord:
       type: object
       properties:
@@ -16374,11 +17691,11 @@ components:
         source: *id174
         revision: *id175
         published: *id176
-        published_by: &id292
+        published_by: &id323
           description: Опубликовал
           type: string
           format: uuid
-      required: *id291
+      required: *id322
     contract_templatesRecord:
       type: object
       properties:
@@ -16396,19 +17713,19 @@ components:
         source: *id174
         revision: *id175
         published: *id176
-        published_by: *id292
+        published_by: *id323
     no_shows:
       type: object
       properties:
-        name: &id293
+        name: &id324
           description: Название
           type: string
           maxLength: 200
-        assignment_id: &id294
+        assignment_id: &id325
           description: Назначение
           type: string
           format: uuid
-        status: &id295
+        status: &id326
           description: Статус
           type: string
           maxLength: 32
@@ -16426,24 +17743,24 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id293
-        assignment_id: *id294
-        status: *id295
+        name: *id324
+        assignment_id: *id325
+        status: *id326
     break_glass:
       type: object
       properties:
-        name: &id296
+        name: &id327
           description: Название
           type: string
           maxLength: 200
-        user_id: &id297
+        user_id: &id328
           description: Пользователь
           type: string
           format: uuid
-        reason: &id298
+        reason: &id329
           description: Причина
           type: string
-        expires_at: &id299
+        expires_at: &id330
           description: Действителен до
           type: string
           format: date-time
@@ -16461,10 +17778,10 @@ components:
         version: *id002
         created_at: *id001
         updated_at: *id001
-        name: *id296
-        user_id: *id297
-        reason: *id298
-        expires_at: *id299
+        name: *id327
+        user_id: *id328
+        reason: *id329
+        expires_at: *id330
     personal_cards:
       type: object
       properties:
@@ -16476,7 +17793,7 @@ components:
         authority: *id182
         receipt: *id183
         status: *id184
-      required: *id300
+      required: *id331
     personal_cardsRecord:
       type: object
       properties:
@@ -16528,6 +17845,39 @@ components:
         customer_id: *id190
         employee_id: *id191
         scopes: *id192
+    MobileEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - POLICY_ACK
+          - ASSIGNMENT_CONFIRM
+          - INSTRUCTION_ACK
+          - CHECK_IN
+          - CHECK_OUT
+          - PATROL_START
+          - CHECKPOINT_SCAN
+          - PATROL_FINISH
+          - INCIDENT_CREATE
+          - INCIDENT_AMEND
+          - ATTENDANCE_EXPLAIN
+        client_time:
+          type: string
+          format: date-time
+        device_id:
+          type: string
+        payload:
+          type: object
+      required:
+      - id
+      - type
+      - client_time
+      - device_id
+      - payload
   responses:
     Error401:
       description: Требуется вход

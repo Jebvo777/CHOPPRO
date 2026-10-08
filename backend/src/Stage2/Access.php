@@ -57,7 +57,8 @@ final class Access
         }
         if($this->user['role']==='customer') {
             if($kind==='customers'){$parts[]='t.id=?';$args[]=$this->user['customer_id'];}
-            if(in_array($kind,['incidents','reports'],true)){$parts[]="t.published=1";}
+            if($kind==='incidents')$parts[]='t.published=1';
+            if($kind==='reports')$parts[]="(t.published=1 OR EXISTS(SELECT 1 FROM cp_report_versions rv WHERE rv.report_id=t.id AND rv.tenant_id=t.tenant_id AND JSON_EXTRACT(rv.snapshot,'$.published')=1 AND JSON_UNQUOTE(JSON_EXTRACT(rv.snapshot,'$.facility_id'))=t.facility_id))";
             if($kind==='shifts')$parts[]='t.published=1';
         }
         if($this->user['role']==='guard') {
@@ -94,6 +95,11 @@ final class Access
     }
     public function safe(string $kind,array $row): array
     {
+        if($kind==='reports'&&$this->user['role']==='customer'&&!(int)($row['published']??0)){
+            $snapshot=$this->db->scalar("SELECT snapshot FROM cp_report_versions WHERE tenant_id=? AND report_id=? AND JSON_EXTRACT(snapshot,'$.published')=1 AND JSON_UNQUOTE(JSON_EXTRACT(snapshot,'$.facility_id'))=? ORDER BY revision DESC LIMIT 1",[$row['tenant_id'],$row['id'],$row['facility_id']]);
+            if(!$snapshot)throw new Problem(404,'NOT_FOUND','Опубликованная версия недоступна');
+            $row=array_replace($row,Support::decode($snapshot));
+        }
         unset($row['password_hash'],$row['mfa_secret'],$row['mfa_last_step'],$row['file_path']);
         if($kind==='employees'&&(!$this->allows('employees.sensitive')||($this->user['role']==='platform_admin'&&!$this->canDownloadDocuments())))$row['passport']='•••• ••••••';
         if($kind==='employees'&&$this->user['role']==='platform_admin'&&!$this->canDownloadDocuments()){foreach(['phone','email','personal_card']as$field)if(isset($row[$field]))$row[$field]='••••';}

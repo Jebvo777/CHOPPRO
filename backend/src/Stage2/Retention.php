@@ -16,7 +16,7 @@ final class Retention
     }
     public function unlinkPending(?string $tenant=null):int
     {
-        $count=0;foreach($this->db->all('SELECT * FROM cp_retention_pending_files'.($tenant?' WHERE tenant_id=?':'').' LIMIT 500',$tenant?[$tenant]:[])as$row){$refs=(int)$this->db->scalar('SELECT COUNT(*) FROM cp_documents WHERE tenant_id=? AND file_path=?',[$row['tenant_id'],$row['file_name']])+(int)$this->db->scalar('SELECT COUNT(*) FROM cp_files WHERE tenant_id=? AND file_path=?',[$row['tenant_id'],$row['file_name']]);if($refs){$this->db->run('DELETE FROM cp_retention_pending_files WHERE id=?',[$row['id']]);continue;}$path=$this->config['storage'].'/uploads/'.$row['tenant_id'].'/'.basename($row['file_name']);if(is_file($path)&&!unlink($path))continue;$this->db->run('DELETE FROM cp_retention_pending_files WHERE id=?',[$row['id']]);$count++;}return$count;
+        $count=0;foreach($this->db->all('SELECT * FROM cp_retention_pending_files'.($tenant?' WHERE tenant_id=?':'').' LIMIT 500',$tenant?[$tenant]:[])as$row){$refs=(int)$this->db->scalar('SELECT COUNT(*) FROM cp_documents WHERE tenant_id=? AND file_path=?',[$row['tenant_id'],$row['file_name']])+(int)$this->db->scalar('SELECT COUNT(*) FROM cp_files WHERE tenant_id=? AND file_path=?',[$row['tenant_id'],$row['file_name']]);if($refs){$this->db->run('DELETE FROM cp_retention_pending_files WHERE id=?',[$row['id']]);continue;}$path=$this->config['storage'].'/uploads/'.$row['tenant_id'].'/'.basename($row['file_name']);if(is_file($path)&&!unlink($path))continue;@unlink($path.'.preview.jpg');$this->db->run('DELETE FROM cp_retention_pending_files WHERE id=?',[$row['id']]);$count++;}return$count;
     }
     private function purge(string $tenant,string $cutoff):array
     {

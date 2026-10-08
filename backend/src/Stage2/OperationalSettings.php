@@ -11,6 +11,11 @@ final class OperationalSettings
         $settings=Support::decode($this->r->db()->scalar('SELECT settings FROM cp_tenants WHERE id=?',[$this->r->access->tenant()])?:'{}');
         return ['incident_categories'=>$settings['incident_categories']??self::CATEGORIES,'incident_images'=>(int)($settings['incident_images']??10),'incident_image_mb'=>(int)($settings['incident_image_mb']??20),'incident_audio_mb'=>(int)($settings['incident_audio_mb']??100),'monthly_auto'=>(bool)($settings['monthly_auto']??true),'accounting_columns'=>$settings['accounting_columns']??array_map(fn($k,$v)=>['key'=>$k,'name'=>$v],array_keys(self::ACCOUNTING),array_values(self::ACCOUNTING))];
     }
+    public function mobile():array
+    {
+        $settings=$this->get();$bytes=static function(string $value):int{$value=trim($value);$n=(float)$value;return(int)($n*match(strtolower(substr($value,-1))){'g'=>1073741824,'m'=>1048576,'k'=>1024,default=>1});};$limits=array_filter([$bytes((string)ini_get('upload_max_filesize')),$bytes((string)ini_get('post_max_size'))-65536],fn($n)=>$n>0);$limit=$limits?round(min($limits)/1048576,2):100;
+        $settings['hosting_upload_mb']=$limit;foreach(['incident_image_mb','incident_audio_mb']as$key)$settings[$key]=min($settings[$key],$limit);return$settings;
+    }
     public function save(array $input):array
     {
         $a=$this->r->access;$a->need('settings.update');$old=$this->get();$new=array_replace($old,array_intersect_key($input,$old));

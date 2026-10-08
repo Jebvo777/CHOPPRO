@@ -66,7 +66,7 @@ export function Provider({children}: {children: React.ReactNode}) {
   async function configure(value: string) {
     const result = normalizeEndpoint(value,__DEV__ || (Platform.OS === 'web' && /localhost|127\.0\.0\.1/.test(value)));
     await secret.set('endpoint',result); setEndpoint(result);
-    const a = new Api(result,Platform.OS !== 'web',async session => { if (session) await secret.set('session',JSON.stringify(session)); else await secret.remove('session'); });
+    const a = new Api(result,Platform.OS !== 'web',async session => { if(current.current!==a)return;if (session) await secret.set('session',JSON.stringify(session)); else await secret.remove('session'); });
     current.current = a; setApi(a); return a;
   }
   async function login(session: Session) { if (!current.current) throw new Error('Укажите адрес сервера'); await connect(session,current.current); }
