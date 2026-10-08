@@ -87,9 +87,11 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
+          ram-size: '4096'
           disable-animations: true
           script: |
             adb install mobile/android/app/build/outputs/apk/release/app-release.apk
+            adb shell am force-stop com.google.android.apps.nexuslauncher
             adb shell am start -W -n ru.choppro.guard/.MainActivity
             adb shell pidof ru.choppro.guard
             python3 tools/mobile_android_smoke.py
@@ -128,7 +130,8 @@ jobs:
         run: |
           mobile_workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
           mobile_scheme=$(basename "$mobile_workspace" .xcworkspace)
-          xcodebuild -workspace "$mobile_workspace" -scheme "$mobile_scheme" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios-build CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=-
+          xcodebuild -workspace "$mobile_workspace" -scheme "$mobile_scheme" -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios-build CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=- > ../ios-build.log 2>&1 || { tail -n 100 ../ios-build.log; exit 1; }
+          tail -n 20 ../ios-build.log
       - name: Launch standalone iOS application
         run: |
           mobile_simulator=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in reversed(list(d["devices"].values())) for x in group if "iPhone" in x["name"]))')
@@ -142,7 +145,8 @@ jobs:
           xcrun simctl spawn "$mobile_simulator" launchctl list | grep ru.choppro.guard
           ruby tools/mobile_ios_tests.rb
           mobile_workspace=$(find mobile/ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
-          xcodebuild test -workspace "$mobile_workspace" -scheme MobileChecks -configuration Release -destination "id=$mobile_simulator" -derivedDataPath mobile/ios-build -resultBundlePath dist/CHOPPRO_iOS_checks.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=-
+          xcodebuild test -workspace "$mobile_workspace" -scheme MobileChecks -configuration Release -destination "id=$mobile_simulator" -derivedDataPath mobile/ios-build -resultBundlePath dist/CHOPPRO_iOS_checks.xcresult CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=- > ios-test.log 2>&1 || { tail -n 100 ios-test.log; exit 1; }
+          tail -n 30 ios-test.log
           xcrun simctl io "$mobile_simulator" screenshot dist/CHOPPRO_iOS_screen.png
           xcrun simctl shutdown "$mobile_simulator"
       - name: Package iOS project

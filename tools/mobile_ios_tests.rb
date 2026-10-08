@@ -13,6 +13,8 @@ tests.source_build_phase.add_file_reference(group.new_file('MobileChecks.swift')
 tests.build_configurations.each do |config|
   config.build_settings.merge!({
     'PRODUCT_BUNDLE_IDENTIFIER' => 'ru.choppro.guard.checks',
+    'PRODUCT_NAME' => 'MobileChecks',
+    'ONLY_ACTIVE_ARCH' => 'YES',
     'GENERATE_INFOPLIST_FILE' => 'YES',
     'SWIFT_VERSION' => '5.0',
     'TEST_TARGET_NAME' => application.name,
