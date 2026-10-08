@@ -39,13 +39,15 @@ jobs:
         run: php tools/upgrade_test.php
       - name: MySQL acceptance scenarios
         run: php backend/tests/stage2/integration.php
+      - name: Mobile operations, reporting and encrypted recovery
+        run: php backend/tests/stage34/integration.php
       - uses: actions/setup-node@v4
         if: ${{ !cancelled() }}
         with:
           node-version: '22'
       - name: Check JavaScript
         if: ${{ !cancelled() }}
-        run: node --check web/shared/app.js && node --check web/shared/qr.js && node --check web/shared/map.js && node --check web/shared/ux.js && node --check web/shared/workspace.js && node tools/map_tests.cjs
+        run: node --check web/shared/stage34.js && node --check web/shared/app.js && node --check web/shared/qr.js && node --check web/shared/map.js && node --check web/shared/ux.js && node --check web/shared/workspace.js && node tools/map_tests.cjs
       - name: Build shared hosting distribution
         if: ${{ !cancelled() }}
         run: |
