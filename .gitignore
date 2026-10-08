@@ -20,3 +20,6 @@ stage2-preview/
 *.local.php
 site-private.php
 dist/
+
+**/.cxx/
+**/.kotlin/

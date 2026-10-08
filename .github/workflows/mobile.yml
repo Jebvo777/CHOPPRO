@@ -74,6 +74,26 @@ jobs:
       - name: Build standalone Android
         working-directory: mobile/android
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Launch standalone Android application
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install mobile/android/app/build/outputs/apk/release/app-release.apk
+            adb shell am start -W -n ru.choppro.guard/.MainActivity
+            sleep 8
+            adb shell pidof ru.choppro.guard
+            mkdir -p dist
+            adb exec-out screencap -p > dist/CHOPPRO_Android_screen.png
       - name: Package Android project
         run: python3 tools/package_mobile.py --platform android --sha "$GITHUB_SHA" --output dist/CHOPPRO_Android.zip
       - name: Include application

@@ -4,7 +4,7 @@ with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
  for path in sorted(root.rglob('*')):
   if not path.is_file():continue
   parts=path.relative_to(root).parts
-  if any(x in parts for x in ['node_modules','Pods','.gradle','build','.expo','dist','ios-build','.git']):continue
+  if any(x in parts for x in ['node_modules','Pods','.gradle','build','.expo','dist','ios-build','.git','.cxx','.kotlin','.idea','captures']):continue
   if parts[0] in ['android','ios'] and parts[0]!=a.platform:continue
   if path.suffix in ['.keystore','.jks','.p12','.mobileprovision','.log'] and path.name!='debug.keystore':continue
   if path.name.startswith('.env') or path.name=='local.properties':continue
