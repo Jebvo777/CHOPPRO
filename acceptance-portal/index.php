@@ -5,6 +5,7 @@ portal_headers();
 $status = $repository->viewStatus();
 $sha = $status['sha'];
 $page = input('page', 'overview');
+$defaultStage = $page === 'stage2' ? '2' : '4';
 if($page==='stage2')$page='acceptance';
 if($page==='design')$page='prototypes';
 if ($page === 'figma') {
@@ -15,7 +16,15 @@ if ($page !== 'doc' && !$section) {
     http_response_code(404);
 }
 $type = $page === 'doc' ? 'doc' : ($section['type'] ?? 'missing');
-if($page==='acceptance'&&input('stage','2')==='1')$section['path']='docs/18_План_и_чеклист_приемки_Этапа_1.md';
+$acceptanceStages = [
+    '1' => ['path'=>'docs/18_План_и_чеклист_приемки_Этапа_1.md','label'=>'Этап 1 · Проектирование','title'=>'Проверка проектных материалов','description'=>'Документы, схемы и HTML-прототипы сохраняют результат проектирования этапа 1. Текущее состояние реализации отражено в спецификации и статусе проекта.'],
+    '2' => ['path'=>'docs/Этап_2_приемка.md','label'=>'Этап 2 · Core MVP','title'=>'Проверка рабочих кабинетов','description'=>'Откройте соответствующее демо и проверьте основной серверный и веб-функционал. Внутренние события и контроль сроков сохраняются; доставка уведомлений исключена из текущего рабочего объема.'],
+    '3' => ['path'=>'docs/Этап_3_приемка.md','label'=>'Этап 3 · Android / iOS','title'=>'Проверка мобильного и операционного контура','description'=>'Переданы тестовый Android APK и iOS Simulator 3.0.2. Проверьте сессии, смены, QR/GPS, обходы, происшествия и офлайн-очередь. Физические устройства и production-подпись относятся к завершающим проверкам этапа 4.'],
+    '4' => ['path'=>'docs/Этап_4_приемка.md','label'=>'Этап 4 · Финальная поставка','title'=>'Отчетность, безопасность и условия завершения','description'=>'Функционал проверен автоматически; финальная приемка еще требует физических устройств, production-сборок, cron и восстановления, аудита безопасности, нагрузки и контрольного импорта 1С. Исключения доставки уведомлений и внешних интеграций применяются к договорной приемке после подписания уточнения.'],
+];
+$selectedStage = input('stage', $defaultStage);
+if (!isset($acceptanceStages[$selectedStage])) $selectedStage = '4';
+if ($page === 'acceptance') $section['path'] = $acceptanceStages[$selectedStage]['path'];
 $title = $page === 'doc' ? 'Просмотр документа' : ($section['title'] ?? 'Раздел не найден');
 $project = $catalog->project;
 $requirementsSection = null;
@@ -154,14 +163,16 @@ if (isset($catalog->files()[$prototypePath]) && str_starts_with($prototypePath, 
 
 <?php elseif ($type === 'requirements'): $items = $catalog->data($section); $categories = []; $stages = []; foreach ($items as $item) { $categories[$item['category'] ?? 'Без категории'] = true; foreach (stage_values($item['implementation_stage'] ?? '') as $stage) $stages[$stage] = true; } ksort($stages, SORT_NUMERIC); ?>
 <div class="filters"><input data-req-search placeholder="ID, требование, критерий…" aria-label="Поиск требований"><select data-req-cat aria-label="Категория"><option value="">Все категории</option><?php foreach (array_keys($categories) as $category): ?><option><?=e($category)?></option><?php endforeach; ?></select><select data-req-stage aria-label="Этап"><option value="">Все этапы</option><?php foreach (array_keys($stages) as $stage): ?><option value="<?=e($stage)?>">Этап <?=e($stage)?></option><?php endforeach; ?></select></div>
-<p class="muted" data-req-count><?=count($items)?> требований</p><div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>Категория</th><th>P</th><th>Требование</th><th>Критерий</th><th>Этап</th></tr></thead><tbody>
-<?php foreach ($items as $item): ?><tr data-req-row data-cat="<?=e($item['category'] ?? '')?>" data-stage="<?=e($item['implementation_stage'] ?? '')?>"><td><strong><?=e($item['id'] ?? '')?></strong></td><td><?=e($item['category'] ?? '')?></td><td><?=e($item['priority'] ?? '')?></td><td><?=e($item['requirement'] ?? '')?></td><td><?=e($item['acceptance'] ?? '')?></td><td><?=e($item['implementation_stage'] ?? '')?></td></tr><?php endforeach; ?>
+<p class="muted">Сверка на 09.10.2026. Текущий статус описывает реализацию и уровень проверки; финальная приемка не оформлена. Исторические критерии сохранены, договорные исключения требуют подписанного основания.</p>
+<p class="muted" data-req-count><?=count($items)?> требований</p><div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>Категория</th><th>P</th><th>Требование</th><th>Критерий</th><th>Этап</th><th>Текущий статус и проверка</th><th>Что осталось</th></tr></thead><tbody>
+<?php foreach ($items as $item): ?><tr data-req-row data-cat="<?=e($item['category'] ?? '')?>" data-stage="<?=e($item['implementation_stage'] ?? '')?>"><td><strong><?=e($item['id'] ?? '')?></strong></td><td><?=e($item['category'] ?? '')?></td><td><?=e($item['priority'] ?? '')?></td><td><?=e($item['requirement'] ?? '')?></td><td><?=e($item['acceptance'] ?? '')?></td><td><?=e($item['implementation_stage'] ?? '')?></td><td><strong><?=e($item['current_status'] ?? 'Статус не указан')?></strong><p class="small"><?=e($item['verification_status'] ?? '')?></p><p class="small muted"><?=e($item['scope_note'] ?? '')?></p><?php if (!empty($item['evidence'])): ?><details><summary>Основание</summary><p class="small"><?=e($item['evidence'])?></p></details><?php endif; ?></td><td><?=e($item['remaining'] ?? '')?></td></tr><?php endforeach; ?>
 </tbody></table></div><div class="toolbar"><a class="btn" href="<?=e(asset_url($section['path'], $sha, true))?>">Скачать матрицу</a></div>
 
 <?php elseif ($type === 'acceptance'): $groups = $catalog->data($section); ?>
-<div class="stage-tabs"><a class="btn <?=input('stage','2')==='2'?'primary':''?>" href="<?=e(nav_url('acceptance',['stage'=>'2']))?>">Этап 2 · Core MVP</a><a class="btn <?=input('stage','2')==='1'?'primary':''?>" href="<?=e(nav_url('acceptance',['stage'=>'1']))?>">Этап 1 · Проектирование</a></div><div class="acceptance-intro"><strong><?=input('stage','2')==='2'?'Проверка рабочих приложений':'Проверка проектных материалов'?></strong><p><?=input('stage','2')==='2'?'Откройте соответствующее демо и пройдите пункты ниже. Внешние уведомления подключаются на этапе 4 при подключении платных сервисов.':'Документы, схемы и прототипы этапа 1 доступны в разделах документации.'?></p></div><p class="muted">Отметки сохраняются в этом браузере. При изменении текста пункта его нужно подтвердить заново.</p>
+<div class="stage-tabs"><?php foreach ($acceptanceStages as $stage => $stageInfo): ?><a class="btn <?=$selectedStage === (string)$stage ? 'primary' : ''?>" href="<?=e(nav_url('acceptance',['stage'=>(string)$stage]))?>"><?=e($stageInfo['label'])?></a><?php endforeach; ?></div>
+<div class="acceptance-intro"><strong><?=e($acceptanceStages[$selectedStage]['title'])?></strong><p><?=e($acceptanceStages[$selectedStage]['description'])?></p></div><p class="muted">Отметки сохраняются в этом браузере и относятся к выбранному этапу. При изменении текста пункта его нужно подтвердить заново. Отметки не заменяют подписанный акт.</p>
 <div class="toolbar"><span class="badge" data-progress-text>0 / 0</span><button class="btn" data-reset-accept>Сбросить отметки</button></div><div class="progress"><div data-progress-bar></div></div>
-<?php foreach ($groups as $group => $items): ?><section class="accept-group"><h2><?=e($group)?></h2><?php foreach ($items as $item): ?><label class="accept-row"><input type="checkbox" data-accept="<?=e($item[0])?>" data-revision="<?=e(hash('sha256', $item[1]))?>"><span><?=e($item[1])?></span></label><?php endforeach; ?></section><?php endforeach; ?>
+<?php foreach ($groups as $group => $items): ?><section class="accept-group"><h2><?=e($group)?></h2><?php foreach ($items as $item): ?><label class="accept-row"><input type="checkbox" data-accept="<?=e(in_array($selectedStage, ['1','2'], true) ? $item[0] : $selectedStage.'-'.$item[0])?>" data-revision="<?=e(hash('sha256', $item[1]))?>"><span><?=e($item[1])?></span></label><?php endforeach; ?></section><?php endforeach; ?>
 
 <?php elseif ($type === 'github'): ?>
 <div class="github-box"><div class="card"><h3>Репозиторий</h3><a href="<?=e($repository->repoUrl())?>" target="_blank" rel="noopener">Jebvo777/CHOPPRO ↗</a></div><div class="card"><h3>Ветка</h3><?=e($status['branch'])?></div><div class="card"><h3>Коммит комплекта</h3><span class="small"><?=e($sha)?></span></div><div class="card"><h3>Обновление содержимого</h3><?=e(display_date($status['synced_at']))?></div></div>

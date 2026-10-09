@@ -50,7 +50,7 @@ function stage_values(string $value): array
 function portal_asset(string $name):string{return defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/'.$name.'&release='.CHOPPRO_RELEASE_SHA:'assets/'.$name;}
 function document_group(string $path):string
 {
-    if(str_contains($path,'Спецификация')||str_contains($path,'Актуальная')||str_contains($path,'Этап_2'))return 'Актуальная спецификация';
+    if(str_contains($path,'Спецификация')||str_contains($path,'Актуальная')||preg_match('/Этап_[234]_приемка/u',$path))return 'Актуальная спецификация';
     if(preg_match('/Архитектура|Модель|модель|схема|интеграций|Структура/iu',$path))return 'Архитектура и данные';
     if(preg_match('/требований|сценариев|технического|ролей/iu',$path))return 'Требования и сценарии';
     return 'Результаты и решения по этапам';
