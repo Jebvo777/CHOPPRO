@@ -66,6 +66,9 @@ $diagramFiles = array_filter($catalog->files(), static fn($entry, $path) => str_
 <?php endif; ?>
 
 <?php if ($type === 'overview'): ?>
+<div class="toolbar section">
+    <a class="btn primary" href="<?=e(nav_url('builds'))?>">Мобильные архивы</a>
+</div>
 <section class="section"><div class="grid">
 <div class="card"><div class="metric"><?=count($catalog->documents)?></div><div>документов в GitHub</div></div>
 <div class="card"><div class="metric"><?=count($diagramFiles)?></div><div>PUML-диаграмм</div></div>
