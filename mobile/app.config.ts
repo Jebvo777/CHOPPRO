@@ -6,6 +6,6 @@ const config: ExpoConfig = {
   android: { package: 'ru.choppro.guard', versionCode: 30002, permissions: ['CAMERA', 'ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION', 'RECORD_AUDIO'], blockedPermissions: ['ACCESS_BACKGROUND_LOCATION'] },
   plugins: [ ['./plugins/network.cjs', { allowHttp: process.env.CHOPPRO_ALLOW_HTTP === '1' }], ['expo-camera', { cameraPermission: 'Разрешить сканирование QR и съемку происшествий?', recordAudioAndroid: false }], ['expo-location', { locationWhenInUsePermission: 'Разрешить определение местоположения при рабочих действиях?' }], ['expo-image-picker', { photosPermission: 'Разрешить выбрать фотографию происшествия?', cameraPermission: 'Разрешить съемку фотографии происшествия?', microphonePermission: false }], ['expo-audio', { microphonePermission: 'Разрешить записать аудио происшествия?' }], ['expo-sqlite', { useSQLCipher: true }], 'expo-secure-store', 'expo-document-picker', 'expo-sharing', 'expo-status-bar' ],
   web: { bundler: 'metro', output: 'single', favicon: './assets/icon.png' },
-  extra: { apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://m20.system404-design.ru/', integrations: false }
+  extra: { apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://system404-extra.ru/choppro/', integrations: false }
 };
 export default config;

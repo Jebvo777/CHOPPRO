@@ -23,7 +23,7 @@ def tap(text=None,resource=None):
 def screenshot(name):
  (output/name).write_bytes(subprocess.check_output(['adb','exec-out','screencap','-p'],timeout=35))
 try:
- wait('Вход сотрудника');address=wait(resource='server-url').get('text','');assert 'https://m20.system404-design.ru/' in address,'Адрес портала заполнен'
+ wait('Вход сотрудника');address=wait(resource='server-url').get('text','');assert 'https://system404-extra.ru/choppro/' in address,'Адрес портала заполнен'
  screenshot('CHOPPRO_Android_login.png');tap('Демонстрационный сотрудник');tap(resource='login-submit');wait('Подставить код')
  tap(resource='otp');adb('shell','input','text','000000');adb('shell','input','keyevent','4');tap(resource='login-submit');wait('Неверный код')
  tap('Подставить код');tap(resource='login-submit');wait('Ваш рабочий день',timeout=150);wait('На связи');screenshot('CHOPPRO_Android_home.png')

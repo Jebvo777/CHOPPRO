@@ -28,11 +28,16 @@ final class Migrator
                 try{$this->db->transaction(function(){(new Seeder($this->db,$this->config))->fill();$this->db->run('INSERT INTO cp_installation(id,seed_version,seeded_at) VALUES(1,1,?)',[Support::now()]);});$seeded=true;}finally{$this->db->pdo->exec('SET FOREIGN_KEY_CHECKS='.$fk);}
             }
             (new RuntimeUpgrade($this->db,$this->config))->apply();
-            (new DemoData($this->db,$this->config))->upgrade();
+            $demo=new DemoData($this->db,$this->config);
+            $demo->upgrade();
+            $restored=[];
+            if($seed&&!$seeded&&$this->config['demo']&&!is_file($this->config['storage'].'/schema.json')){
+                $restored['demo_files']=$demo->restoreDemoFiles();
+            }
             (new MobileUpgrade($this->db,$this->config))->apply();
             $version=(int)$this->db->scalar('SELECT COALESCE(MAX(version),0) FROM cp_schema_migrations');
             Support::atomic($this->config['storage'].'/schema.json',Support::json(['version'=>$version,'updated_at'=>Support::now()]));
-            return ['version'=>$version,'migrations'=>$changes,'seeded'=>$seeded,'tenants'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_tenants'),'employees'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_employees'),'shifts'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_shifts')];
+            return ['version'=>$version,'migrations'=>$changes,'seeded'=>$seeded,'tenants'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_tenants'),'employees'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_employees'),'shifts'=>(int)$this->db->scalar('SELECT COUNT(*) FROM cp_shifts')]+$restored;
         }finally{$this->db->run('SELECT RELEASE_LOCK(?)',[$lock]);}
     }
     public static function statements(string $sql): array

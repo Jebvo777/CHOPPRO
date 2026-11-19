@@ -32,6 +32,50 @@ final class DemoData
             'Документ используется в демонстрационном пространстве ЧОППРО. Все персональные сведения вымышлены.']);
     }
 
+    private static function licenseDocument(array $license,string $tenant):string
+    {
+        return Pdf::render([$license['name'],'Демонстрационный образец — не действителен.',
+            'Организация: '.$tenant,'Номер: '.$license['number'],'Дата выдачи: '.$license['issued_at'],
+            'Действительна до: '.$license['expires_at'],'Виды услуг: физическая охрана, пропускной режим, видеонаблюдение.']);
+    }
+
+    public function restoreDemoFiles():array
+    {
+        $counts=['restored'=>0,'unmatched'=>0];
+        $documents=$this->db->all("SELECT d.number,d.issued_at,d.expires_at,d.tenant_id,d.file_path,d.sha256,
+            e.name,e.badge,e.qualification,t.name AS tenant_name,dt.name AS type_name
+            FROM cp_documents d
+            JOIN cp_employees e ON e.id=d.employee_id AND e.tenant_id=d.tenant_id
+            JOIN cp_document_types dt ON dt.id=d.type_id AND dt.tenant_id=d.tenant_id
+            JOIN cp_tenants t ON t.id=d.tenant_id
+            WHERE d.deleted_at IS NULL AND d.mime='application/pdf' AND d.file_path=CONCAT('demo-',d.id,'.pdf')");
+        foreach($documents as$row){
+            $this->restoreFile($row,$counts,static fn()=>self::employeeDocument($row,$row,$row['type_name'],$row['tenant_name']));
+        }
+        $licenses=$this->db->all("SELECT f.tenant_id,f.file_path,f.sha256,l.name,l.number,l.issued_at,l.expires_at,t.name AS tenant_name
+            FROM cp_files f JOIN cp_licenses l ON l.id=f.entity_id AND l.tenant_id=f.tenant_id
+            JOIN cp_tenants t ON t.id=f.tenant_id
+            WHERE f.deleted_at IS NULL AND f.entity_type='licenses' AND f.mime='application/pdf' AND f.file_path='demo-license.pdf'");
+        foreach($licenses as$row){
+            $this->restoreFile($row,$counts,static fn()=>self::licenseDocument($row,$row['tenant_name']));
+        }
+        return $counts;
+    }
+
+    private function restoreFile(array $row,array &$counts,\Closure $render):void
+    {
+        if(!preg_match('/^[0-9a-f-]{36}$/D',$row['tenant_id'])||!preg_match('/^demo-(?:[0-9a-f-]{36}|license)\.pdf$/D',$row['file_path']))return;
+        $path=$this->config['storage'].'/uploads/'.$row['tenant_id'].'/'.$row['file_path'];
+        if(is_file($path))return;
+        $bytes=$render();
+        if(!hash_equals((string)$row['sha256'],hash('sha256',$bytes))){$counts['unmatched']++;return;}
+        $directory=dirname($path);
+        if(!is_dir($directory)&&!mkdir($directory,0700,true)&&!is_dir($directory))throw new \RuntimeException('Не удалось создать хранилище демо-файлов');
+        Support::atomic($path,$bytes);
+        chmod($path,0600);
+        $counts['restored']++;
+    }
+
     public function upgrade():void
     {
         if(!$this->config['demo']||$this->db->scalar("SELECT COUNT(*) FROM cp_data_migrations WHERE name='workspace-6'"))return;
@@ -63,7 +107,7 @@ final class DemoData
                     $platform->file($id,$tenant,'documents',strlen($bytes));
                 }
                 $license=Seeder::id('license-'.$ti);$row=$this->db->one('SELECT * FROM cp_licenses WHERE id=? AND tenant_id=?',[$license,$tenant]);
-                if($row){$pdf=Pdf::render([$row['name'],'Демонстрационный образец — не действителен.','Организация: '.$company['name'],'Номер: '.$row['number'],'Дата выдачи: '.$row['issued_at'],'Действительна до: '.$row['expires_at'],'Виды услуг: физическая охрана, пропускной режим, видеонаблюдение.']);Support::atomic($dir.'/demo-license.pdf',$pdf);$id=Seeder::id('file-license-'.$ti);
+                if($row){$pdf=self::licenseDocument($row,$company['name']);Support::atomic($dir.'/demo-license.pdf',$pdf);$id=Seeder::id('file-license-'.$ti);
                     $this->db->run("UPDATE cp_files SET name='Лицензия.pdf',file_path='demo-license.pdf',mime='application/pdf',sha256=? WHERE id=? AND tenant_id=? AND file_path IN ('demo-document.png','demo-document.pdf','demo-license.pdf')",[hash('sha256',$pdf),$id,$tenant]);
                     if($this->db->scalar("SELECT COUNT(*) FROM cp_files WHERE id=? AND file_path='demo-license.pdf'",[$id]))$platform->file($id,$tenant,'files',strlen($pdf));
                 }

@@ -8,7 +8,7 @@ final class MobileChecks: XCTestCase {
         XCTAssertTrue(app.staticTexts["Вход сотрудника"].waitForExistence(timeout: 90))
         let address = app.textFields["server-url"]
         XCTAssertTrue(address.waitForExistence(timeout: 20))
-        XCTAssertTrue((address.value as? String ?? "").contains("https://m20.system404-design.ru/"), "Адрес портала подставлен при запуске")
+        XCTAssertTrue((address.value as? String ?? "").contains("https://system404-extra.ru/choppro/"), "Адрес портала подставлен при запуске")
         app.buttons["Демонстрационный сотрудник"].tap()
         app.buttons["login-submit"].tap()
         let codeButton = app.buttons["Подставить код"]

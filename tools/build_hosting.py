@@ -25,9 +25,11 @@ for file,target in [('asset.php','asset.php'),('release-status.php','status.php'
 (root/'.htaccess').write_text('Options -Indexes\nDirectoryIndex index.php\n<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteRule ^(?:\\.private|\\.loader)(?:/|$) - [F,L]\nRewriteRule ^demo/(admin|client|platform|jobs|mobile)/?$ demo.php?app=$1 [QSA,L]\n</IfModule>\n<FilesMatch "^(INSTALL|installation|site-config|source-metadata).*">\nRequire all denied\n</FilesMatch>\n')
 for d in [private,loader]:(d/'.htaccess').write_text('Require all denied\nDeny from all\n');(d/'index.html').write_text('')
 (root/'robots.txt').write_text('User-agent: *\nDisallow: /\n')
+install=source/'docs'/'Развертывание_ЧОППРО.md'
+if install.is_file():shutil.copyfile(install,root/'INSTALL.md')
 cache=release/'.portal-cache';(cache/'blobs').mkdir(parents=True,exist_ok=True);files={p:e for p,e in entries.items() if p=='README.md' or p.startswith(('docs/','prototypes/')) or p=='acceptance-portal/portal.json'}
 for path,e in files.items():shutil.copyfile(release/path,cache/'blobs'/e['sha'])
-snapshot={'sha':sha,'branch':'main','tree':entries,'files':files,'manifest':json.loads((release/'acceptance-portal/portal.json').read_text()),'synced_at':0,'message':'Изменено мобильное приложение и отчётность','commits':[]}
+snapshot={'sha':sha,'branch':'main','tree':entries,'files':files,'manifest':json.loads((release/'acceptance-portal/portal.json').read_text()),'synced_at':0,'message':'Установленный выпуск','commits':[]}
 (cache/'current.json').write_text(json.dumps(snapshot,ensure_ascii=False));(cache/'state.json').write_text(json.dumps({'checked_at':0,'next_check_at':0,'error':None}));(release/'.release.json').write_text(json.dumps({'sha':sha,'files':entries}));(private/'current.json').write_text(json.dumps({'portal':sha,'demo':sha,'previous':None}));(private/'sync.json').write_text('{}')
 if args.private_config:shutil.copyfile(args.private_config,private/'site.php')
 else:(private/'site.php').write_text("<?php\nreturn ['demo'=>true];\n")

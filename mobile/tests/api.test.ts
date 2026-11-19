@@ -5,7 +5,7 @@ import type { Session } from '../src/core/types';
 const session: Session = {access_token:'test-access',refresh_token:'test-refresh',expires_in:900,user:{id:'guard'},csrf:'csrf'};
 test('Native authentication survives a proxy that removes Authorization',async()=>{
   const original=globalThis.fetch;
-  const api=new Api('https://m20.system404-design.ru/demo-api.php',true,async()=>{});await api.use(session);
+  const api=new Api('https://example.test/choppro/demo-api.php',true,async()=>{});await api.use(session);
   globalThis.fetch=async(url,init)=>{const headers=init!.headers as Record<string,string>;assert.equal(headers.Authorization,'Bearer test-access');assert.equal(headers['X-Choppro-Authorization'],headers.Authorization);assert.equal(headers['X-Choppro-Client'],'native');assert.equal(init!.credentials,'omit');assert.equal(new URL(String(url)).searchParams.get('path'),'/v1/mobile/snapshot');return Response.json({assignments:[]});};
   try{assert.deepEqual(await api.request('/v1/mobile/snapshot'),{assignments:[]});}finally{globalThis.fetch=original;}
 });

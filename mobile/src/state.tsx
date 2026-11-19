@@ -20,7 +20,7 @@ interface State {
   openFile(file:Row):Promise<void>;
 }
 const Context = createContext<State | null>(null);
-const defaultPortal = Platform.OS === 'web' ? '' : String(Constants.expoConfig?.extra?.apiUrl ?? '').trim() || 'https://m20.system404-design.ru/';
+const defaultPortal = Platform.OS === 'web' ? '' : String(Constants.expoConfig?.extra?.apiUrl ?? '').trim();
 export function useApp(): State { const value = useContext(Context); if (!value) throw new Error('Приложение не готово'); return value; }
 export function Provider({children}: {children: React.ReactNode}) {
   const [ready,setReady] = useState(false), [endpoint,setEndpoint] = useState(defaultPortal), [api,setApi] = useState<Api | null>(null), [snapshot,setSnapshot] = useState<Snapshot | null>(null), [events,setEvents] = useState<QueuedEvent[]>([]), [online,setOnline] = useState(true), [syncing,setSyncing] = useState(false), [message,setMessage] = useState(''), [device,setDevice] = useState('');
