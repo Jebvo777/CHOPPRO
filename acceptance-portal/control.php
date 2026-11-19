@@ -3,9 +3,10 @@ declare(strict_types=1);
 if(!defined('CHOPPRO_HOST_ROOT'))require __DIR__.'/../host-loader/boot.php';
 require_once __DIR__.'/app/HostUpdate.php';
 require_once __DIR__.'/app/helpers.php';
+$storageMode = defined('CHOPPRO_STORAGE_MODE') ? CHOPPRO_STORAGE_MODE : 'site';
 $sessionDir = CHOPPRO_STORAGE_ROOT.'/owner-sessions';
-if (!is_dir($sessionDir)) @mkdir($sessionDir, 0700, true);
-$sessionReady = is_writable($sessionDir);
+if ($storageMode !== 'unavailable' && !is_dir($sessionDir)) @mkdir($sessionDir, 0700, true);
+$sessionReady = $storageMode !== 'unavailable' && is_writable($sessionDir);
 if ($sessionReady) {
     session_save_path($sessionDir);
     session_name('choppro_owner');
@@ -15,7 +16,7 @@ if ($sessionReady) {
     if ($sessionReady) $_SESSION['csrf'] ??= bin2hex(random_bytes(32));
 }
 $message = '';
-$error = $sessionReady ? '' : 'PHP не может сохранить сессию в каталоге .private/runtime.';
+$error = $sessionReady ? '' : 'PHP не может сохранить сессию в служебном хранилище.';
 if(($_SERVER['REQUEST_METHOD']??'GET')==='POST'){
  try{
   if (!$sessionReady) throw new RuntimeException($error);
@@ -30,5 +31,8 @@ header('Content-Type: text/html; charset=utf-8');header('Cache-Control: no-store
 ?>
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Управление обновлениями · ЧОППРО</title><link rel="icon" href="<?=$e($asset('favicon.png'))?>"><link rel="stylesheet" href="<?=$e($asset('style.css'))?>"><?=portal_fonts($asset)?></head><body class="control-body"><main class="control-main"><a class="control-back" href="<?=CHOPPRO_HOST_BASE?>/">← Портал проекта</a><div class="control-title"><img src="<?=$e($asset('brand.png'))?>" alt="Логотип ЧОППРО"><div><p class="eyebrow">РАБОЧАЯ ВЕРСИЯ</p><h1><?=($update['status']??'')==='ready'?'Всё готово к работе':'Управление обновлениями'?></h1><p>Файлы и база обновляются вместе. Дополнительный вход не требуется.</p></div></div>
 <?php if($message):?><div class="notice success" role="status"><?=$e($message)?></div><?php endif?><?php if($error):?><div class="warning" role="alert"><?=$e($error)?></div><?php endif?>
+<?php if ($storageMode === 'temporary'): ?>
+<div class="warning" role="status">Файлы приложения хранятся во временном каталоге хостинга. Для постоянного хранения укажите закрытый каталог в CHOPPRO_STATE_DIR.</div>
+<?php endif; ?>
 <section class="control-card" id="database"><div class="control-state"><span class="state-orb">↻</span><div><h2>Обновление системы</h2><p>Новая версия сначала проверяется, затем применяются изменения базы. Ваши записи сохраняются.</p></div><span class="badge">Схема <?=$e($schema['version']??0)?></span></div><?php if ($sessionReady): ?><div class="toolbar"><?php foreach(['update'=>'Обновить систему','database'=>'Актуализировать БД','worker'=>'Запустить обработку']as$action=>$label):?><form method="post"><input type="hidden" name="csrf" value="<?=$e($_SESSION['csrf'])?>"><input type="hidden" name="action" value="<?=$action?>"><button class="btn <?=$action==='update'?'primary':''?>"><?=$label?></button></form><?php endforeach?></div><?php endif; ?><p class="small muted">Портал: <?=$e(substr($state['portal']??'',0,10))?> · Демо: <?=$e(substr($state['demo']??'',0,10))?> · Источник: main</p><?php if(($update['status']??'')==='retry'):?><div class="warning"><?=$e($update['message'])?></div><?php endif?></section>
 <section class="control-card"><h2>Открыть рабочее пространство</h2><div class="demo-grid"><?php foreach(['admin'=>['Администратор','Команда, объекты и смены'],'mobile'=>['Сотрудник','Смены, обходы и происшествия'],'client'=>['Заказчик','Покрытие постов и отчёты'],'platform'=>['Платформа','Организации, лимиты и аудит'],'jobs'=>['Биржа труда','Вакансии и отклики']]as$app=>$d):?><a class="demo-tile" href="<?=CHOPPRO_HOST_BASE?>/demo.php?app=<?=$app?>" target="_blank" rel="noopener"><strong><?=$d[0]?> ↗</strong><span><?=$d[1]?></span></a><?php endforeach?></div></section></main></body></html>

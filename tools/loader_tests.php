@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/host-loader/ReleaseLoader.php';
+require dirname(__DIR__).'/host-loader/HostingStorage.php';
 $root=(getenv('CHOPPRO_STORAGE_ROOT')?:sys_get_temp_dir()).'/loader-test-'.bin2hex(random_bytes(4));mkdir($root.'/.private/releases',0700,true);$checks=0;
 function expect(bool $ok,string $message):void{global $checks;if(!$ok)throw new RuntimeException($message);$checks++;}
 $files=['site-release.json'=>json_encode(['format'=>1,'php'=>'8.3','schema'=>3]),'acceptance-portal/index.php'=>'<?php echo "portal one";','acceptance-portal/portal.json'=>'{"sections":[]}','backend/public/index.php'=>'<?php echo "api one";','web/shared/app.php'=>'<?php echo "app one";','README.md'=>'# Initial'];
@@ -23,5 +24,21 @@ expect($installed->current() === ['sha'=>$bundled, 'path'=>$bundledPath], 'The a
 expect($installed->current('demo')['sha'] === $bundled, 'Demo starts from the archive without a state file');
 file_put_contents($pointer, json_encode(['portal'=>str_repeat('f', 40), 'demo'=>false]));
 expect($installed->state()['portal'] === $bundled && $installed->state()['demo'] === $bundled, 'Invalid release pointers fall back to the archive');
+
+$site = $root.'/account/site';
+mkdir($site, 0700, true);
+file_put_contents($site.'/.private', '');
+$_SERVER['DOCUMENT_ROOT'] = $site;
+$alternate = HostingStorage::locate($site);
+expect($alternate->mode === 'external' && is_writable($alternate->directory.'/runtime'), 'Read-only site uses storage outside the document root');
+expect((fileperms($alternate->directory) & 0777) === 0700, 'Automatically created storage is owner-only');
+file_put_contents($alternate->directory.'/runtime/schema.json', '{"version":3}');
+unlink($site.'/.private');
+mkdir($site.'/.private', 0700);
+expect(HostingStorage::locate($site)->directory === $alternate->directory, 'Initialized storage remains active when site permissions change');
+
+$broken = true;
+$alternateLoader = new ReleaseLoader($root, $transport, storage: $alternate->directory);
+expect(empty($alternateLoader->sync(true)['error']) && $alternateLoader->current()['sha'] === $head, 'Alternate storage reuses verified objects from the package');
 echo 'PASS '.$checks." release-loader checks\n";
 function clean(string $path):void{foreach(scandir($path)as$entry)if($entry!=='.'&&$entry!=='..'){$p=$path.'/'.$entry;if(is_dir($p))clean($p);else unlink($p);}rmdir($path);}clean($root);

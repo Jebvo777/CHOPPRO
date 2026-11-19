@@ -53,7 +53,8 @@ for filename in ('.htaccess', 'index.html', 'current.json', 'sync.json'):
 if args.private_config:
     config = private / 'site.php'
     shutil.copyfile(args.private_config, config)
-    config.chmod(0o640)
+    # PHP can run under a different account than the one extracting the ZIP.
+    config.chmod(0o644)
 bootstrap_key = os.environ.get('CHOPPRO_BOOTSTRAP_KEY')
 if bootstrap_key:
     key = runtime / 'key'

@@ -8,9 +8,21 @@ final class Config
     {
         date_default_timezone_set('UTC');
         $storage = defined('CHOPPRO_STORAGE_ROOT') ? CHOPPRO_STORAGE_ROOT : (getenv('CHOPPRO_STORAGE_ROOT') ?: dirname(__DIR__, 3).'/var');
-        if (!is_dir($storage)) mkdir($storage, 0700, true);
+        if (defined('CHOPPRO_STORAGE_MODE') && CHOPPRO_STORAGE_MODE === 'unavailable') {
+            throw new Problem(503, 'STORAGE_UNAVAILABLE', 'PHP не может записать файлы приложения в служебное хранилище.');
+        }
+        if (!is_dir($storage)) @mkdir($storage, 0700, true);
+        if (!is_dir($storage) || !is_writable($storage)) {
+            throw new Problem(503, 'STORAGE_UNAVAILABLE', 'PHP не может записать файлы приложения в служебное хранилище.');
+        }
         $private = defined('CHOPPRO_HOST_ROOT') ? CHOPPRO_HOST_ROOT.'/.private/site.php' : (getenv('CHOPPRO_PRIVATE_CONFIG') ?: '');
-        $site = $private && is_file($private) ? require $private : [];
+        $site = [];
+        if ($private && is_file($private)) {
+            if (!is_readable($private)) {
+                throw new Problem(503, 'DATABASE_CONFIG_UNREADABLE', 'PHP не может прочитать файл реквизитов базы. Проверьте доступ на чтение к .private/site.php.');
+            }
+            $site = require $private;
+        }
         $keyPath = $storage.'/key';
         if (empty($site['key']) && !is_file($keyPath)) {
             $f = @fopen($keyPath, 'x');

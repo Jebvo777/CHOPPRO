@@ -7,11 +7,12 @@ final class Auth
     public static function start(array $config): void
     {
         if(session_status()===PHP_SESSION_ACTIVE)return;
-        $dir=$config['storage'].'/sessions';if(!is_dir($dir))mkdir($dir,0700,true);
+        $dir=$config['storage'].'/sessions';if(!is_dir($dir))@mkdir($dir,0700,true);
         session_save_path($dir);$space=$_GET['space']??'admin';if(!in_array($space,['admin','client','platform','jobs','mobile'],true))$space='admin';session_name('choppro_app_'.$space);
         session_set_cookie_params(['lifetime'=>0,'path'=>($config['base']?:'').'/','secure'=>!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off','httponly'=>true,'samesite'=>'Lax']);
         if(($_SERVER['HTTP_X_CHOPPRO_CLIENT']??'')==='native'&&empty($_SERVER['HTTP_ORIGIN']))ini_set('session.use_cookies','0');
-        ini_set('session.use_strict_mode','1');session_start();
+        ini_set('session.use_strict_mode','1');
+        if (!@session_start()) throw new Problem(503, 'STORAGE_UNAVAILABLE', 'PHP не может сохранить сессию приложения.');
         $_SESSION['csrf']??=bin2hex(random_bytes(32));
     }
     public function limit(string $key,int $maximum=10,int $seconds=300): void

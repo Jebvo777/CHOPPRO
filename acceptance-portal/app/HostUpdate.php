@@ -5,6 +5,10 @@ final class HostUpdate
     public static function ensure(bool $force=false):array
     {
         if (!defined('CHOPPRO_HOST_ROOT')) return [];
+        $storageError = 'PHP не может записать состояние в служебное хранилище.';
+        if (defined('CHOPPRO_STORAGE_MODE') && CHOPPRO_STORAGE_MODE === 'unavailable') {
+            return ['status'=>'retry', 'message'=>$storageError];
+        }
         global $loader;
         if (!$force) $loader->sync();
         $sha = $loader->state()['portal'] ?? '';
@@ -15,7 +19,7 @@ final class HostUpdate
 
         $lock = @fopen($loader->private.'/database-update.lock', 'c');
         if (!$lock) {
-            return ['status'=>'retry', 'message'=>'PHP не может записать состояние базы в каталог .private.'];
+            return ['status'=>'retry', 'message'=>$storageError];
         }
         if (!flock($lock, LOCK_EX | LOCK_NB)) {
             fclose($lock);
@@ -38,6 +42,9 @@ final class HostUpdate
             $message = $e instanceof PDOException
                 ? 'Не удалось открыть или обновить базу. Проверьте подключение к MySQL, реквизиты и журнал PHP.'
                 : 'Обновление базы пока не завершено. Проверьте журнал PHP и повторите обновление.';
+            if ($e instanceof \Choppro\Stage2\Problem && in_array($e->codeName, ['STORAGE_UNAVAILABLE', 'DATABASE_CONFIG_UNREADABLE'], true)) {
+                $message = $e->getMessage();
+            }
             $out = ['status'=>'retry', 'release'=>$sha, 'retry_after'=>time()+60, 'message'=>$message];
             try {
                 $loader->atomic($statusPath, json_encode($out, JSON_UNESCAPED_UNICODE));
