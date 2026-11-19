@@ -51,7 +51,7 @@ for filename in ('.htaccess', 'index.html', 'current.json', 'sync.json'):
     (private/filename).chmod(0o644)
 
 if args.private_config:
-    config = private / 'site.php'
+    config = loader / 'site-config.php'
     shutil.copyfile(args.private_config, config)
     # PHP can run under a different account than the one extracting the ZIP.
     config.chmod(0o644)

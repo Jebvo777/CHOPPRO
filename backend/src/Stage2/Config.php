@@ -15,13 +15,16 @@ final class Config
         if (!is_dir($storage) || !is_writable($storage)) {
             throw new Problem(503, 'STORAGE_UNAVAILABLE', 'PHP не может записать файлы приложения в служебное хранилище.');
         }
-        $private = defined('CHOPPRO_HOST_ROOT') ? CHOPPRO_HOST_ROOT.'/.private/site.php' : (getenv('CHOPPRO_PRIVATE_CONFIG') ?: '');
-        $site = [];
-        if ($private && is_file($private)) {
-            if (!is_readable($private)) {
-                throw new Problem(503, 'DATABASE_CONFIG_UNREADABLE', 'PHP не может прочитать файл реквизитов базы. Проверьте доступ на чтение к .private/site.php.');
-            }
-            $site = require $private;
+        $hosted = defined('CHOPPRO_HOST_ROOT');
+        $bundled = $hosted ? CHOPPRO_HOST_ROOT.'/.loader/site-config.php' : '';
+        $private = $hosted ? CHOPPRO_HOST_ROOT.'/.private/site.php' : (getenv('CHOPPRO_PRIVATE_CONFIG') ?: '');
+        $hasBundled = $bundled !== '' && is_file($bundled);
+        $hasPrivate = $private !== '' && is_file($private);
+        $site = $hasBundled && is_readable($bundled) ? require $bundled : [];
+        if ($hasPrivate && is_readable($private)) {
+            $site = array_replace_recursive($site, require $private);
+        } elseif (!$site && ($hasBundled || $hasPrivate)) {
+            throw new Problem(503, 'DATABASE_CONFIG_UNREADABLE', 'PHP не может прочитать закрытую конфигурацию подключения к MySQL.');
         }
         $keyPath = $storage.'/key';
         if (empty($site['key']) && !is_file($keyPath)) {
