@@ -31,6 +31,9 @@ header('Content-Type: '.$mime[$extension]);
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: public, max-age=31536000, immutable');
 header('Referrer-Policy: no-referrer');
+if (in_array($extension, ['woff', 'woff2', 'ttf'], true)) {
+    header('Access-Control-Allow-Origin: *');
+}
 
 header("Content-Security-Policy: sandbox allow-scripts allow-forms allow-downloads; default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'self'; form-action 'none'");
 echo $body;

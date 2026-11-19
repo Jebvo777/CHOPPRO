@@ -48,6 +48,13 @@ function stage_values(string $value): array
 }
 
 function portal_asset(string $name):string{return defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/'.$name.'&release='.CHOPPRO_RELEASE_SHA:'assets/'.$name;}
+
+function portal_fonts(?callable $asset=null):string
+{
+    $asset ??= 'portal_asset';
+    return '<style>@font-face{font-family:"Golos Text";font-style:normal;font-weight:400 900;font-display:swap;src:url("'.$asset('GolosText-latin.woff2').'") format("woff2")}'
+        .'@font-face{font-family:"Golos Text";font-style:normal;font-weight:400 900;font-display:swap;src:url("'.$asset('GolosText-cyrillic.woff2').'") format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}</style>';
+}
 function document_group(string $path):string
 {
     if(str_contains($path,'Спецификация')||str_contains($path,'Актуальная')||preg_match('/Этап_[234]_приемка/u',$path))return 'Актуальная спецификация';

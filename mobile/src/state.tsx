@@ -110,7 +110,7 @@ export function Provider({children}: {children: React.ReactNode}) {
     void (async () => {
       try {const network=await Network.getNetworkStateAsync();onlineRef.current=network.isConnected!==false;setOnline(onlineRef.current);}catch {}
       let savedDevice = await secret.get('device'); if (!savedDevice) { savedDevice = Crypto.randomUUID(); await secret.set('device',savedDevice); } setDevice(savedDevice);
-      const url = await secret.get('endpoint') || (Platform.OS === 'web' ? location.origin + location.pathname.replace(/\/demo\.php.*$/,'').replace(/\/mobile.*$/,'') : defaultPortal);
+      const url = await secret.get('endpoint') || (Platform.OS === 'web' ? new URL('.',document.baseURI).href : defaultPortal);
       if (url) {
         await configure(url);
         const revoke = await secret.get('revocation');

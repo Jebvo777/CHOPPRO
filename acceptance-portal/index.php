@@ -40,6 +40,7 @@ $diagramFiles = array_filter($catalog->files(), static fn($entry, $path) => str_
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title><?=e($title)?> — <?=e($project['name'] ?? 'ЧОППРО')?></title>
+<?=portal_fonts()?>
 <link rel="stylesheet" href="<?=e(defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/style.css&release='.CHOPPRO_RELEASE_SHA:'assets/style.css?v=6')?>"><script src="<?=e(defined('CHOPPRO_RELEASE_SHA')?CHOPPRO_HOST_BASE.'/asset.php?path=acceptance-portal/assets/app.js&release='.CHOPPRO_RELEASE_SHA:'assets/app.js?v=6')?>" defer></script>
 <link rel="icon" href="<?=e(portal_asset('favicon.png'))?>"></head>
 <body data-base="<?=e(defined('CHOPPRO_HOST_BASE')?CHOPPRO_HOST_BASE:'')?>" data-sha="<?=e($sha)?>" data-repository="<?=e($repository->config['owner'].'/'.$repository->config['repository'])?>">

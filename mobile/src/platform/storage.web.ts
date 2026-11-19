@@ -1,5 +1,12 @@
 import type { KeyValue } from '../core/types';
-export const secret = { get: async (key: string) => sessionStorage.getItem('choppro.' + key), set: async (key: string,value: string) => { sessionStorage.setItem('choppro.' + key,value); }, remove: async (key: string) => { sessionStorage.removeItem('choppro.' + key); } };
+
+const mount = new URL('.', document.baseURI).pathname;
+const prefix = mount === '/' ? 'choppro.' : 'choppro.' + mount;
+export const secret = {
+  get: async (key: string) => sessionStorage.getItem(prefix + key),
+  set: async (key: string,value: string) => { sessionStorage.setItem(prefix + key,value); },
+  remove: async (key: string) => { sessionStorage.removeItem(prefix + key); },
+};
 export async function openStorage(namespace: string): Promise<KeyValue> {
   const raw = await crypto.subtle.digest('SHA-256',new TextEncoder().encode(namespace));
   const hash = Array.from(new Uint8Array(raw),value => value.toString(16).padStart(2,'0')).join('');

@@ -62,10 +62,10 @@
   const searchToolbar=(placeholder,extra='')=>`<div class="toolbar"><div class="search-field">${ico('search')}<input class="input" placeholder="${placeholder}"></div>${extra}${btn('Фильтры','filter')}</div>`;
 
   const APPS = {
-    admin:{label:'Admin / ЧОП', subtitle:'Управление охранной организацией', color:'#3b63f3'},
-    mobile:{label:'Mobile / Охранник', subtitle:'Android & iOS', color:'#13a66a'},
-    client:{label:'Кабинет заказчика', subtitle:'Контроль исполнения договора', color:'#7a5bea'},
-    platform:{label:'Platform', subtitle:'Системный контур ЧОППРО', color:'#1ba6a6'}
+    admin:{label:'Admin / ЧОП', subtitle:'Управление охранной организацией', color:'#005ef4'},
+    mobile:{label:'Mobile / Охранник', subtitle:'Android & iOS', color:'#1dc263'},
+    client:{label:'Кабинет заказчика', subtitle:'Контроль исполнения договора', color:'#315fbd'},
+    platform:{label:'Platform', subtitle:'Системный контур ЧОППРО', color:'#4c82d6'}
   };
 
   const NAV = {
