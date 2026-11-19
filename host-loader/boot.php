@@ -9,6 +9,5 @@ if(!defined('CHOPPRO_STORAGE_ROOT'))define('CHOPPRO_STORAGE_ROOT',$hostRoot.'/.p
 function host_release(string $space='portal',?string $sha=null):array
 {
     global $loader;$release=$sha?['sha'=>$sha,'path'=>$loader->path($sha)]:$loader->current($space);
-    $lease=fopen($release['path'].'/.lease','c');flock($lease,LOCK_SH);register_shutdown_function(static function()use($lease){flock($lease,LOCK_UN);fclose($lease);});
     if(!defined('CHOPPRO_RELEASE_ROOT'))define('CHOPPRO_RELEASE_ROOT',$release['path']);if(!defined('CHOPPRO_RELEASE_SHA'))define('CHOPPRO_RELEASE_SHA',$release['sha']);return$release;
 }

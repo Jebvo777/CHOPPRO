@@ -3,11 +3,53 @@ declare(strict_types=1);
 final class ReleaseLoader
 {
     public string $private;
-    public function __construct(public string $root,public ?Closure $transport=null){$this->private=$root.'/.private';}
-    public function json(string $path):array{if(!is_file($path))return[];try{return json_decode(file_get_contents($path),true,512,JSON_THROW_ON_ERROR)?:[];}catch(Throwable){return[];}}
+    private ?string $bundledSha = null;
+
+    public function __construct(public string $root, public ?Closure $transport = null)
+    {
+        $this->private = $root.'/.private';
+        $bundled = $this->json($root.'/.loader/bundled.json')['sha'] ?? null;
+        if (self::validSha($bundled) && is_readable($root.'/.loader/releases/'.$bundled.'/.release.json')) {
+            $this->bundledSha = $bundled;
+        }
+    }
+
+    public function json(string $path): array
+    {
+        if (!is_file($path) || ($contents = @file_get_contents($path)) === false) return [];
+        $data = json_decode($contents, true);
+        return is_array($data) ? $data : [];
+    }
+
+    private static function validSha(mixed $sha): bool
+    {
+        return is_string($sha) && preg_match('/\A[a-f0-9]{40}\z/', $sha) === 1;
+    }
     public function atomic(string $path,string $text):void{if(!is_dir(dirname($path)))mkdir(dirname($path),0700,true);$temp=$path.'.'.bin2hex(random_bytes(5)).'.tmp';if(file_put_contents($temp,$text,LOCK_EX)!==strlen($text)||!rename($temp,$path))throw new RuntimeException('Не удалось сохранить состояние');chmod($path,0600);}
-    public function state():array{return $this->json($this->private.'/current.json');}
-    public function path(string $sha):string{if(!preg_match('/^[a-f0-9]{40}$/',$sha))throw new RuntimeException('Некорректная версия');$path=$this->private.'/releases/'.$sha;if(!is_file($path.'/.release.json'))throw new RuntimeException('Версия не подготовлена');return$path;}
+    public function state(): array
+    {
+        $state = $this->json($this->private.'/current.json');
+        if ($this->bundledSha === null) return $state;
+
+        $portal = $state['portal'] ?? null;
+        $demo = $state['demo'] ?? $portal;
+        $state['portal'] = $this->releaseDirectory($portal) !== null ? $portal : $this->bundledSha;
+        $state['demo'] = $this->releaseDirectory($demo) !== null ? $demo : $this->bundledSha;
+        return $state;
+    }
+
+    private function releaseDirectory(mixed $sha): ?string
+    {
+        if (!self::validSha($sha)) return null;
+        $releases = $sha === $this->bundledSha ? $this->root.'/.loader/releases' : $this->private.'/releases';
+        $path = $releases.'/'.$sha;
+        return is_readable($path.'/.release.json') ? $path : null;
+    }
+
+    public function path(string $sha): string
+    {
+        return $this->releaseDirectory($sha) ?? throw new RuntimeException('Не найдены читаемые файлы установленного выпуска.');
+    }
     public function current(string $space='portal'):array{$s=$this->state();$sha=$s[$space]??$s['portal']??'';return['sha'=>$sha,'path'=>$this->path($sha)];}
     public function allowed(string $path):bool
     {
@@ -25,7 +67,10 @@ final class ReleaseLoader
     public function sync(bool $force=false):array
     {
         $status=$this->json($this->private.'/sync.json');if(!$force&&($status['next_check']??0)>time())return$status;
-        $lock=fopen($this->private.'/sync.lock','c');if(!flock($lock,LOCK_EX|LOCK_NB)){fclose($lock);return['busy'=>true];}
+        if (!is_dir($this->private)) @mkdir($this->private, 0700, true);
+        $lock = @fopen($this->private.'/sync.lock', 'c');
+        if (!$lock) return ['error'=>'PHP не может записать состояние в каталог .private.'];
+        if(!flock($lock,LOCK_EX|LOCK_NB)){fclose($lock);return['busy'=>true];}
         try{
             $status=$this->json($this->private.'/sync.json');if(!$force&&($status['next_check']??0)>time())return$status;
             @set_time_limit(180);$base='https://api.github.com/repos/Jebvo777/CHOPPRO/';$commits=json_decode($this->request($base.'commits?sha=main&per_page=1'),true,512,JSON_THROW_ON_ERROR);$commit=$commits[0]??[];$sha=$commit['sha']??'';if(!preg_match('/^[a-f0-9]{40}$/',$sha))throw new RuntimeException('Не удалось определить main');
@@ -40,7 +85,16 @@ final class ReleaseLoader
                 $this->atomic($this->private.'/current.json',json_encode($new));$status['updated']=true;
             }
             $this->atomic($this->private.'/sync.json',json_encode($status,JSON_UNESCAPED_UNICODE));return$status;
-        }catch(Throwable $e){$status=['checked_at'=>time(),'next_check'=>time()+600,'error'=>$e->getMessage()];$this->atomic($this->private.'/sync.json',json_encode($status,JSON_UNESCAPED_UNICODE));return$status;}
+        }catch(Throwable $e){
+            $status=['checked_at'=>time(),'next_check'=>time()+600,'error'=>$e->getMessage()];
+            try {
+                $this->atomic($this->private.'/sync.json', json_encode($status, JSON_UNESCAPED_UNICODE));
+            } catch (Throwable $writeError) {
+                error_log('CHOPPRO sync state: '.$writeError->getMessage());
+                $status['error'] = 'PHP не может записать состояние в каталог .private.';
+            }
+            return $status;
+        }
         finally{flock($lock,LOCK_UN);fclose($lock);}
     }
     public function prepare(string $sha,array $entries,array $commit):void

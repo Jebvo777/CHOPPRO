@@ -4,7 +4,13 @@ source=pathlib.Path(args.source).resolve();sha=args.sha
 if not re.fullmatch('[a-f0-9]{40}',sha):raise SystemExit('Invalid SHA')
 root=pathlib.Path(args.directory).resolve() if args.directory else pathlib.Path(tempfile.mkdtemp(prefix='choppro-',dir=os.environ.get('TMPDIR')))
 root.mkdir(parents=True,exist_ok=True)
-private=root/'.private';release=private/'releases'/sha;release.mkdir(parents=True,exist_ok=True);(private/'objects').mkdir(parents=True,exist_ok=True);(private/'runtime').mkdir(parents=True,exist_ok=True);loader=root/'.loader';loader.mkdir(exist_ok=True)
+private = root / '.private'
+objects = private / 'objects'
+runtime = private / 'runtime'
+loader = root / '.loader'
+release = loader / 'releases' / sha
+for directory in (objects, runtime, release):
+    directory.mkdir(parents=True, exist_ok=True)
 metadata=json.loads(pathlib.Path(args.metadata).read_text()) if args.metadata else None
 if metadata and 'tree' in metadata:metadata={e['path']:e for e in metadata['tree'] if e['type']=='blob'}
 entries={}
@@ -18,7 +24,7 @@ for p in sorted(source.rglob('*')):
  content=p.read_bytes();blob=hashlib.sha1(b'blob '+str(len(content)).encode()+b'\0'+content).hexdigest()
  if metadata and (path not in metadata or metadata[path]['sha']!=blob):raise SystemExit('Source differs from Git: '+path)
  entries[path]={'path':path,'sha':blob,'size':len(content),'mode':'100644','type':'blob'}
- dest=release/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(content);(private/'objects'/blob).write_bytes(content)
+ dest=release/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(content);(objects/blob).write_bytes(content)
 for p in (source/'host-loader').glob('*.php'):shutil.copyfile(p,loader/p.name)
 for route in ['index','control','api','file','prototype','demo','demo-api']:(root/(route+'.php')).write_text('<?php\ndeclare(strict_types=1);\n$hostRoute='+json.dumps(route)+';\nrequire __DIR__."/.loader/dispatch.php";\n')
 for file,target in [('asset.php','asset.php'),('release-status.php','status.php'),('site-cron.php','cron.php')]:(root/file).write_text('<?php\ndeclare(strict_types=1);\nrequire __DIR__."/.loader/'+target+'";\n')
@@ -30,14 +36,32 @@ if install.is_file():shutil.copyfile(install,root/'INSTALL.md')
 cache=release/'.portal-cache';(cache/'blobs').mkdir(parents=True,exist_ok=True);files={p:e for p,e in entries.items() if p=='README.md' or p.startswith(('docs/','prototypes/')) or p=='acceptance-portal/portal.json'}
 for path,e in files.items():shutil.copyfile(release/path,cache/'blobs'/e['sha'])
 snapshot={'sha':sha,'branch':'main','tree':entries,'files':files,'manifest':json.loads((release/'acceptance-portal/portal.json').read_text()),'synced_at':0,'message':'Установленный выпуск','commits':[]}
-(cache/'current.json').write_text(json.dumps(snapshot,ensure_ascii=False));(cache/'state.json').write_text(json.dumps({'checked_at':0,'next_check_at':0,'error':None}));(release/'.release.json').write_text(json.dumps({'sha':sha,'files':entries}));(private/'current.json').write_text(json.dumps({'portal':sha,'demo':sha,'previous':None}));(private/'sync.json').write_text('{}')
-if args.private_config:shutil.copyfile(args.private_config,private/'site.php')
-else:(private/'site.php').write_text("<?php\nreturn ['demo'=>true];\n")
-(private/'runtime'/'key').write_text(os.environ.get('CHOPPRO_BOOTSTRAP_KEY') or os.urandom(32).hex())
-for p in private.rglob('*'):
- if p.is_file():p.chmod(0o600)
+(cache/'current.json').write_text(json.dumps(snapshot, ensure_ascii=False), encoding='utf-8')
+(cache/'state.json').write_text(json.dumps({'checked_at': 0, 'next_check_at': 0, 'error': None}))
+(release/'.release.json').write_text(json.dumps({'sha': sha, 'files': entries}))
+(loader/'bundled.json').write_text(json.dumps({'sha': sha}))
+(private/'current.json').write_text(json.dumps({'portal': sha, 'demo': sha, 'previous': None}))
+(private/'sync.json').write_text('{}')
+
+# The bundled sources and Git objects need to be readable by the PHP worker.
+for directory in (loader, objects):
+    for path in (directory, *directory.rglob('*')):
+        path.chmod(0o755 if path.is_dir() else 0o644)
+for filename in ('.htaccess', 'index.html', 'current.json', 'sync.json'):
+    (private/filename).chmod(0o644)
+
+if args.private_config:
+    config = private / 'site.php'
+    shutil.copyfile(args.private_config, config)
+    config.chmod(0o640)
+bootstrap_key = os.environ.get('CHOPPRO_BOOTSTRAP_KEY')
+if bootstrap_key:
+    key = runtime / 'key'
+    key.write_text(bootstrap_key)
+    key.chmod(0o600)
 output=pathlib.Path(args.output).resolve();output.parent.mkdir(parents=True,exist_ok=True)
-with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED,compresslevel=7)as z:
- for p in sorted(root.rglob('*')):
-  if p.is_file():z.write(p,p.relative_to(root).as_posix())
+with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED, compresslevel=7) as archive:
+    for path in sorted(root.rglob('*')):
+        if path.is_file() or (path.is_dir() and path != runtime):
+            archive.write(path, path.relative_to(root).as_posix())
 print(json.dumps({'archive':str(output),'files':len(entries),'sha':sha,'bytes':output.stat().st_size,'directory':str(root)},ensure_ascii=False))
