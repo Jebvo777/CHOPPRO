@@ -203,6 +203,8 @@ table tbody tr:last-child td { border-bottom: 0; }
   .card.table-card { padding: 0; }
   table thead th:first-child, table tbody td:first-child { padding-left: 18px; }
   table thead th:last-child, table tbody td:last-child { padding-right: 18px; }
+  .document-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .document-filters :is(label, input, select) { min-width: 0; }
   .document-entry { grid-template-columns: minmax(0, 1fr) max-content; }
   .document-entry .btn { grid-column: 2; grid-row: 1; min-height: 39px; padding-inline: 12px; }
 }
