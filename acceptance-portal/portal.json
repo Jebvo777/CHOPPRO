@@ -25,7 +25,7 @@
       },
       {
         "title": "UI/UX в GitHub",
-        "text": "Результат проектирования — версионируемые интерактивные HTML/CSS/JS-прототипы. Figma в поставку не входит."
+        "text": "Интерактивные HTML/CSS/JS-прототипы версионируются в GitHub. Макеты и UI-kit в Figma доступны в разделе прототипов."
       },
       {
         "title": "Поставка и финальная приемка",
@@ -113,6 +113,10 @@
       "group": "Материалы",
       "directory": "prototypes",
       "entry": "prototypes/index.html",
+      "figma": {
+        "Макеты проекта": "https://www.figma.com/design/CUofWRSphXwUe6luoJ8Or8/%D0%9E%D1%85%D1%80%D0%B0%D0%BD%D0%BA%D0%B0?node-id=0-1",
+        "UI-kit": "https://www.figma.com/design/CUofWRSphXwUe6luoJ8Or8/%D0%9E%D1%85%D1%80%D0%B0%D0%BD%D0%BA%D0%B0?node-id=22-14"
+      },
       "description": "Результат проектирования этапа 1. Рабочие приложения открываются кнопками «Демо»."
     },
     {

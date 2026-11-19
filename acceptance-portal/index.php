@@ -7,10 +7,7 @@ $sha = $status['sha'];
 $page = input('page', 'overview');
 $defaultStage = $page === 'stage2' ? '2' : '4';
 if($page==='stage2')$page='acceptance';
-if($page==='design')$page='prototypes';
-if ($page === 'figma') {
-    $page = 'design'; 
-}
+if(in_array($page,['design','figma'],true))$page='prototypes';
 $section = $catalog->section($page);
 if ($page !== 'doc' && !$section) {
     http_response_code(404);
@@ -125,6 +122,13 @@ $svg = $renderCurrent && isset($catalog->files()[$base.'.svg']) ? $base.'.svg' :
 <?php endforeach; ?></div>
 
 <?php elseif ($type === 'prototypes'): ?>
+<?php if (!empty($section['figma'])): ?>
+<div class="toolbar section">
+<?php foreach ($section['figma'] as $label => $url): if (!str_starts_with($url, 'https://www.figma.com/design/')) continue; ?>
+<a class="btn" href="<?=e($url)?>" target="_blank" rel="noopener"><?=e($label)?> · Figma ↗</a>
+<?php endforeach; ?>
+</div>
+<?php endif; ?>
 <?php foreach ($section['launches'] ?? [] as $launch): if (!isset($catalog->files()[$launch['path']])) continue; ?>
 <div class="card section"><h3><?=e($launch['title'])?></h3><p><?=e($launch['description'] ?? '')?></p><a class="btn primary" href="<?=e(nav_url($page, ['path' => $launch['path']] + ($launch['query'] ?? [])))?>">Открыть</a></div>
 <?php endforeach; ?>
